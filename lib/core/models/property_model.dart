@@ -11,20 +11,22 @@ class Property {
   final bool isNew;
   final double rating;
   final List<String> tags; // e.g., ['1 شخص', 'ممنوع التدخين']
-
-  final List<String> rules; // Added
-  final String? featuredLabel; // Added
-  final double? discountPrice; // Added
-  final String? agentName; // Added
-
+  final List<String> rules;
+  final String? featuredLabel;
+  final double? discountPrice;
+  final String? agentName;
   final String? description;
   final String? governorate;
-  final String? gender; // 'male' or 'female'
-  final List<String> paymentMethods; // ['monthly', 'term']
-  final List<String> universities; // List of university names
+  final String? gender;
+  final List<String> paymentMethods;
+  final List<String> universities;
   final int bedsCount;
   final int roomsCount;
-  final List<String> images; // Full list of property images
+  final int bathroomsCount; // Added
+  final List<String> images;
+
+  final String? videoUrl;
+  final List<Map<String, dynamic>> rooms;
 
   // Helpers
   bool get hasAC => tags.contains('ac') || tags.contains('تكييف');
@@ -51,7 +53,10 @@ class Property {
     this.universities = const [],
     this.bedsCount = 0,
     this.roomsCount = 0,
+    this.bathroomsCount = 1, // Default 1
     this.images = const [],
+    this.videoUrl,
+    this.rooms = const [],
   });
 
   factory Property.fromMap(Map<String, dynamic> map, String documentId) {
@@ -101,9 +106,17 @@ class Property {
           [],
       bedsCount: (map['bedsCount'] as num?)?.toInt() ?? 0,
       roomsCount: (map['roomsCount'] as num?)?.toInt() ?? 0,
+      bathroomsCount:
+          (map['bathroomsCount'] as num?)?.toInt() ?? 1, // Default 1
       images:
           (map['images'] as List<dynamic>?)
               ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      videoUrl: map['videoUrl'],
+      rooms:
+          (map['rooms'] as List<dynamic>?)
+              ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
     );

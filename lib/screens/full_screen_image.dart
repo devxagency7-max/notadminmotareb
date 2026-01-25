@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class FullScreenImage extends StatefulWidget {
@@ -49,7 +49,6 @@ class _FullScreenImageState extends State<FullScreenImage> {
               });
             },
             itemBuilder: (context, index) {
-              // Construct unique tag per image index to avoid Hero tag conflicts
               final tag = index == 0
                   ? widget.baseHeroTag
                   : '${widget.baseHeroTag}_$index';
@@ -173,24 +172,15 @@ class _ZoomableImageState extends State<_ZoomableImage>
           boundaryMargin: const EdgeInsets.all(20),
           minScale: 1.0,
           maxScale: 5.0,
-          child: Image(
-            image: widget.imagePath.startsWith('http')
-                ? NetworkImage(widget.imagePath)
-                : (widget.imagePath.startsWith('assets')
-                      ? AssetImage(widget.imagePath) as ImageProvider
-                      : MemoryImage(base64Decode(widget.imagePath))),
+          child: CachedNetworkImage(
+            imageUrl: widget.imagePath,
             fit: BoxFit.contain,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return const Center(
-                child: Icon(Icons.broken_image, color: Colors.white, size: 50),
-              );
-            },
+            placeholder: (context, url) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+            errorWidget: (context, url, error) => const Center(
+              child: Icon(Icons.broken_image, color: Colors.white, size: 50),
+            ),
           ),
         ),
       ),

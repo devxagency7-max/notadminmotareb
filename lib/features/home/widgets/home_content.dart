@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 // import '../../../admin/admin_dashboard.dart'; // Removed
 import '../../../core/models/property_model.dart';
@@ -8,12 +9,21 @@ import '../../../screens/filter_screen.dart';
 import '../../../screens/property_details_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/home_provider.dart';
+import 'large_property_card.dart'; // Import LargePropertyCard
 import 'property_card.dart';
+import '../screens/university_properties_screen.dart';
 
 class HomeContent extends StatelessWidget {
   HomeContent({super.key});
 
-  final List<String> _categories = ['الكل', 'جامعة', 'شباب', 'بنات', 'سرير '];
+  final List<String> _categories = [
+    'الكل',
+    'جامعة',
+    'شباب',
+    'بنات',
+    'سرير ',
+    'غرفة',
+  ];
 
   // Dummy Data
 
@@ -88,7 +98,22 @@ class HomeContent extends StatelessWidget {
 
                     return Column(
                       children: [
-                        _buildSectionTitle(uni, ''),
+                        _buildSectionTitle(
+                          ' ${uni}',
+                          'عرض الكل',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    UniversityPropertiesScreen(
+                                      universityName: uni,
+                                      properties: uniProperties,
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
                         const SizedBox(height: 15),
                         _buildFeaturedList(context, uniProperties),
                         const SizedBox(height: 25),
@@ -96,6 +121,46 @@ class HomeContent extends StatelessWidget {
                     );
                   }).toList(),
                 );
+              }
+
+              // Filtering Logic for other categories
+              // Index 2: Youth (Male)
+              if (selectedCategoryIndex == 2) {
+                final filtered = properties
+                    .where(
+                      (p) =>
+                          p.gender == 'male' ||
+                          p.tags.contains('شباب') ||
+                          p.tags.contains('ذكور'),
+                    )
+                    .toList();
+                return _buildFilteredList(context, filtered);
+              }
+              // Index 3: Girls (Female)
+              if (selectedCategoryIndex == 3) {
+                final filtered = properties
+                    .where(
+                      (p) =>
+                          p.gender == 'female' ||
+                          p.tags.contains('بنات') ||
+                          p.tags.contains('إناث'),
+                    )
+                    .toList();
+                return _buildFilteredList(context, filtered);
+              }
+              // Index 4: Bed
+              if (selectedCategoryIndex == 4) {
+                final filtered = properties
+                    .where((p) => p.type == 'سرير' || p.type.contains('سرير'))
+                    .toList();
+                return _buildFilteredList(context, filtered);
+              }
+              // Index 5: Room
+              if (selectedCategoryIndex == 5) {
+                final filtered = properties
+                    .where((p) => p.type == 'غرفة' || p.type.contains('غرفة'))
+                    .toList();
+                return _buildFilteredList(context, filtered);
               }
 
               // Default View (All, or other categories if not handled specifically)
@@ -141,9 +206,52 @@ class HomeContent extends StatelessWidget {
         // Greeting
         Row(
           children: [
-            const CircleAvatar(
-              radius: 22,
-              backgroundImage: AssetImage('assets/images/logo.png'),
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: authProvider.userData?['photoUrl'] != null
+                    ? CachedNetworkImage(
+                        imageUrl: authProvider.userData!['photoUrl'],
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          width: 44,
+                          height: 44,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: 44,
+                          height: 44,
+                          color: Colors.grey[100],
+                          child: const Icon(Icons.person, color: Colors.grey),
+                        ),
+                      )
+                    : Container(
+                        width: 44,
+                        height: 44,
+                        color: Colors.grey[100],
+                        child: const Icon(Icons.person, color: Colors.grey),
+                      ),
+              ),
             ),
             const SizedBox(width: 10),
             Column(
@@ -308,20 +416,34 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title, String action) {
+  Widget _buildSectionTitle(
+    String title,
+    String action, {
+    VoidCallback? onTap,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         if (action.isNotEmpty)
-          Text(
-            action,
-            style: GoogleFonts.cairo(
-              color: Colors.teal,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: GestureDetector(
+              onTap: onTap,
+              child: Text(
+                action,
+                style: GoogleFonts.cairo(
+                  color: Colors.teal,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
       ],
@@ -475,6 +597,25 @@ class HomeContent extends StatelessWidget {
             ),
           ),
         );
+      },
+    );
+  }
+
+  Widget _buildFilteredList(BuildContext context, List<Property> properties) {
+    if (properties.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text('لا توجد عقارات متاحة في هذا التصنيف حالياً'),
+        ),
+      );
+    }
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: properties.length,
+      itemBuilder: (context, index) {
+        return LargePropertyCard(property: properties[index]);
       },
     );
   }

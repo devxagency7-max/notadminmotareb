@@ -1,13 +1,183 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final DatabaseReference _rtdb = FirebaseDatabase.instance.ref();
 
-  // Check if user is admin
+  // ✅ Web Client ID (client_type = 3) from google-services.json
+  // Used for oauth_client type 3
+  static const String _webClientId =
+      "562885198822-siravv97bb6nsun6cnald9ajb1qm76jo.apps.googleusercontent.com";
+
+  // ✅ google_sign_in v7 uses singleton instance
+  // Initialization and scopes are handled via initialize()
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+  // ------------------------------------------------------------
+  // Google Sign-In
+  // ------------------------------------------------------------
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      // ✅ v7 singleton initialization
+      await _googleSignIn.initialize(serverClientId: _webClientId);
+
+      // ✅ optional: to force account picker
+      await _googleSignIn.signOut();
+
+      // ✅ v7: use authenticate() instead of signIn()
+      final GoogleSignInAccount? googleUser = await _googleSignIn
+          .authenticate();
+
+      if (googleUser == null) {
+        debugPrint("Google Sign-In: User cancelled the flow.");
+        return null;
+      }
+
+      // ✅ v7: Accessing authentication tokens is synchronous
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      if (googleAuth.idToken == null) {
+        throw Exception("Google Sign-In failed: idToken is null");
+      }
+
+      // ✅ Create credential using idToken (v7 logic)
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+      );
+
+      // ✅ Firebase sign in
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+
+      // ✅ Firestore create/update user
+      // Note: Since authenticate() might not return user profile info directly in some v7 flows,
+      // we might need to handle user data differently.
+      // But typically, we can get current user or profile if scopes were authorized.
+      final user = userCredential.user;
+      if (user != null) {
+        final userDoc = _firestore.collection('users').doc(user.uid);
+        final doc = await userDoc.get();
+
+        if (!doc.exists) {
+          await userDoc.set({
+            'uid': user.uid,
+            'name': user.displayName ?? 'Google User',
+            'email': user.email,
+            'photoUrl': user.photoURL,
+            'role': 'seeker',
+            'provider': 'google',
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastLoginAt': FieldValue.serverTimestamp(),
+            'isBanned': false,
+          });
+        } else {
+          await userDoc.update({
+            'photoUrl': user.photoURL,
+            'lastLoginAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e, s) {
+      debugPrint("Firebase Auth Error: [${e.code}] ${e.message}");
+      debugPrint("Stack: $s");
+      rethrow;
+    } catch (e, s) {
+      debugPrint("Google Sign-In Error: $e");
+      debugPrint("Stack: $s");
+      rethrow;
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Facebook Sign-In (Stub for UI integration)
+  // ------------------------------------------------------------
+  Future<UserCredential?> signInWithFacebook() async {
+    try {
+      // 1. Trigger Facebook Login
+      final LoginResult result = await FacebookAuth.instance.login(
+        permissions: ['email', 'public_profile'],
+      );
+
+      if (result.status == LoginStatus.cancelled) {
+        debugPrint("Facebook Login: User cancelled.");
+        return null;
+      }
+
+      if (result.status == LoginStatus.failed) {
+        throw Exception("Facebook Login Validation Failed: ${result.message}");
+      }
+
+      // 2. Get Access Token
+      final AccessToken? accessToken = result.accessToken;
+      if (accessToken == null) {
+        throw Exception("Facebook Access Token is null");
+      }
+
+      // 3. Create Credential
+      final OAuthCredential credential = FacebookAuthProvider.credential(
+        accessToken.tokenString,
+      );
+
+      // 4. Sign in to Firebase
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+
+      // 5. Create/Update User in Firestore
+      final user = userCredential.user;
+      if (user != null) {
+        // Fetch Facebook Graph Data for a better profile picture
+        final Map<String, dynamic> fbData = await FacebookAuth.instance
+            .getUserData();
+        final String? fbPhotoUrl = fbData['picture']?['data']?['url'];
+
+        final userDoc = _firestore.collection('users').doc(user.uid);
+        final doc = await userDoc.get();
+
+        if (!doc.exists) {
+          await userDoc.set({
+            'uid': user.uid,
+            'name': user.displayName ?? fbData['name'] ?? 'Facebook User',
+            'email': user.email ?? fbData['email'],
+            'photoUrl': fbPhotoUrl ?? user.photoURL,
+            'role': 'seeker',
+            'provider': 'facebook',
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastLoginAt': FieldValue.serverTimestamp(),
+            'isBanned': false,
+          });
+        } else {
+          await userDoc.update({
+            'photoUrl': fbPhotoUrl ?? user.photoURL,
+            'lastLoginAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e, s) {
+      debugPrint("Firebase Auth (Facebook) Error: [${e.code}] ${e.message}");
+      debugPrint("Stack: $s");
+      rethrow;
+    } catch (e, s) {
+      debugPrint("Facebook Sign-In Error: $e");
+      debugPrint("Stack: $s");
+      rethrow;
+    }
+  }
+
+  // ------------------------------------------------------------
+  // Check if user is admin (RTDB)
+  // ------------------------------------------------------------
   Future<bool> isAdmin() async {
     final user = _auth.currentUser;
     if (user == null) return false;
@@ -16,11 +186,14 @@ class AuthService {
       final snapshot = await _rtdb.child('admin/${user.uid}').get();
       return snapshot.exists;
     } catch (e) {
+      debugPrint("isAdmin error: $e");
       return false;
     }
   }
 
-  // Check if user is Owner
+  // ------------------------------------------------------------
+  // Check if user is Owner (Firestore role)
+  // ------------------------------------------------------------
   Future<bool> isOwner() async {
     final user = _auth.currentUser;
     if (user == null) return false;
@@ -32,65 +205,100 @@ class AuthService {
       }
       return false;
     } catch (e) {
+      debugPrint("isOwner error: $e");
       return false;
     }
   }
 
-  // Sign Up
+  // ------------------------------------------------------------
+  // Sign Up with Email/Password
+  // ------------------------------------------------------------
   Future<UserCredential> signUp({
     required String email,
     required String password,
     required String name,
-    required bool isOwner, // true = Owner, false = Seeker
+    required bool isOwner,
   }) async {
     try {
-      // 1. Create User in Auth
-      UserCredential userCredential = await _auth
+      final UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      // 2. Save User Details in Firestore
       if (userCredential.user != null) {
         await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'uid': userCredential.user!.uid,
           'name': name,
           'email': email,
           'role': isOwner ? 'owner' : 'seeker',
+          'provider': 'email',
           'createdAt': FieldValue.serverTimestamp(),
-          'uid': userCredential.user!.uid,
+          'lastLoginAt': FieldValue.serverTimestamp(),
+          'isBanned': false,
         });
       }
 
       return userCredential;
-    } catch (e) {
+    } on FirebaseAuthException catch (e, s) {
+      debugPrint("Firebase Sign-Up Error: [${e.code}] ${e.message}");
+      debugPrint("Stack: $s");
+      rethrow;
+    } catch (e, s) {
+      debugPrint("SignUp Error: $e");
+      debugPrint("Stack: $s");
       rethrow;
     }
   }
 
-  // Sign In
+  // ------------------------------------------------------------
+  // Sign In with Email/Password
+  // ------------------------------------------------------------
   Future<UserCredential> signIn({
     required String email,
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email, password: password);
+
+      // update lastLogin
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'lastLoginAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e, s) {
+      debugPrint("Firebase Sign-In Error: [${e.code}] ${e.message}");
+      debugPrint("Stack: $s");
+      rethrow;
+    } catch (e, s) {
+      debugPrint("SignIn Error: $e");
+      debugPrint("Stack: $s");
       rethrow;
     }
   }
 
+  // ------------------------------------------------------------
   // Sign Out
+  // ------------------------------------------------------------
   Future<void> signOut() async {
-    await _auth.signOut();
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (e, s) {
+      debugPrint("Sign Out Error: $e");
+      debugPrint("Stack: $s");
+      rethrow;
+    }
   }
 
-  // Get Current User
-  User? getCurrentUser() {
-    return _auth.currentUser;
-  }
+  // ------------------------------------------------------------
+  // Helpers
+  // ------------------------------------------------------------
+  User? getCurrentUser() => _auth.currentUser;
 
-  // Get User Data
+  Stream<User?> authStateChanges() => _auth.authStateChanges();
+
   Future<Map<String, dynamic>?> getUserData() async {
     final user = _auth.currentUser;
     if (user == null) return null;
@@ -99,6 +307,7 @@ class AuthService {
       final doc = await _firestore.collection('users').doc(user.uid).get();
       return doc.data();
     } catch (e) {
+      debugPrint("getUserData error: $e");
       return null;
     }
   }

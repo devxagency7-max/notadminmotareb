@@ -3,6 +3,8 @@ import 'package:animate_do/animate_do.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../services/auth_service.dart';
 import '../utils/custom_snackbar.dart';
 import '../utils/error_handler.dart';
@@ -94,6 +96,56 @@ class _SignupScreenState extends State<SignupScreen> {
           message: ErrorHandler.getMessage(e),
           isError: true,
           action: action,
+        );
+      }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      await context.read<AuthProvider>().signInWithGoogle();
+      if (mounted && context.read<AuthProvider>().isAuthenticated) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'تم تسجيل الدخول بجوجل بنجاح!',
+          isError: false,
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: ErrorHandler.getMessage(e),
+          isError: true,
+        );
+      }
+    }
+  }
+
+  Future<void> _signInWithFacebook() async {
+    try {
+      await context.read<AuthProvider>().signInWithFacebook();
+      if (mounted && context.read<AuthProvider>().isAuthenticated) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'تم تسجيل الدخول بفيسبوك بنجاح!',
+          isError: false,
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: ErrorHandler.getMessage(e),
+          isError: true,
         );
       }
     }
@@ -499,53 +551,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 30),
 
                   // Google Sign In Button
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 700),
-                    child: Container(
-                      width: double.infinity,
-                      height: 55,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade200),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(15),
-                          onTap: () {
-                            // Google Sign In Logic
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/google.png',
-                                height: 24,
-                                width: 24,
-                              ),
-                              const SizedBox(width: 15),
-                              Text(
-                                'التسجيل ب',
-                                style: GoogleFonts.cairo(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildGoogleButton(),
+
+                  const SizedBox(height: 15),
+
+                  // Facebook Sign In Button
+                  _buildFacebookButton(),
 
                   const SizedBox(height: 20),
 
@@ -577,6 +588,97 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    return FadeInUp(
+      delay: const Duration(milliseconds: 700),
+      child: Container(
+        width: double.infinity,
+        height: 55,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(15),
+            onTap: _signInWithGoogle,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/images/google.png', height: 24, width: 24),
+                const SizedBox(width: 15),
+                Text(
+                  'التسجيل بـ Google',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFacebookButton() {
+    return FadeInUp(
+      delay: const Duration(milliseconds: 750),
+      child: Container(
+        width: double.infinity,
+        height: 55,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1877F2), // Facebook Blue
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1877F2).withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(15),
+            onTap: _signInWithFacebook,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  FontAwesomeIcons.facebook,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 15),
+                Text(
+                  'التسجيل بـ Facebook',
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

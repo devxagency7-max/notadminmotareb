@@ -1,9 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
 import '../../chat/providers/chat_provider.dart';
 import '../../chat/models/message_model.dart';
+import 'banner_ad_widget.dart';
 
 class ChatContent extends StatefulWidget {
   const ChatContent({super.key});
@@ -14,7 +22,14 @@ class ChatContent extends StatefulWidget {
 
 class _ChatContentState extends State<ChatContent> {
   final TextEditingController _chatController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final ImagePicker _picker = ImagePicker();
+
+  // Scroll Controllers for "Jump to Pin" functionality
+  final ItemScrollController _itemScrollController = ItemScrollController();
+  final ItemPositionsListener _itemPositionsListener =
+      ItemPositionsListener.create();
+
+  int _currentPinnedIndex = -1;
 
   @override
   void initState() {
@@ -27,7 +42,6 @@ class _ChatContentState extends State<ChatContent> {
   @override
   void dispose() {
     _chatController.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -37,234 +51,302 @@ class _ChatContentState extends State<ChatContent> {
 
     context.read<ChatProvider>().sendMessage(text);
     _chatController.clear();
-
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
+    if (_itemScrollController.isAttached) {
+      _itemScrollController.scrollTo(
+        index: 0,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     }
   }
 
+  Future<void> _pickAndSendImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+      if (image != null) {
+        if (!mounted) return;
+        context.read<ChatProvider>().sendImageMessage(File(image.path));
+        if (_itemScrollController.isAttached) {
+          _itemScrollController.jumpTo(index: 0);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
+
+  void _scrollToNextPinnedMessage(List<Message> messages) {
+    final pinnedIndices = <int>[];
+    for (int i = 0; i < messages.length; i++) {
+      if (messages[i].isPinned) {
+        pinnedIndices.add(i);
+      }
+    }
+
+    if (pinnedIndices.isEmpty) return;
+
+    setState(() {
+      _currentPinnedIndex++;
+      if (_currentPinnedIndex >= pinnedIndices.length) {
+        _currentPinnedIndex = 0;
+      }
+    });
+
+    final targetIndex = pinnedIndices[_currentPinnedIndex];
+
+    if (_itemScrollController.isAttached) {
+      _itemScrollController.scrollTo(
+        index: targetIndex,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Watch provider to rebuild on loading state changes
     final chatProvider = context.watch<ChatProvider>();
 
-    return Column(
-      children: [
-        // Header
-        Container(
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 20,
-            left: 20,
-            right: 20,
-            bottom: 20,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+    return StreamBuilder<List<Message>>(
+      stream: chatProvider.currentMessagesStream,
+      builder: (context, snapshot) {
+        final messages = snapshot.data ?? [];
+        final hasPinnedMessages = messages.any((m) => m.isPinned);
+
+        return Column(
+          children: [
+            // Header
+            Container(
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 20,
+                left: 20,
+                right: 20,
+                bottom: 20,
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  const CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Color(0xFF008695),
-                    child: Text('ع', style: TextStyle(color: Colors.white)),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    'الدعم الفني',
-                    style: GoogleFonts.cairo(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'متصل الآن',
-                    style: GoogleFonts.cairo(color: Colors.green, fontSize: 12),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
-        // Messages List
-        Expanded(
-          child: chatProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : StreamBuilder<List<Message>>(
-                  stream: chatProvider.currentMessagesStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return Center(child: Text('حدث خطأ'));
-                    }
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    final messages = snapshot.data!;
-
-                    if (messages.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'لا توجد رسائل',
-                          style: GoogleFonts.cairo(color: Colors.grey),
+                  Stack(
+                    children: [
+                      const CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Color(0xFF008695),
+                        child: Icon(
+                          Icons.support_agent,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                      );
-                    }
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'الدعم الفني والشكاوي',
+                          style: GoogleFonts.cairo(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'متواجدون لخدمتكم 24/7',
+                          style: GoogleFonts.cairo(
+                            color: Colors.grey,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (hasPinnedMessages)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.push_pin,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
+                      onPressed: () => _scrollToNextPinnedMessage(messages),
+                      tooltip: 'الانتقال للرسائل المثبتة',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                ],
+              ),
+            ),
 
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(20),
-                      reverse: true,
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final msg = messages[index];
-                        // If I sent it, isMe is true.
-                        // User side: I am not 'admin' and not 'system'.
-                        // My messages have my UID. Admin has their UID.
-                        // Simple check: senderId != 'system' && senderId != 'admin' (if admin uses that ID)
-                        // But if Admin uses real UID, we need to compare `msg.senderId == currentUserId`.
-                        // Provider exposes `currentUserId`.
-                        final currentUserId = context
-                            .read<ChatProvider>()
-                            .currentUserId;
-                        final isMe = msg.senderId == currentUserId;
-
-                        if (msg.type == MessageType.system) {
-                          return Center(
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 10),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
+            // Messages List
+            Expanded(
+              child: Stack(
+                children: [
+                  chatProvider.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : (snapshot.hasError)
+                      ? const Center(child: Text('حدث خطأ'))
+                      : (messages.isEmpty)
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 80,
+                                color: Colors.grey.withOpacity(0.3),
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                msg.text,
+                              const SizedBox(height: 10),
+                              Text(
+                                'أهلاً بك 👋\nكيف يمكننا مساعدتك اليوم؟',
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.cairo(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade700,
+                                  color: Colors.grey,
+                                  fontSize: 16,
                                 ),
                               ),
-                            ),
-                          );
-                        }
+                            ],
+                          ),
+                        )
+                      : ScrollablePositionedList.builder(
+                          itemScrollController: _itemScrollController,
+                          itemPositionsListener: _itemPositionsListener,
+                          padding: const EdgeInsets.only(
+                            top: 70, // Space for banner
+                            left: 15,
+                            right: 15,
+                            bottom: 20,
+                          ),
+                          reverse: true,
+                          itemCount: messages.length,
+                          itemBuilder: (context, index) {
+                            final msg = messages[index];
+                            final currentUserId = context
+                                .read<ChatProvider>()
+                                .currentUserId;
+                            final isMe = msg.senderId == currentUserId;
 
-                        return _buildMessageBubble(context, msg, isMe);
-                      },
-                    );
-                  },
-                ),
-        ),
+                            // Check for date grouping
+                            bool showDate = false;
+                            if (index == messages.length - 1) {
+                              showDate = true;
+                            } else {
+                              final nextMsg = messages[index + 1];
+                              final currentDay = DateTime(
+                                msg.timestamp.year,
+                                msg.timestamp.month,
+                                msg.timestamp.day,
+                              );
+                              final nextDay = DateTime(
+                                nextMsg.timestamp.year,
+                                nextMsg.timestamp.month,
+                                nextMsg.timestamp.day,
+                              );
+                              if (currentDay != nextDay) {
+                                showDate = true;
+                              }
+                            }
 
-        // Input Area (Same as before)
-        Container(
-          padding: const EdgeInsets.all(15),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
+                            return Column(
+                              children: [
+                                if (showDate) _buildDateHeader(msg.timestamp),
+                                if (msg.type == MessageType.system)
+                                  _buildSystemMessage(msg)
+                                else
+                                  _buildMessageBubble(context, msg, isMe),
+                              ],
+                            );
+                          },
+                        ),
+
+                  // Banner Ad Floating at the Top
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: SafeArea(
+                      top: true,
+                      bottom: false,
+                      child: const Center(child: BannerAdWidget()),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: TextField(
-                    controller: _chatController,
-                    onSubmitted: (_) => _sendMessage(),
-                    decoration: InputDecoration(
-                      hintText: 'اكتب رسالتك...',
-                      hintStyle: GoogleFonts.cairo(color: Colors.grey),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: _sendMessage,
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.send_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
-          ),
+
+            // Input Area
+            _buildInputArea(chatProvider.isLoading),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDateHeader(DateTime date) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        DateFormat('d MMMM', 'ar').format(date),
+        style: GoogleFonts.cairo(fontSize: 11, color: Colors.black54),
+      ),
+    );
+  }
+
+  Widget _buildSystemMessage(Message msg) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.blueGrey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-      ],
+        child: Text(
+          msg.text,
+          style: GoogleFonts.cairo(fontSize: 11, color: Colors.blueGrey),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 
   Widget _buildMessageBubble(BuildContext context, Message msg, bool isMe) {
     return FadeInUp(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 200),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 15),
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          margin: const EdgeInsets.only(bottom: 8),
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
@@ -278,51 +360,238 @@ class _ChatContentState extends State<ChatContent> {
                 : null,
             color: !isMe ? Colors.white : null,
             borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(20),
-              topRight: const Radius.circular(20),
-              bottomLeft: Radius.circular(isMe ? 20 : 0),
-              bottomRight: Radius.circular(!isMe ? 20 : 0),
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 0),
+              bottomRight: Radius.circular(!isMe ? 16 : 0),
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                msg.text,
-                style: GoogleFonts.cairo(
-                  color: isMe ? Colors.white : Colors.black87,
-                  fontSize: 14,
-                  height: 1.4,
+          child: Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (msg.isPinned)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, right: 8, top: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.push_pin,
+                          size: 12,
+                          color: Colors.orange,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'مثبتة',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                if (msg.type == MessageType.image)
+                  _buildImageContent(msg)
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    child: Linkify(
+                      text: msg.text,
+                      onOpen: (link) async {
+                        if (await canLaunchUrl(Uri.parse(link.url))) {
+                          await launchUrl(
+                            Uri.parse(link.url),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
+                      style: GoogleFonts.cairo(
+                        color: isMe ? Colors.white : Colors.black87,
+                        fontSize: 15,
+                      ),
+                      linkStyle: GoogleFonts.cairo(
+                        color: isMe ? Colors.white : Colors.blue,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, right: 8, bottom: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (msg.isEdited)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Icon(
+                            Icons.edit,
+                            size: 10,
+                            color: isMe ? Colors.white70 : Colors.grey,
+                          ),
+                        ),
+                      Text(
+                        DateFormat('hh:mm a').format(msg.timestamp),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isMe ? Colors.white70 : Colors.grey[600],
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          msg.isRead ? Icons.done_all : Icons.done,
+                          size: 14,
+                          color: msg.isRead
+                              ? Colors.blueAccent.shade100
+                              : Colors.white70,
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                _formatTime(msg.timestamp),
-                style: GoogleFonts.cairo(
-                  color: isMe ? Colors.white70 : Colors.grey,
-                  fontSize: 10,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  String _formatTime(DateTime time) {
-    final hour = time.hour > 12
-        ? time.hour - 12
-        : (time.hour == 0 ? 12 : time.hour);
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.hour >= 12 ? 'م' : 'ص';
-    return '$hour:$minute $period';
+  Widget _buildImageContent(Message msg) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (_) =>
+              Dialog(child: InteractiveViewer(child: Image.network(msg.text))),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          msg.text,
+          width: 200,
+          fit: BoxFit.cover,
+          loadingBuilder: (ctx, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 200,
+              height: 200,
+              color: Colors.black12,
+              child: const Center(child: CircularProgressIndicator()),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: 200,
+              height: 200,
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputArea(bool isLoading) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(
+              Icons.add_photo_alternate_rounded,
+              color: Color(0xFF008695),
+            ),
+            onPressed: isLoading ? null : _pickAndSendImage,
+          ),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(25),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _chatController,
+                maxLines: 5,
+                minLines: 1,
+                decoration: InputDecoration(
+                  hintText: 'اكتب رسالتك...',
+                  hintStyle: GoogleFonts.cairo(color: Colors.grey),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: isLoading ? null : _sendMessage,
+            child: Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF008695).withOpacity(0.4),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: isLoading
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -3,63 +3,17 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/models/property_model.dart';
 import '../../../screens/filter_screen.dart';
-import '../../../screens/property_details_screen.dart';
+
+import 'package:provider/provider.dart';
+import '../providers/home_provider.dart';
+import 'large_property_card.dart'; // Import LargePropertyCard
+// import 'native_ad_widget.dart';
 
 class SearchContent extends StatelessWidget {
   const SearchContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Dummy Data for Search Results
-    final List<Property> searchResults = [
-      Property(
-        id: 'search_1',
-        title: 'غرفة مفردة في حي النخيل',
-        location: 'الرياض - حي النخيل',
-        price: '1,200 رس/شهر',
-        imageUrl:
-            'https://images.unsplash.com/photo-1596276020587-8044fe049813?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-        type: 'غرفة',
-        isVerified: true,
-        isNew: true,
-        tags: ['1 شخص', 'ممنوع التدخين', 'ذكور فقط'],
-      ),
-      Property(
-        id: 'search_2',
-        title: 'شقة عائلية فاخرة',
-        location: 'جدة - حي الحمراء',
-        price: '3,500 رس/شهر',
-        imageUrl:
-            'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-        type: 'شقة',
-        isVerified: true,
-        tags: ['عائلات', 'موقف خاص'],
-      ),
-      Property(
-        id: 'search_3',
-        title: 'استوديو بالقرب من العمل',
-        location: 'الدمام - حي الشاطئ',
-        price: '1,500 رس/شهر',
-        imageUrl:
-            'https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-        type: 'استوديو',
-        isVerified: false,
-        tags: ['يسمح بالحيوانات'],
-      ),
-      Property(
-        id: 'search_4',
-        title: 'غرفة مشتركة للطلاب',
-        location: 'الخبر - الحزام الذهبي',
-        price: '600 رس/شهر',
-        imageUrl:
-            'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80',
-        type: 'سرير',
-        isVerified: true,
-        tags: ['طلاب فقط', 'إنترنت مجاني'],
-        governorate: 'الخبر',
-      ),
-    ];
-
     return Column(
       children: [
         // Header - Fixed at top
@@ -73,21 +27,30 @@ class SearchContent extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'الشقاق المتاحة',
-                    style: GoogleFonts.cairo(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '${searchResults.length} عقارات متاحة',
-                    style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
+              StreamBuilder<List<Property>>(
+                stream: context.read<HomeProvider>().propertiesStream,
+                builder: (context, snapshot) {
+                  final count = snapshot.data?.length ?? 0;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'الشقاق المتاحة',
+                        style: GoogleFonts.cairo(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '$count عقارات متاحة',
+                        style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               GestureDetector(
                 onTap: () {
@@ -165,232 +128,65 @@ class SearchContent extends StatelessWidget {
 
         // List
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: searchResults.length,
-            itemBuilder: (context, index) {
-              return _buildLargeSearchCard(context, searchResults[index]);
+          child: StreamBuilder<List<Property>>(
+            stream: context.read<HomeProvider>().propertiesStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'حدث خطأ في تحميل البيانات',
+                    style: GoogleFonts.cairo(color: Colors.red),
+                  ),
+                );
+              }
+
+              final properties = snapshot.data ?? [];
+
+              if (properties.isEmpty) {
+                return Center(
+                  child: Text(
+                    'لا توجد عقارات متاحة حالياً',
+                    style: GoogleFonts.cairo(color: Colors.grey),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                // Insert an ad after every 5 items
+                itemCount: properties.length + (properties.length ~/ 5),
+                itemBuilder: (context, index) {
+                  // Calculate if this position should be an ad
+                  // Pattern: 5 items, Ad, 5 items, Ad...
+                  // Indices: 0-4 (Items), 5 (Ad), 6-10 (Items), 11 (Ad)...
+                  // (index + 1) % 6 == 0 means it's an Ad position
+                  // if ((index + 1) % 6 == 0) {
+                  //   return const Padding(
+                  //     padding: EdgeInsets.only(bottom: 15),
+                  //     child: NativeAdWidget(),
+                  //   );
+                  // }
+
+                  // Calculate the actual property index
+                  // Subtract the number of ads that appeared before this index
+                  final propertyIndex = index - (index ~/ 6);
+
+                  // Safety check
+                  if (propertyIndex >= properties.length) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return LargePropertyCard(property: properties[propertyIndex]);
+                },
+              );
             },
           ),
         ),
       ],
-    );
-  }
-
-  // Keeping the specific design for Search cards but updating data mapping
-  // We can eventually replace this with PropertyCard if we want identical design,
-  // but the user requested "Favorites card... same design as application", implying
-  // we should use the standard card.
-  // However, the search list usually has a different, larger layout.
-  // For favorites, the user asked for "same design as card".
-  // The PropertyCard created is the "Featured" style (Standard vertical card).
-  // The Favorites screen uses GridView with PropertyCard.
-  // The Search screen uses a large list card.
-  // I will keep the custom large card for Search for now, but update it to use the Property model.
-
-  Widget _buildLargeSearchCard(BuildContext context, Property property) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PropertyDetailsScreen(property: property),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image + Badges
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: Image.network(
-                    property.imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 180,
-                      width: double.infinity,
-                      color: Colors.grey.shade200,
-                      child: const Icon(
-                        Icons.image,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-                if (property.isVerified)
-                  Positioned(
-                    top: 15,
-                    right: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF008695),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'موثق',
-                            style: GoogleFonts.cairo(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                // Use PropertyCard's favorite logic here or just display?
-                // Since search has its own card, we should use FavoritesProvider here too.
-                // I'll leave the heart icon visual for now, but ideally it should work.
-                /*
-              Positioned(
-                top: 15,
-                left: 15,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.favorite_border, size: 20),
-                ),
-              ),
-              */
-                if (property.isNew)
-                  Positioned(
-                    bottom: 15,
-                    left: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF69F0AE),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'متاح الآن',
-                        style: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-
-            // Details
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        property.price,
-                        style: GoogleFonts.cairo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF008695),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    property.type,
-                    style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        property.location,
-                        style: GoogleFonts.cairo(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Tags
-                  if (property.tags.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      children: property.tags
-                          .map((tag) => _buildTag(Icons.check, tag))
-                          .toList(),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTag(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE0F2F1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.teal),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.cairo(fontSize: 12, color: Colors.teal),
-          ),
-        ],
-      ),
     );
   }
 }

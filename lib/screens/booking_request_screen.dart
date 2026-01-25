@@ -139,7 +139,7 @@ class BookingRequestScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '1,200 ر.س',
+                          '1,200 ج.م',
                           style: GoogleFonts.cairo(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
