@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/property_model.dart';
 import '../widgets/large_property_card.dart';
 
+import '../widgets/native_ad_widget.dart';
+
 class UniversityPropertiesScreen extends StatelessWidget {
   final String universityName;
   final List<Property> properties;
@@ -15,6 +17,10 @@ class UniversityPropertiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ad every 5 items
+    // Pattern: P1, P2, P3, P4, P5, Ad, P6...
+    final totalItems = properties.length + (properties.length ~/ 5);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -32,9 +38,20 @@ class UniversityPropertiesScreen extends StatelessWidget {
             )
           : ListView.builder(
               padding: const EdgeInsets.all(20),
-              itemCount: properties.length,
+              itemCount: totalItems,
               itemBuilder: (context, index) {
-                return LargePropertyCard(property: properties[index]);
+                // Ad position: Every 6th slot (index 5, 11, etc.)
+                if ((index + 1) % 6 == 0) {
+                  return const NativeAdWidget(factoryId: 'listTileMedium');
+                }
+
+                // Calculate actual property index
+                final propertyIndex = index - (index ~/ 6);
+                if (propertyIndex >= properties.length) {
+                  return const SizedBox.shrink();
+                }
+
+                return LargePropertyCard(property: properties[propertyIndex]);
               },
             ),
     );

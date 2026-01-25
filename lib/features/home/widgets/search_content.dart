@@ -7,7 +7,7 @@ import '../../../screens/filter_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import 'large_property_card.dart'; // Import LargePropertyCard
-// import 'native_ad_widget.dart';
+import 'native_ad_widget.dart';
 
 class SearchContent extends StatelessWidget {
   const SearchContent({super.key});
@@ -35,7 +35,7 @@ class SearchContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'الشقاق المتاحة',
+                        'الشقق المتاحة',
                         style: GoogleFonts.cairo(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -156,27 +156,23 @@ class SearchContent extends StatelessWidget {
                 );
               }
 
+              // Calculate total items including ads
+              // Ad every 3 items
+              // Pattern: P1, P2, P3, Ad, P4, P5, P6, Ad...
+              final totalItems = properties.length + (properties.length ~/ 3);
+
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                // Insert an ad after every 5 items
-                itemCount: properties.length + (properties.length ~/ 5),
+                itemCount: totalItems,
                 itemBuilder: (context, index) {
-                  // Calculate if this position should be an ad
-                  // Pattern: 5 items, Ad, 5 items, Ad...
-                  // Indices: 0-4 (Items), 5 (Ad), 6-10 (Items), 11 (Ad)...
-                  // (index + 1) % 6 == 0 means it's an Ad position
-                  // if ((index + 1) % 6 == 0) {
-                  //   return const Padding(
-                  //     padding: EdgeInsets.only(bottom: 15),
-                  //     child: NativeAdWidget(),
-                  //   );
-                  // }
+                  // Ad position: Every 4th item (index 3, 7, 11...)
+                  if ((index + 1) % 4 == 0) {
+                    return const NativeAdWidget(factoryId: 'listTileMedium');
+                  }
 
-                  // Calculate the actual property index
-                  // Subtract the number of ads that appeared before this index
-                  final propertyIndex = index - (index ~/ 6);
+                  // Calculate actual property index
+                  final propertyIndex = index - (index ~/ 4);
 
-                  // Safety check
                   if (propertyIndex >= properties.length) {
                     return const SizedBox.shrink();
                   }

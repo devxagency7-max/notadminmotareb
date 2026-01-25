@@ -1,114 +1,114 @@
-// import 'dart:io';
-// import 'package:flutter/material.dart';
-// import 'package:google_mobile_ads/google_mobile_ads.dart';
-// import 'package:google_fonts/google_fonts.dart';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:motareb/core/services/ad_service.dart';
 
-// class NativeAdWidget extends StatefulWidget {
-//   const NativeAdWidget({super.key});
+class NativeAdWidget extends StatefulWidget {
+  final double height;
+  final String factoryId;
+  const NativeAdWidget({
+    super.key,
+    this.height = 260,
+    this.factoryId = 'listTileMedium',
+  });
 
-//   @override
-//   State<NativeAdWidget> createState() => _NativeAdWidgetState();
-// }
+  @override
+  State<NativeAdWidget> createState() => _NativeAdWidgetState();
+}
 
-// class _NativeAdWidgetState extends State<NativeAdWidget> {
-//   NativeAd? _nativeAd;
-//   bool _isAdLoaded = false;
+class _NativeAdWidgetState extends State<NativeAdWidget> {
+  NativeAd? _nativeAd;
+  bool _isAdLoaded = false;
+  bool _isDisposed = false;
 
-//   // Real ID: ca-app-pub-2375099279419840/6187445807
-//   // Test ID: ca-app-pub-3940256099942544/2247696110
-//   final String _adUnitId = Platform.isAndroid
-//       ? 'ca-app-pub-3940256099942544/2247696110' // Using Test ID for debugging
-//       : 'ca-app-pub-3940256099942544/3986624511'; // iOS Test ID
+  @override
+  void initState() {
+    super.initState();
+    _tryGetPooledAd();
+  }
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     _loadAd();
-//   }
+  void _tryGetPooledAd() {
+    // Attempt to get a pre-loaded ad from the correct pool
+    final pooledAd = AdService().getNativeAd(widget.factoryId);
+    if (pooledAd != null) {
+      debugPrint('⚡ Using pre-loaded Native Ad (${widget.factoryId})');
+      setState(() {
+        _nativeAd = pooledAd;
+        _isAdLoaded = true;
+      });
+    } else {
+      debugPrint('⌛ Pool empty for ${widget.factoryId}, loading normally');
+      _loadAdManual();
+    }
+  }
 
-//   void _loadAd() {
-//     _nativeAd = NativeAd(
-//       adUnitId: _adUnitId,
-//       factoryId: 'listTile', // Must match the ID registered in MainActivity.kt
-//       request: const AdRequest(),
-//       listener: NativeAdListener(
-//         onAdLoaded: (ad) {
-//           debugPrint('✅ NativeAd loaded successfully');
-//           if (mounted) {
-//             setState(() {
-//               _isAdLoaded = true;
-//             });
-//           }
-//         },
-//         onAdFailedToLoad: (ad, error) {
-//           debugPrint('❌ NativeAd failed to load: ${error.message}');
-//           ad.dispose();
-//           if (mounted) {
-//             setState(() {
-//               _isAdLoaded = false;
-//             });
-//           }
-//         },
-//       ),
-//     )..load();
-//   }
+  void _loadAdManual() {
+    final String adUnitId = Platform.isAndroid
+        ? 'ca-app-pub-3940256099942544/2247696110'
+        : 'ca-app-pub-3940256099942544/3986624511';
 
-//   @override
-//   void dispose() {
-//     _nativeAd?.dispose();
-//     super.dispose();
-//   }
+    _nativeAd = NativeAd(
+      adUnitId: adUnitId,
+      factoryId: widget.factoryId,
+      request: const AdRequest(),
+      listener: NativeAdListener(
+        onAdLoaded: (ad) {
+          if (_isDisposed) {
+            ad.dispose();
+            return;
+          }
+          setState(() {
+            _isAdLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          if (!_isDisposed) {
+            setState(() {
+              _isAdLoaded = false;
+            });
+          }
+        },
+      ),
+    )..load();
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     if (!_isAdLoaded || _nativeAd == null) {
-//       return const SizedBox.shrink();
-//     }
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _nativeAd?.dispose();
+    super.dispose();
+  }
 
-//     return Container(
-//       height: 320, // Adjust height as needed for the native layout
-//       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-//       child: Stack(
-//         children: [
-//           Container(
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(16),
-//               boxShadow: [
-//                 BoxShadow(
-//                   color: Colors.black.withOpacity(0.05),
-//                   blurRadius: 10,
-//                   offset: const Offset(0, 5),
-//                 ),
-//               ],
-//             ),
-//             child: ClipRRect(
-//               borderRadius: BorderRadius.circular(16),
-//               child: AdWidget(ad: _nativeAd!),
-//             ),
-//           ),
-//           // "Ad" Badge in top-right
-//           Positioned(
-//             top: 10,
-//             right: 10,
-//             child: Container(
-//               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-//               decoration: BoxDecoration(
-//                 color: Colors.amber,
-//                 borderRadius: BorderRadius.circular(4),
-//               ),
-//               child: Text(
-//                 'إعلان',
-//                 style: GoogleFonts.cairo(
-//                   fontSize: 10,
-//                   fontWeight: FontWeight.bold,
-//                   color: Colors.white,
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    if (!_isAdLoaded || _nativeAd == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      height: widget.height,
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(20),
+        border: Theme.of(context).brightness == Brightness.dark
+            ? Border.all(color: const Color(0xFF2A3038))
+            : null,
+        boxShadow: Theme.of(context).brightness == Brightness.dark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: AdWidget(ad: _nativeAd!),
+      ),
+    );
+  }
+}

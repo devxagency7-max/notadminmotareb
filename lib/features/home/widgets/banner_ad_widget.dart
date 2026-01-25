@@ -12,8 +12,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
 
-  // Real ID for Release, Test ID for Debug
   // Test ID: ca-app-pub-3940256099942544/6300978111
+  // Real ID: ca-app-pub-2375099279419840/5691604828
   final String _adUnitId = 'ca-app-pub-3940256099942544/6300978111';
 
   @override

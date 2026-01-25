@@ -16,11 +16,15 @@ import 'package:motareb/features/chat/providers/chat_provider.dart';
 import 'package:motareb/core/providers/theme_provider.dart';
 import 'package:motareb/core/theme/app_theme.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:motareb/core/services/ad_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await MobileAds.instance.initialize(); // ✅ تشغيل AdMob
+
+  // Initialize Ads (Interstitial & Native Pool)
+  AdService().init();
 
   runApp(
     MultiProvider(

@@ -12,6 +12,7 @@ import '../providers/home_provider.dart';
 import 'large_property_card.dart'; // Import LargePropertyCard
 import 'property_card.dart';
 import '../screens/university_properties_screen.dart';
+import 'native_ad_widget.dart';
 
 class HomeContent extends StatelessWidget {
   HomeContent({super.key});
@@ -499,19 +500,25 @@ class HomeContent extends StatelessWidget {
     BuildContext context,
     List<Property> properties,
   ) {
+    // Ad every 5 items
+    final totalItems = properties.length + (properties.length ~/ 5);
+
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      itemCount: properties.length,
+      itemCount: totalItems,
       separatorBuilder: (_, __) => const SizedBox(height: 15),
       itemBuilder: (context, index) {
-        // Reuse PropertyCard here or keep custom list item.
-        // For visual consistency with the design shown in user requests (horizontal cards),
-        // we might want to keep the custom horizontal layout for "Recently Added"
-        // OR adapt PropertyCard to support horizontal mode.
-        // For now, I'll update it to use Property data but keep the horizontal layout code
-        // to match the specific "Recently Added" list tile design.
-        final property = properties[index];
+        // Ad position: Every 6th slot (index 5, 11, etc.)
+        if ((index + 1) % 6 == 0) {
+          return const NativeAdWidget(height: 100, factoryId: 'listTileSmall');
+        }
+
+        // Calculate actual property index
+        final propertyIndex = index - (index ~/ 6);
+        if (propertyIndex >= properties.length) return const SizedBox.shrink();
+
+        final property = properties[propertyIndex];
         return GestureDetector(
           onTap: () {
             Navigator.push(
