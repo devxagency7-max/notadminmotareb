@@ -9,6 +9,7 @@ import '../features/home/widgets/home_content.dart';
 import '../features/home/widgets/profile_content.dart';
 import '../features/home/widgets/search_content.dart';
 import '../owner/add_property_screen.dart';
+import '../core/theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -21,9 +22,54 @@ class HomeScreen extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F7F9),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Stack(
           children: [
+            // Ambient Gradient Background (Glows - Enhanced Diffusion)
+            Positioned(
+              top: -150,
+              right: -150,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.ambientGlow.withOpacity(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? 0.12
+                            : 0.5,
+                      ),
+                      AppTheme.ambientGlow.withOpacity(0),
+                    ],
+                    stops: const [0.2, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -150,
+              left: -150,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppTheme.ambientGlow.withOpacity(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? 0.12
+                            : 0.5,
+                      ),
+                      AppTheme.ambientGlow.withOpacity(0),
+                    ],
+                    stops: const [0.2, 1.0],
+                  ),
+                ),
+              ),
+            ),
             // Dynamic Content Body with Padding
             Positioned.fill(
               child: Padding(

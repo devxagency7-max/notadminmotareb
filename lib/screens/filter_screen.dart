@@ -19,19 +19,19 @@ class _FilterScreenState extends State<FilterScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.black),
+            icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
           title: Text(
             'تصفية البحث',
             style: GoogleFonts.cairo(
-              color: Colors.black,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
               fontWeight: FontWeight.bold,
               fontSize: 18,
             ),
@@ -49,7 +49,7 @@ class _FilterScreenState extends State<FilterScreen> {
               child: Text(
                 'إعادة تعيين',
                 style: GoogleFonts.cairo(
-                  color: Colors.teal,
+                  color: const Color(0xFF39BB5E),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -57,7 +57,12 @@ class _FilterScreenState extends State<FilterScreen> {
           ],
         ),
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).padding.bottom + 10,
+            top: 10,
+          ),
           child: Container(
             width: double.infinity,
             height: 50,
@@ -68,13 +73,15 @@ class _FilterScreenState extends State<FilterScreen> {
                 end: Alignment.centerLeft,
               ),
               borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF008695).withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+              boxShadow: Theme.of(context).brightness == Brightness.dark
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: const Color(0xFF008695).withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
             ),
             child: ElevatedButton(
               onPressed: () {
@@ -110,14 +117,21 @@ class _FilterScreenState extends State<FilterScreen> {
                   children: [
                     Expanded(
                       child: _buildPriceInput(
+                        context,
                         '${_currentRangeValues.start.round()}',
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const Text('-'),
+                    Text(
+                      '-',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _buildPriceInput(
+                        context,
                         '${_currentRangeValues.end.round()}',
                       ),
                     ),
@@ -128,8 +142,10 @@ class _FilterScreenState extends State<FilterScreen> {
                   min: 0,
                   max: 5000,
                   divisions: 50,
-                  activeColor: Colors.teal,
-                  inactiveColor: Colors.grey.shade300,
+                  activeColor: const Color(0xFF39BB5E),
+                  inactiveColor: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey.shade800
+                      : Colors.grey.shade300,
                   labels: RangeLabels(
                     _currentRangeValues.start.round().toString(),
                     _currentRangeValues.end.round().toString(),
@@ -188,22 +204,34 @@ class _FilterScreenState extends State<FilterScreen> {
         title,
         style: GoogleFonts.cairo(
           fontWeight: FontWeight.bold,
-          color: Colors.grey.shade700,
+          color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
         ),
       ),
     );
   }
 
-  Widget _buildPriceInput(String value) {
+  Widget _buildPriceInput(BuildContext context, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).dividerColor
+              : Colors.grey.shade300,
+        ),
         borderRadius: BorderRadius.circular(10),
-        color: Colors.grey.shade50,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).cardTheme.color
+            : Colors.grey.shade50,
       ),
-      child: Text(value, style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+      child: Text(
+        value,
+        style: GoogleFonts.cairo(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
+        ),
+      ),
     );
   }
 
@@ -212,16 +240,27 @@ class _FilterScreenState extends State<FilterScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
         border: Border.all(
-          color: isSelected ? Colors.teal : Colors.grey.shade300,
+          color: isSelected
+              ? const Color(0xFF39BB5E)
+              : Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).dividerColor
+              : Colors.grey.shade300,
         ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: RadioListTile<String>(
-        title: Text(text, style: GoogleFonts.cairo(fontSize: 14)),
+        title: Text(
+          text,
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
         value: value,
         groupValue: _selectedHousingType,
-        activeColor: Colors.teal,
+        activeColor: const Color(0xFF39BB5E),
         onChanged: (val) {
           setState(() {
             _selectedHousingType = val!;
@@ -254,16 +293,24 @@ class _FilterScreenState extends State<FilterScreen> {
           padding: const EdgeInsets.symmetric(vertical: 10),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isSelected
+                ? const Color(0xFF39BB5E).withOpacity(0.1)
+                : Theme.of(context).cardTheme.color,
             border: Border.all(
-              color: isSelected ? Colors.teal : Colors.grey.shade300,
+              color: isSelected
+                  ? const Color(0xFF39BB5E)
+                  : Theme.of(context).dividerColor,
             ),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             label,
             style: GoogleFonts.cairo(
-              color: isSelected ? Colors.teal : Colors.grey.shade700,
+              color: isSelected
+                  ? const Color(0xFF39BB5E)
+                  : Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.color?.withOpacity(0.6),
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

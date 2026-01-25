@@ -81,14 +81,26 @@ class _PropertyImagesCarouselState extends State<PropertyImagesCarousel> {
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.grey.shade200,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[900]
+                        : Colors.grey.shade300,
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Theme.of(
+                        context,
+                      ).iconTheme.color?.withOpacity(0.5),
+                    ),
                   ),
                 ),
               ),

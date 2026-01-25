@@ -10,6 +10,8 @@ import '../widgets/property_images_carousel.dart';
 import '../widgets/property_video_card.dart';
 import 'booking_request_screen.dart';
 
+import '../core/theme/app_theme.dart';
+
 class PropertyDetailsScreen extends StatefulWidget {
   final Property? property;
 
@@ -133,7 +135,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Stack(
           children: [
             CustomScrollView(
@@ -167,9 +169,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                     children: [
                       // White Body Container
                       Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(30),
                             topRight: Radius.circular(30),
                           ),
@@ -211,14 +213,8 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                                     vertical: 6,
                                                   ),
                                               decoration: BoxDecoration(
-                                                gradient: const LinearGradient(
-                                                  colors: [
-                                                    Color(0xFF39BB5E),
-                                                    Color(0xFF008695),
-                                                  ],
-                                                  begin: Alignment.centerRight,
-                                                  end: Alignment.centerLeft,
-                                                ),
+                                                gradient:
+                                                    AppTheme.primaryGradient,
                                                 borderRadius:
                                                     BorderRadius.circular(10),
                                                 boxShadow: [
@@ -254,10 +250,16 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                                   ).withOpacity(0.1),
                                                   shape: BoxShape.circle,
                                                 ),
-                                                child: const Icon(
+                                                child: Icon(
                                                   Icons.location_on_rounded,
                                                   size: 18,
-                                                  color: Color(0xFF008695),
+                                                  color:
+                                                      Theme.of(
+                                                            context,
+                                                          ).brightness ==
+                                                          Brightness.dark
+                                                      ? const Color(0xFF39BB5E)
+                                                      : const Color(0xFF008695),
                                                 ),
                                               ),
                                               const SizedBox(width: 10),
@@ -269,7 +271,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                                   style: GoogleFonts.cairo(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w600,
-                                                    color: Colors.grey.shade700,
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
                                                   ),
                                                   overflow:
                                                       TextOverflow.ellipsis,
@@ -284,17 +289,22 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                     Container(
                                       margin: const EdgeInsets.only(right: 10),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: Theme.of(
+                                          context,
+                                        ).cardTheme.color,
                                         borderRadius: BorderRadius.circular(25),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.1,
-                                            ),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 5),
-                                          ),
-                                        ],
+                                        boxShadow:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? []
+                                            : [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.1),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 5),
+                                                ),
+                                              ],
                                       ),
                                       child: IconButton(
                                         icon: Icon(
@@ -332,7 +342,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                         style: GoogleFonts.cairo(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w800,
-                                          color: Colors.black,
+                                          color: Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.color,
                                         ),
                                       ),
                                       const SizedBox(height: 15),
@@ -421,15 +433,21 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                 child: Container(
                                   margin: const EdgeInsets.only(bottom: 25),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: Theme.of(context).cardTheme.color,
                                     borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
+                                    boxShadow:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? []
+                                        : [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(
+                                                0.05,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
                                   ),
                                   child: Theme(
                                     data: Theme.of(context).copyWith(
@@ -443,12 +461,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                       leading: Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF39BB5E),
-                                              Color(0xFF008695),
-                                            ],
-                                          ),
+                                          gradient: AppTheme.primaryGradient,
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
@@ -458,13 +471,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                         ),
                                       ),
                                       title: ShaderMask(
-                                        shaderCallback: (bounds) =>
-                                            const LinearGradient(
-                                              colors: [
-                                                Color(0xFF39BB5E),
-                                                Color(0xFF008695),
-                                              ],
-                                            ).createShader(bounds),
+                                        shaderCallback: (bounds) => AppTheme
+                                            .primaryGradient
+                                            .createShader(bounds),
                                         child: Text(
                                           'تواصل معنا',
                                           style: GoogleFonts.cairo(
@@ -537,7 +546,13 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                       Container(
                                         padding: const EdgeInsets.all(20),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade50,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Theme.of(
+                                                  context,
+                                                ).cardTheme.color
+                                              : Colors.grey.shade50,
                                           borderRadius: BorderRadius.circular(
                                             20,
                                           ),
@@ -545,7 +560,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                         child: Text(
                                           _property.description!,
                                           style: GoogleFonts.cairo(
-                                            color: Colors.grey.shade700,
+                                            color: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.color,
                                             fontSize: 14,
                                             height: 1.7,
                                           ),
@@ -573,14 +590,18 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
+                  color:
+                      Theme.of(context).bottomAppBarTheme.color ??
+                      Theme.of(context).cardTheme.color,
+                  boxShadow: Theme.of(context).brightness == Brightness.dark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, -5),
+                          ),
+                        ],
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
@@ -596,7 +617,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                           _selectionLabel ?? 'السعر',
                           style: GoogleFonts.cairo(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -605,7 +626,10 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                           style: GoogleFonts.cairo(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF008695),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFFE6F4F4)
+                                : const Color(0xFF008695),
                           ),
                         ),
                         if (_property.discountPrice != null)
@@ -624,11 +648,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       height: 50,
                       padding: const EdgeInsets.symmetric(horizontal: 30),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                        ),
+                        gradient: AppTheme.primaryGradient,
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
@@ -722,22 +742,28 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         Container(
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardTheme.color,
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
+            boxShadow: Theme.of(context).brightness == Brightness.dark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
           ),
           child: Icon(icon, color: iconColor),
         ),
         const SizedBox(height: 8),
         Text(
           label,
-          style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold),
+          style: GoogleFonts.cairo(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
         ),
       ],
     );
@@ -761,7 +787,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: Colors.grey.withOpacity(0.1)),
+            bottom: BorderSide(color: Theme.of(context).dividerColor),
           ),
         ),
         child: Row(
@@ -772,7 +798,7 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
               style: GoogleFonts.cairo(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),
             const Spacer(),
@@ -858,7 +884,7 @@ class _UnitSelectionWidget extends StatelessWidget {
           style: GoogleFonts.cairo(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: Colors.black,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         const SizedBox(height: 15),
@@ -875,11 +901,16 @@ class _UnitSelectionWidget extends StatelessWidget {
                       colors: [Color(0xFF39BB5E), Color(0xFF008695)],
                     )
                   : null,
-              color: isWholeApartment ? null : Colors.white,
+              color: isWholeApartment
+                  ? null
+                  : Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(12),
               border: isWholeApartment
                   ? null
-                  : Border.all(color: Colors.grey.shade300, width: 1.5),
+                  : Border.all(
+                      color: Theme.of(context).dividerColor,
+                      width: 1.5,
+                    ),
               boxShadow: isWholeApartment
                   ? [
                       BoxShadow(
@@ -896,7 +927,9 @@ class _UnitSelectionWidget extends StatelessWidget {
                 Text(
                   'حجز الشقة بالكامل',
                   style: GoogleFonts.cairo(
-                    color: isWholeApartment ? Colors.white : Colors.black87,
+                    color: isWholeApartment
+                        ? Colors.white
+                        : Theme.of(context).textTheme.bodyMedium?.color,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -926,12 +959,14 @@ class _UnitSelectionWidget extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15),
             border: Border.all(
-              color: showError ? Colors.red : Colors.grey.shade300,
+              color: showError ? Colors.red : Theme.of(context).dividerColor,
               width: showError ? 2 : 1,
             ),
             color: showError
                 ? Colors.red.withOpacity(0.05)
-                : Colors.grey.shade50,
+                : Theme.of(context).brightness == Brightness.dark
+                ? Theme.of(context).cardTheme.color
+                : const Color(0xFFF5F5F5),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(15),
@@ -946,7 +981,7 @@ class _UnitSelectionWidget extends StatelessWidget {
                     border: rowIndex < roomRows.length - 1
                         ? Border(
                             bottom: BorderSide(
-                              color: Colors.grey.shade300,
+                              color: Theme.of(context).dividerColor,
                               width: 1,
                             ),
                           )
@@ -972,7 +1007,7 @@ class _UnitSelectionWidget extends StatelessWidget {
                             border: roomInRowIndex < rowRooms.length - 1
                                 ? Border(
                                     left: BorderSide(
-                                      color: Colors.grey.shade300,
+                                      color: Theme.of(context).dividerColor,
                                       width: 1,
                                     ),
                                   )
@@ -985,7 +1020,11 @@ class _UnitSelectionWidget extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 5,
                                 ),
-                                color: Colors.grey.shade200,
+                                color:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.grey[800]?.withOpacity(0.5)
+                                    : Colors.grey[200],
                                 width: double.infinity,
                                 child: Text(
                                   type == 'Single'
@@ -995,6 +1034,9 @@ class _UnitSelectionWidget extends StatelessWidget {
                                   style: GoogleFonts.cairo(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
                                   ),
                                 ),
                               ),
@@ -1002,6 +1044,7 @@ class _UnitSelectionWidget extends StatelessWidget {
                               Expanded(
                                 child: type == 'Single'
                                     ? _buildSelectableUnit(
+                                        context: context,
                                         isSelected: isRoomSelected,
                                         label: 'غرفة',
                                         onTap: () =>
@@ -1022,14 +1065,15 @@ class _UnitSelectionWidget extends StatelessWidget {
                                                 border: bedIdx < bedsCount - 1
                                                     ? Border(
                                                         left: BorderSide(
-                                                          color: Colors
-                                                              .grey
-                                                              .shade300,
+                                                          color: Theme.of(
+                                                            context,
+                                                          ).dividerColor,
                                                         ),
                                                       )
                                                     : null,
                                               ),
                                               child: _buildSelectableUnit(
+                                                context: context,
                                                 isSelected: isBedSelected,
                                                 label: 'سرير',
                                                 onTap: () => onSelectionChanged(
@@ -1059,6 +1103,7 @@ class _UnitSelectionWidget extends StatelessWidget {
   }
 
   Widget _buildSelectableUnit({
+    required BuildContext context,
     required bool isSelected,
     required String label,
     required VoidCallback onTap,
@@ -1076,10 +1121,16 @@ class _UnitSelectionWidget extends StatelessWidget {
                   end: Alignment.bottomRight,
                 )
               : null,
-          color: isSelected ? null : Colors.white,
+          color: isSelected
+              ? null
+              : Theme.of(context).brightness == Brightness.dark
+              ? Theme.of(context).cardTheme.color
+              : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color: isSelected
+                ? Colors.transparent
+                : Theme.of(context).dividerColor,
           ),
           boxShadow: isSelected
               ? [
@@ -1097,7 +1148,7 @@ class _UnitSelectionWidget extends StatelessWidget {
               : Text(
                   label,
                   style: GoogleFonts.cairo(
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontSize: isSmall ? 10 : 12,
                     fontWeight: FontWeight.bold,
                   ),

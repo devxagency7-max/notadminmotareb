@@ -15,6 +15,8 @@ class PropertyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isFav = context.watch<FavoritesProvider>().isFavorite(property.id);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -29,15 +31,18 @@ class PropertyCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 15),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 10,
-              offset: Offset(0, 5),
-            ),
-          ],
+          border: isDark ? Border.all(color: const Color(0xFF2A3038)) : null,
+          boxShadow: isDark
+              ? []
+              : const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,10 +73,15 @@ class PropertyCard extends StatelessWidget {
                                     errorBuilder:
                                         (context, error, stackTrace) =>
                                             Container(
-                                              color: Colors.grey.shade200,
-                                              child: const Center(
+                                              color: isDark
+                                                  ? Colors.grey[800]
+                                                  : Colors.grey.shade200,
+                                              child: Center(
                                                 child: Icon(
                                                   Icons.image_not_supported,
+                                                  color: isDark
+                                                      ? Colors.grey[600]
+                                                      : Colors.grey,
                                                 ),
                                               ),
                                             ),
@@ -83,9 +93,16 @@ class PropertyCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Container(
-                                    color: Colors.grey.shade200,
-                                    child: const Center(
-                                      child: Icon(Icons.broken_image),
+                                    color: isDark
+                                        ? Colors.grey[800]
+                                        : Colors.grey.shade200,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        color: isDark
+                                            ? Colors.grey[600]
+                                            : Colors.grey,
+                                      ),
                                     ),
                                   ),
                             ),
@@ -101,8 +118,10 @@ class PropertyCard extends StatelessWidget {
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.black.withOpacity(0.5)
+                                : Colors.white,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -123,6 +142,7 @@ class PropertyCard extends StatelessWidget {
               style: GoogleFonts.cairo(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -140,6 +160,7 @@ class PropertyCard extends StatelessWidget {
                   style: GoogleFonts.cairo(
                     fontWeight: FontWeight.bold,
                     fontSize: 11,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ],
@@ -156,13 +177,15 @@ class PropertyCard extends StatelessWidget {
                   end: Alignment.centerLeft,
                 ),
                 borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF008695).withOpacity(0.3),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                boxShadow: isDark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: const Color(0xFF008695).withOpacity(0.3),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: Center(
                 child: Text(

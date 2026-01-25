@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'dart:async';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/intro_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:provider/provider.dart';
@@ -13,6 +13,8 @@ import 'package:motareb/features/auth/providers/auth_provider.dart';
 import 'package:motareb/features/home/providers/home_provider.dart';
 import 'package:motareb/features/favorites/providers/favorites_provider.dart';
 import 'package:motareb/features/chat/providers/chat_provider.dart';
+import 'package:motareb/core/providers/theme_provider.dart';
+import 'package:motareb/core/theme/app_theme.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 Future<void> main() async {
@@ -23,6 +25,9 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(
+          create: (_) => ThemeProvider(),
+        ), // Provider Added
         ChangeNotifierProvider(
           create: (_) => AuthProvider()..checkAuthStatus(),
         ),
@@ -44,14 +49,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'Motareb',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true,
-        textTheme: GoogleFonts.cairoTextTheme(Theme.of(context).textTheme),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeProvider.themeMode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -106,19 +111,38 @@ class _SplashScreenState extends State<SplashScreen> {
           ),
         );
       } else {
-        debugPrint("Splash: Navigating to LoginScreen as requested.");
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            transitionDuration: const Duration(seconds: 1),
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const LoginScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-          ),
-        );
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+        // Check if user is already logged in
+        if (authProvider.isAuthenticated) {
+          debugPrint("Splash: User logged in, navigating to HomeScreen.");
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              transitionDuration: const Duration(seconds: 1),
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const HomeScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+            ),
+          );
+        } else {
+          debugPrint("Splash: No user logged in, navigating to LoginScreen.");
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              transitionDuration: const Duration(seconds: 1),
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const LoginScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint("Splash Error: $e");
@@ -135,7 +159,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),

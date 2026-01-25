@@ -99,6 +99,7 @@ class HomeContent extends StatelessWidget {
                     return Column(
                       children: [
                         _buildSectionTitle(
+                          context,
                           ' ${uni}',
                           'عرض الكل',
                           onTap: () {
@@ -182,11 +183,11 @@ class HomeContent extends StatelessWidget {
 
               return Column(
                 children: [
-                  _buildSectionTitle('مميزة لك ✨', 'عرض الكل'),
+                  _buildSectionTitle(context, 'مميزة لك ✨', 'عرض الكل'),
                   const SizedBox(height: 15),
                   _buildFeaturedList(context, displayFeatured),
                   const SizedBox(height: 25),
-                  _buildSectionTitle('أضيف حديثاً 🆕', ''),
+                  _buildSectionTitle(context, 'أضيف حديثاً 🆕', ''),
                   const SizedBox(height: 15),
                   _buildRecentlyAddedList(context, properties),
                   const SizedBox(height: 20),
@@ -209,14 +210,19 @@ class HomeContent extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                border: Border.all(
+                  color: Theme.of(context).cardTheme.color ?? Colors.white,
+                  width: 2,
+                ),
+                boxShadow: Theme.of(context).brightness == Brightness.dark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(22),
@@ -248,7 +254,9 @@ class HomeContent extends StatelessWidget {
                     : Container(
                         width: 44,
                         height: 44,
-                        color: Colors.grey[100],
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[900]
+                            : Colors.grey[100],
                         child: const Icon(Icons.person, color: Colors.grey),
                       ),
               ),
@@ -266,7 +274,7 @@ class HomeContent extends StatelessWidget {
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ],
@@ -280,18 +288,24 @@ class HomeContent extends StatelessWidget {
             // Notification
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                boxShadow: Theme.of(context).brightness == Brightness.dark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
               ),
-              child: const Icon(Icons.notifications_outlined, size: 22),
+              child: Icon(
+                Icons.notifications_outlined,
+                size: 22,
+                color: Theme.of(context).iconTheme.color,
+              ),
             ),
           ],
         ),
@@ -307,15 +321,20 @@ class HomeContent extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 15),
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(15),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
+              boxShadow: Theme.of(context).brightness == Brightness.dark
+                  ? []
+                  : const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+              border: Theme.of(context).brightness == Brightness.dark
+                  ? Border.all(color: Theme.of(context).dividerColor)
+                  : null,
             ),
             child: Row(
               children: [
@@ -396,16 +415,22 @@ class HomeContent extends StatelessWidget {
                         end: Alignment.centerLeft,
                       )
                     : null,
-                color: isSelected ? null : Colors.white,
+                color: isSelected ? null : Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(20),
                 border: isSelected
                     ? null
-                    : Border.all(color: Colors.grey.shade200),
+                    : Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(context).dividerColor
+                            : Colors.grey.shade200,
+                      ),
               ),
               child: Text(
                 _categories[index],
                 style: GoogleFonts.cairo(
-                  color: isSelected ? Colors.white : Colors.black,
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -417,6 +442,7 @@ class HomeContent extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(
+    BuildContext context,
     String title,
     String action, {
     VoidCallback? onTap,
@@ -427,7 +453,11 @@ class HomeContent extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+            style: GoogleFonts.cairo(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -494,15 +524,20 @@ class HomeContent extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 5,
-                  offset: Offset(0, 2),
-                ),
-              ],
+              border: Theme.of(context).brightness == Brightness.dark
+                  ? Border.all(color: Theme.of(context).dividerColor)
+                  : null,
+              boxShadow: Theme.of(context).brightness == Brightness.dark
+                  ? []
+                  : const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 5,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Row(
               children: [
@@ -551,6 +586,7 @@ class HomeContent extends StatelessWidget {
                         style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -578,6 +614,9 @@ class HomeContent extends StatelessWidget {
                             style: GoogleFonts.cairo(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
+                              color: Theme.of(
+                                context,
+                              ).textTheme.bodySmall?.color,
                             ),
                           ),
                         ],

@@ -26,15 +26,20 @@ class LargePropertyCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Theme.of(context).brightness == Brightness.dark
+              ? Border.all(color: const Color(0xFF2A3038))
+              : null,
+          boxShadow: Theme.of(context).brightness == Brightness.dark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,11 +59,15 @@ class LargePropertyCard extends StatelessWidget {
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 180,
                       width: double.infinity,
-                      color: Colors.grey.shade200,
-                      child: const Icon(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[800]
+                          : Colors.grey.shade200,
+                      child: Icon(
                         Icons.image,
                         size: 50,
-                        color: Colors.grey,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[600]
+                            : Colors.grey,
                       ),
                     ),
                   ),
@@ -107,8 +116,10 @@ class LargePropertyCard extends StatelessWidget {
                     },
                     child: Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.black.withOpacity(0.5)
+                            : Colors.white,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -171,6 +182,7 @@ class LargePropertyCard extends StatelessWidget {
                     style: GoogleFonts.cairo(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -194,7 +206,7 @@ class LargePropertyCard extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       children: property.tags
-                          .map((tag) => _buildTag(Icons.check, tag))
+                          .map((tag) => _buildTag(context, Icons.check, tag))
                           .toList(),
                     ),
                 ],
@@ -206,11 +218,13 @@ class LargePropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTag(IconData icon, String label) {
+  Widget _buildTag(BuildContext context, IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2F1),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.teal.withOpacity(0.1)
+            : const Color(0xFFE0F2F1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -220,7 +234,12 @@ class LargePropertyCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: GoogleFonts.cairo(fontSize: 12, color: Colors.teal),
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.tealAccent
+                  : Colors.teal,
+            ),
           ),
         ],
       ),

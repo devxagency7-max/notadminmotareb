@@ -127,14 +127,16 @@ class _ChatContentState extends State<ChatContent> {
                 bottom: 20,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                color: Theme.of(context).cardTheme.color,
+                boxShadow: Theme.of(context).brightness == Brightness.dark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
               ),
               child: Row(
                 children: [
@@ -172,7 +174,7 @@ class _ChatContentState extends State<ChatContent> {
                         Text(
                           'الدعم الفني والشكاوي',
                           style: GoogleFonts.cairo(
-                            color: Colors.black,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -317,7 +319,10 @@ class _ChatContentState extends State<ChatContent> {
       ),
       child: Text(
         DateFormat('d MMMM', 'ar').format(date),
-        style: GoogleFonts.cairo(fontSize: 11, color: Colors.black54),
+        style: GoogleFonts.cairo(
+          fontSize: 11,
+          color: Theme.of(context).textTheme.bodySmall?.color,
+        ),
       ),
     );
   }
@@ -358,20 +363,22 @@ class _ChatContentState extends State<ChatContent> {
                     end: Alignment.bottomRight,
                   )
                 : null,
-            color: !isMe ? Colors.white : null,
+            color: !isMe ? Theme.of(context).cardTheme.color : null,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
               bottomLeft: Radius.circular(isMe ? 16 : 0),
               bottomRight: Radius.circular(!isMe ? 16 : 0),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            boxShadow: Theme.of(context).brightness == Brightness.dark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(4.0),
@@ -420,7 +427,9 @@ class _ChatContentState extends State<ChatContent> {
                         }
                       },
                       style: GoogleFonts.cairo(
-                        color: isMe ? Colors.white : Colors.black87,
+                        color: isMe
+                            ? Colors.white
+                            : Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 15,
                       ),
                       linkStyle: GoogleFonts.cairo(
@@ -514,18 +523,20 @@ class _ChatContentState extends State<ChatContent> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(30),
           topRight: Radius.circular(30),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        boxShadow: Theme.of(context).brightness == Brightness.dark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
       ),
       child: Row(
         children: [
@@ -540,9 +551,11 @@ class _ChatContentState extends State<ChatContent> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey.shade900
+                    : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Theme.of(context).dividerColor),
               ),
               child: TextField(
                 controller: _chatController,

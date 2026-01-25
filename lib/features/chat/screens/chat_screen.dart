@@ -123,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final hasPinnedMessages = messages.any((m) => m.isPinned);
 
         return Scaffold(
-          backgroundColor: const Color(0xFFE5E5E5).withOpacity(0.5),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: _buildAppBar(hasPinnedMessages, messages),
           body: Stack(
             children: [
@@ -218,7 +218,7 @@ class _ChatScreenState extends State<ChatScreen> {
             widget.userName,
             style: GoogleFonts.cairo(
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
               fontSize: 16,
             ),
           ),
@@ -232,10 +232,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
       elevation: 1,
       centerTitle: true,
-      iconTheme: const IconThemeData(color: Colors.black),
+      iconTheme: IconThemeData(color: Theme.of(context).iconTheme.color),
       actions: [
         if (hasPinned)
           IconButton(
@@ -271,7 +271,10 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Text(
         text,
-        style: GoogleFonts.cairo(fontSize: 12, color: Colors.black54),
+        style: GoogleFonts.cairo(
+          fontSize: 12,
+          color: Theme.of(context).textTheme.bodySmall?.color,
+        ),
       ),
     );
   }
@@ -312,20 +315,22 @@ class _ChatScreenState extends State<ChatScreen> {
                     end: Alignment.bottomRight,
                   )
                 : null,
-            color: !isMe ? Colors.white : null,
+            color: !isMe ? Theme.of(context).cardTheme.color : null,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
               bottomLeft: Radius.circular(isMe ? 16 : 0),
               bottomRight: Radius.circular(!isMe ? 16 : 0),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
+            boxShadow: Theme.of(context).brightness == Brightness.dark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(4.0),
@@ -374,7 +379,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         }
                       },
                       style: GoogleFonts.cairo(
-                        color: isMe ? Colors.white : Colors.black87,
+                        color: isMe
+                            ? Colors.white
+                            : Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 15,
                       ),
                       linkStyle: GoogleFonts.cairo(
@@ -468,8 +475,10 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
+        color: Theme.of(context).cardTheme.color,
+        boxShadow: Theme.of(context).brightness == Brightness.dark
+            ? []
+            : [BoxShadow(color: Colors.black12, blurRadius: 5)],
       ),
       child: SafeArea(
         child: Row(
@@ -485,9 +494,11 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 15),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey.shade900
+                      : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: Theme.of(context).dividerColor),
                 ),
                 child: TextField(
                   controller: _chatController,
