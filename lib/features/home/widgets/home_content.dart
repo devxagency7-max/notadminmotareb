@@ -345,7 +345,7 @@ class HomeContent extends StatelessWidget {
                   child: TextField(
                     textAlign: TextAlign.right,
                     decoration: InputDecoration(
-                      hintText: 'وين حاب تسكن؟',
+                      hintText:"حابب تسكن فين..؟",
                       hintStyle: GoogleFonts.cairo(color: Colors.grey),
                       border: InputBorder.none,
                     ),

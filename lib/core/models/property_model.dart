@@ -14,6 +14,14 @@ class Property {
   final List<String> rules;
   final String? featuredLabel;
   final double? discountPrice;
+
+  // Booking Modes
+  final String bookingMode; // 'unit' or 'bed'
+  final bool isFullApartmentBooking;
+  final int totalBeds;
+  final int apartmentRoomsCount;
+  final double bedPrice;
+  final String? generalRoomType;
   final String? agentName;
   final String? description;
   final String? governorate;
@@ -57,6 +65,12 @@ class Property {
     this.images = const [],
     this.videoUrl,
     this.rooms = const [],
+    this.bookingMode = 'unit',
+    this.isFullApartmentBooking = false,
+    this.totalBeds = 0,
+    this.apartmentRoomsCount = 0,
+    this.bedPrice = 0.0,
+    this.generalRoomType,
   });
 
   factory Property.fromMap(Map<String, dynamic> map, String documentId) {
@@ -119,6 +133,12 @@ class Property {
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
+      bookingMode: map['bookingMode'] ?? 'unit',
+      isFullApartmentBooking: map['isFullApartmentBooking'] ?? false,
+      totalBeds: (map['totalBeds'] as num?)?.toInt() ?? 0,
+      apartmentRoomsCount: (map['apartmentRoomsCount'] as num?)?.toInt() ?? 0,
+      bedPrice: (map['bedPrice'] as num?)?.toDouble() ?? 0.0,
+      generalRoomType: map['generalRoomType'],
     );
   }
 }

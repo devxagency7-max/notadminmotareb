@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/models/property_model.dart';
 import '../features/favorites/providers/favorites_provider.dart';
@@ -35,6 +36,9 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
       {}; // Keys: "r{idx}" or "r{idx}_b{bIdx}"
   final GlobalKey _unitSelectionKey = GlobalKey();
 
+  // Booking Mode State
+  int _selectedBedCount = 1;
+
   @override
   void initState() {
     super.initState();
@@ -58,12 +62,22 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
           bedsCount: 2,
           roomsCount: 1,
           discountPrice: null,
+          bookingMode: 'unit',
+          isFullApartmentBooking: false,
+          totalBeds: 2,
+          apartmentRoomsCount: 1,
+          bedPrice: 0.0,
+          generalRoomType: '',
           rooms: [
-            // Fake rooms for dummy data
             {'type': 'Single', 'beds': 1, 'price': 2000, 'bedPrice': 2000},
             {'type': 'Double', 'beds': 2, 'price': 2000, 'bedPrice': 1000},
           ],
         );
+
+    // Initialize based on mode
+    if (_property.bookingMode == 'unit' && _property.isFullApartmentBooking) {
+      _isWholeApartment = true;
+    }
 
     // Initial Price
     _updatePrice();
@@ -75,6 +89,23 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
         double.tryParse(_property.price.replaceAll(RegExp(r'[^0-9.]'), '')) ??
         0.0;
 
+    // 1. Bed Mode Logic
+    if (_property.bookingMode == 'bed') {
+      _selectedPrice = _property.bedPrice * _selectedBedCount;
+      _selectionLabel = '$_selectedBedCount سرير';
+      setState(() {});
+      return;
+    }
+
+    // 2. Unit Mode - Full Apartment Only
+    if (_property.isFullApartmentBooking) {
+      _selectedPrice = base;
+      _selectionLabel = 'سعر الشقة بالكامل';
+      setState(() {});
+      return;
+    }
+
+    // 3. Unit Mode - Selection Logic
     if (_isWholeApartment) {
       _selectedPrice = base;
       _selectionLabel = 'سعر الشقة بالكامل';
@@ -484,14 +515,55 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                         ),
                                       ),
                                       children: [
-                                        _buildContactNumberItem(
-                                          '+201113927464',
-                                        ),
-                                        _buildContactNumberItem(
-                                          '+201026064819',
-                                        ),
-                                        _buildContactNumberItem(
-                                          '+201011335761',
+                                        StreamBuilder<QuerySnapshot>(
+                                          stream: FirebaseFirestore.instance
+                                              .collection('contact_numbers')
+                                              .orderBy(
+                                                'createdAt',
+                                                descending: true,
+                                              )
+                                              .snapshots(),
+                                          builder: (context, snapshot) {
+                                            if (snapshot.connectionState ==
+                                                ConnectionState.waiting) {
+                                              return const Center(
+                                                child: Padding(
+                                                  padding: EdgeInsets.all(15.0),
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                ),
+                                              );
+                                            }
+
+                                            if (!snapshot.hasData ||
+                                                snapshot.data!.docs.isEmpty) {
+                                              return Padding(
+                                                padding: const EdgeInsets.all(
+                                                  15.0,
+                                                ),
+                                                child: Text(
+                                                  'لا توجد أرقام متاحة حالياً',
+                                                  style: GoogleFonts.cairo(
+                                                    color: Colors.grey,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+
+                                            return Column(
+                                              children: snapshot.data!.docs.map((
+                                                doc,
+                                              ) {
+                                                var data =
+                                                    doc.data()
+                                                        as Map<String, dynamic>;
+                                                return _buildContactNumberItem(
+                                                  data['number'],
+                                                );
+                                              }).toList(),
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),
@@ -499,33 +571,8 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                                 ),
                               ),
 
-                              // --- UNIT SELECTION WIDGET (MOVED TO BOTTOM) ---
-                              if (_property.rooms.isNotEmpty) ...[
-                                _UnitSelectionWidget(
-                                  key: _unitSelectionKey,
-                                  property: _property,
-                                  isWholeApartment: _isWholeApartment,
-                                  selectedUnitKeys: _selectedUnitKeys,
-                                  showError: _showSelectionError,
-                                  onSelectionChanged: (isWhole, key) {
-                                    setState(() {
-                                      _showSelectionError = false;
-                                      if (isWhole) {
-                                        if (_isWholeApartment) {
-                                          _isWholeApartment = false;
-                                        } else {
-                                          _isWholeApartment = true;
-                                          _selectedUnitKeys.clear();
-                                        }
-                                        _updatePrice();
-                                      } else {
-                                        _toggleSelection(key!);
-                                      }
-                                    });
-                                  },
-                                ),
-                                const SizedBox(height: 25),
-                              ],
+                              // --- UNIT SELECTION WIDGET ---
+                              _buildBookingSelection(),
 
                               if (_property.description != null &&
                                   _property.description!.isNotEmpty)
@@ -660,17 +707,27 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
                       ),
                       child: GestureDetector(
                         onTap: () {
-                          if (!_isWholeApartment && _selectedUnitKeys.isEmpty) {
+                          bool canBook = true;
+                          if (_property.bookingMode == 'unit' &&
+                              !_property.isFullApartmentBooking &&
+                              !_isWholeApartment &&
+                              _selectedUnitKeys.isEmpty) {
+                            canBook = false;
+                          }
+
+                          if (!canBook) {
                             setState(() {
                               _showSelectionError = true;
                             });
 
                             // Scroll to unit selection section
-                            Scrollable.ensureVisible(
-                              _unitSelectionKey.currentContext!,
-                              duration: const Duration(milliseconds: 600),
-                              curve: Curves.easeInOut,
-                            );
+                            if (_unitSelectionKey.currentContext != null) {
+                              Scrollable.ensureVisible(
+                                _unitSelectionKey.currentContext!,
+                                duration: const Duration(milliseconds: 600),
+                                curve: Curves.easeInOut,
+                              );
+                            }
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -731,6 +788,375 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
   }
 
   // --- Helpers ---
+  Widget _buildBookingSelection() {
+    // 1. Bed Mode UI
+    if (_property.bookingMode == 'bed') {
+      return FadeInUp(
+        delay: const Duration(milliseconds: 200),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 25),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: Theme.of(context).brightness == Brightness.dark
+                ? []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+            border: Border.all(color: const Color(0xFF39BB5E).withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF39BB5E).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.bed, color: Color(0xFF39BB5E)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'حجز سراير',
+                      style: GoogleFonts.cairo(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              Text(
+                'نوع الغرف: ${_property.generalRoomType ?? "مشترك"}',
+                style: GoogleFonts.cairo(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              // 1. Bed Mode - Styled Counter
+              FadeInUp(
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.only(bottom: 25),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'عدد السراير المطلوبة',
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildCounterButton(
+                            icon: Icons.remove,
+                            onPressed: _selectedBedCount > 1
+                                ? () {
+                                    setState(() {
+                                      _selectedBedCount--;
+                                      _updatePrice();
+                                    });
+                                  }
+                                : null,
+                          ),
+                          Container(
+                            width: 100,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).canvasColor,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Theme.of(context).dividerColor,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              '$_selectedBedCount',
+                              style: GoogleFonts.cairo(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF008695),
+                              ),
+                            ),
+                          ),
+                          _buildCounterButton(
+                            icon: Icons.add,
+                            onPressed:
+                                (_property.totalBeds > 0 &&
+                                    _selectedBedCount < _property.totalBeds)
+                                ? () {
+                                    setState(() {
+                                      _selectedBedCount++;
+                                      _updatePrice();
+                                    });
+                                  }
+                                : null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      // Availability Progress Bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: LinearProgressIndicator(
+                          value:
+                              1 -
+                              (_selectedBedCount /
+                                  (_property.totalBeds > 0
+                                      ? _property.totalBeds
+                                      : 1)),
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _property.totalBeds - _selectedBedCount < 2
+                                ? Colors.orange
+                                : const Color(0xFF39BB5E),
+                          ),
+                          minHeight: 6,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            'متبقي ${_property.totalBeds - _selectedBedCount} سراير من أصل ${_property.totalBeds}',
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    // 2. Unit Mode - Full Apartment Fixed
+    else if (_property.isFullApartmentBooking) {
+      return FadeInUp(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 25),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF008695).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: const Color(0xFF008695).withOpacity(0.3)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF008695).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.home_work_rounded,
+                      color: Color(0xFF008695),
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'حجز الشقة بالكامل',
+                          style: GoogleFonts.cairo(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF008695),
+                          ),
+                        ),
+                        Text(
+                          'تشمل الشقة المكونات التالية:',
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Composition Summary
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildCompositionCard(
+                      context,
+                      icon: Icons.meeting_room_rounded,
+                      count: _property.rooms.length.toString(),
+                      label: 'غرف ',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildCompositionCard(
+                      context,
+                      icon: Icons.bed_rounded,
+                      count: _property.rooms
+                          .fold<int>(
+                            0,
+                            (sum, room) => sum + ((room['beds'] as int?) ?? 1),
+                          )
+                          .toString(),
+                      label: 'سراير',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildCompositionCard(
+                      context,
+                      icon: Icons.bathtub_outlined,
+                      count: _property.bathroomsCount.toString(),
+                      label: 'حمامات',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              // Room Types Breakdown
+              Builder(
+                builder: (context) {
+                  final typeCounts = <String, int>{};
+                  for (final room in _property.rooms) {
+                    final type = room['type']?.toString() ?? 'Other';
+                    typeCounts[type] = (typeCounts[type] ?? 0) + 1;
+                  }
+
+                  final arabicTypes = {
+                    'Single': 'فردية',
+                    'Double': 'زوجية',
+                    'Triple': 'ثلاثية',
+                    'Quadruple': 'رباعية',
+                  };
+
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: typeCounts.entries.map((entry) {
+                      final label = arabicTypes[entry.key] ?? entry.key;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF008695).withOpacity(0.1),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF008695),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${entry.value} $label',
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF008695),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    // 3. Unit Mode - Standard Selection
+    else {
+      if (_property.rooms.isEmpty) return const SizedBox.shrink();
+      return Column(
+        children: [
+          _UnitSelectionWidget(
+            key: _unitSelectionKey,
+            property: _property,
+            isWholeApartment: _isWholeApartment,
+            selectedUnitKeys: _selectedUnitKeys,
+            showError: _showSelectionError,
+            onSelectionChanged: (isWhole, key) {
+              setState(() {
+                _showSelectionError = false;
+                if (isWhole) {
+                  if (_isWholeApartment) {
+                    _isWholeApartment = false;
+                  } else {
+                    _isWholeApartment = true;
+                    _selectedUnitKeys.clear();
+                  }
+                  _updatePrice();
+                } else {
+                  _toggleSelection(key!);
+                }
+              });
+            },
+          ),
+          const SizedBox(height: 25),
+        ],
+      );
+    }
+  }
+
   Widget _buildFeatureItem(
     IconData icon,
     String label,
@@ -831,6 +1257,73 @@ class _PropertyDetailsScreenState extends State<PropertyDetailsScreen> {
       ),
     );
   }
+
+  Widget _buildCounterButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: onPressed == null
+              ? Colors.grey.shade200
+              : const Color(0xFF008695).withOpacity(0.5),
+        ),
+        boxShadow: onPressed == null
+            ? []
+            : [
+                BoxShadow(
+                  color: const Color(0xFF008695).withOpacity(0.1),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: onPressed == null ? Colors.grey : const Color(0xFF008695),
+        ),
+        onPressed: onPressed,
+      ),
+    );
+  }
+
+  Widget _buildCompositionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String count,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.grey.shade400, size: 22),
+          const SizedBox(height: 5),
+          Text(
+            count,
+            style: GoogleFonts.cairo(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF008695),
+            ),
+          ),
+          Text(
+            label,
+            style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _UnitSelectionWidget extends StatelessWidget {
@@ -839,6 +1332,7 @@ class _UnitSelectionWidget extends StatelessWidget {
   final Set<String> selectedUnitKeys;
   final bool showError;
   final Function(bool isWhole, String? key) onSelectionChanged;
+  final bool isReadOnly;
 
   const _UnitSelectionWidget({
     super.key,
@@ -847,6 +1341,7 @@ class _UnitSelectionWidget extends StatelessWidget {
     required this.selectedUnitKeys,
     this.showError = false,
     required this.onSelectionChanged,
+    this.isReadOnly = false,
   });
 
   @override
@@ -891,7 +1386,10 @@ class _UnitSelectionWidget extends StatelessWidget {
 
         // Header: "Whole Apartment" Option
         GestureDetector(
-          onTap: () => onSelectionChanged(true, null),
+          onTap: () {
+            if (isReadOnly) return;
+            onSelectionChanged(true, null);
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             margin: const EdgeInsets.only(bottom: 15),
@@ -1047,8 +1545,10 @@ class _UnitSelectionWidget extends StatelessWidget {
                                         context: context,
                                         isSelected: isRoomSelected,
                                         label: 'غرفة',
-                                        onTap: () =>
-                                            onSelectionChanged(false, roomKey),
+                                        onTap: () {
+                                          if (isReadOnly) return;
+                                          onSelectionChanged(false, roomKey);
+                                        },
                                       )
                                     : Row(
                                         // Split for beds
@@ -1076,10 +1576,13 @@ class _UnitSelectionWidget extends StatelessWidget {
                                                 context: context,
                                                 isSelected: isBedSelected,
                                                 label: 'سرير',
-                                                onTap: () => onSelectionChanged(
-                                                  false,
-                                                  bedKey,
-                                                ),
+                                                onTap: () {
+                                                  if (isReadOnly) return;
+                                                  onSelectionChanged(
+                                                    false,
+                                                    bedKey,
+                                                  );
+                                                },
                                                 isSmall: true,
                                               ),
                                             ),
