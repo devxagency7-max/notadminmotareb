@@ -13,7 +13,8 @@ import '../providers/home_provider.dart';
 import 'large_property_card.dart'; // Import LargePropertyCard
 import 'property_card.dart';
 import '../screens/university_properties_screen.dart';
-import 'native_ad_widget.dart';
+
+import 'package:motareb/core/services/ad_service.dart';
 
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
@@ -525,7 +526,10 @@ class HomeContent extends StatelessWidget {
       itemBuilder: (context, index) {
         // Ad position: Every 6th slot (index 5, 11, etc.)
         if ((index + 1) % 6 == 0) {
-          return const NativeAdWidget(height: 100, factoryId: 'listTileSmall');
+          return AdService().getAdWidget(
+            factoryId: 'listTileSmall',
+            height: 100,
+          );
         }
 
         // Calculate actual property index

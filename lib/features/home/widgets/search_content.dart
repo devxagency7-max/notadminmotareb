@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:motareb/core/services/ad_service.dart';
 
 import '../../../core/models/property_model.dart';
 import '../../../screens/filter_screen.dart';
@@ -7,7 +8,7 @@ import '../../../screens/filter_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import 'large_property_card.dart'; // Import LargePropertyCard
-import 'native_ad_widget.dart';
+
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 class SearchContent extends StatelessWidget {
@@ -168,7 +169,10 @@ class SearchContent extends StatelessWidget {
                 itemBuilder: (context, index) {
                   // Ad position: Every 4th item (index 3, 7, 11...)
                   if ((index + 1) % 4 == 0) {
-                    return const NativeAdWidget(factoryId: 'listTileMedium');
+                    return AdService().getAdWidget(
+                      factoryId: 'listTileLarge',
+                      height: 300, // Large card height
+                    );
                   }
 
                   // Calculate actual property index

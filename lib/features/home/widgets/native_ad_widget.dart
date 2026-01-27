@@ -49,7 +49,9 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
 
     _nativeAd = NativeAd(
       adUnitId: adUnitId,
-      factoryId: widget.factoryId,
+      factoryId: widget.factoryId == 'listTileLarge'
+          ? 'listTileMedium'
+          : widget.factoryId,
       request: const AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (ad) {

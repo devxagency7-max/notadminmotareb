@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/models/property_model.dart';
 import '../widgets/large_property_card.dart';
 
-import '../widgets/native_ad_widget.dart';
+import 'package:motareb/core/services/ad_service.dart';
 
 class UniversityPropertiesScreen extends StatelessWidget {
   final String universityName;
@@ -42,7 +42,10 @@ class UniversityPropertiesScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 // Ad position: Every 6th slot (index 5, 11, etc.)
                 if ((index + 1) % 6 == 0) {
-                  return const NativeAdWidget(factoryId: 'listTileMedium');
+                  return AdService().getAdWidget(
+                    factoryId: 'listTileLarge',
+                    height: 300, // Large card height
+                  );
                 }
 
                 // Calculate actual property index

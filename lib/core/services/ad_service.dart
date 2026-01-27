@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:motareb/features/home/widgets/custom_ad_widget.dart';
+import 'package:motareb/features/home/widgets/native_ad_widget.dart';
+import 'custom_ad_service.dart';
+import 'dart:math';
 
 class AdService {
   static final AdService _instance = AdService._internal();
@@ -34,6 +38,27 @@ class AdService {
     _startTimer();
     _fillSmallPool();
     _fillMediumPool();
+    CustomAdService().fetchActiveAds();
+  }
+
+  Widget getAdWidget({required String factoryId, double? height}) {
+    final activeCustomAds = CustomAdService().activeAds;
+    if (activeCustomAds.isNotEmpty) {
+      final ad = CustomAdService().getRandomAd();
+      if (ad != null) {
+        return CustomAdWidget(
+          ad: ad,
+          size: factoryId == 'listTileSmall'
+              ? CustomAdSize.small
+              : factoryId == 'listTileMedium'
+              ? CustomAdSize.medium
+              : CustomAdSize.large,
+        );
+      }
+    }
+
+    // Fallback or 40% chance -> Google Ad
+    return NativeAdWidget(factoryId: factoryId, height: height ?? 260);
   }
 
   // --- Interstitial Ads ---
@@ -149,7 +174,7 @@ class AdService {
         return ad;
       }
       _fillSmallPool(); // Try to load one if empty
-    } else if (factoryId == 'listTileMedium') {
+    } else if (factoryId == 'listTileMedium' || factoryId == 'listTileLarge') {
       if (_mediumAdsPool.isNotEmpty) {
         final ad = _mediumAdsPool.removeAt(0);
         _fillMediumPool();
