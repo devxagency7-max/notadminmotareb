@@ -12,6 +12,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../../chat/providers/chat_provider.dart';
 import '../../chat/models/message_model.dart';
 import 'banner_ad_widget.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class ChatContent extends StatefulWidget {
   const ChatContent({super.key});
@@ -172,7 +173,7 @@ class _ChatContentState extends State<ChatContent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'الدعم الفني والشكاوي',
+                          context.loc.techSupport,
                           style: GoogleFonts.cairo(
                             color: Theme.of(context).textTheme.bodyLarge?.color,
                             fontSize: 16,
@@ -180,7 +181,7 @@ class _ChatContentState extends State<ChatContent> {
                           ),
                         ),
                         Text(
-                          'متواجدون لخدمتكم 24/7',
+                          context.loc.available247,
                           style: GoogleFonts.cairo(
                             color: Colors.grey,
                             fontSize: 11,
@@ -197,7 +198,7 @@ class _ChatContentState extends State<ChatContent> {
                         size: 20,
                       ),
                       onPressed: () => _scrollToNextPinnedMessage(messages),
-                      tooltip: 'الانتقال للرسائل المثبتة',
+                      tooltip: context.loc.jumpToPinned,
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -212,7 +213,7 @@ class _ChatContentState extends State<ChatContent> {
                   chatProvider.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : (snapshot.hasError)
-                      ? const Center(child: Text('حدث خطأ'))
+                      ? Center(child: Text(context.loc.errorOccurred))
                       : (messages.isEmpty)
                       ? Center(
                           child: Column(
@@ -225,7 +226,7 @@ class _ChatContentState extends State<ChatContent> {
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'أهلاً بك 👋\nكيف يمكننا مساعدتك اليوم؟',
+                                context.loc.chatWelcome,
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.cairo(
                                   color: Colors.grey,
@@ -318,7 +319,10 @@ class _ChatContentState extends State<ChatContent> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        DateFormat('d MMMM', 'ar').format(date),
+        DateFormat(
+          'd MMMM',
+          Localizations.localeOf(context).languageCode,
+        ).format(date),
         style: GoogleFonts.cairo(
           fontSize: 11,
           color: Theme.of(context).textTheme.bodySmall?.color,
@@ -398,7 +402,7 @@ class _ChatContentState extends State<ChatContent> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'مثبتة',
+                          context.loc.pinned,
                           style: GoogleFonts.cairo(
                             fontSize: 10,
                             color: Colors.orange,
@@ -455,7 +459,10 @@ class _ChatContentState extends State<ChatContent> {
                           ),
                         ),
                       Text(
-                        DateFormat('hh:mm a').format(msg.timestamp),
+                        DateFormat(
+                          'hh:mm a',
+                          Localizations.localeOf(context).languageCode,
+                        ).format(msg.timestamp),
                         style: TextStyle(
                           fontSize: 10,
                           color: isMe ? Colors.white70 : Colors.grey[600],
@@ -562,7 +569,7 @@ class _ChatContentState extends State<ChatContent> {
                 maxLines: 5,
                 minLines: 1,
                 decoration: InputDecoration(
-                  hintText: 'اكتب رسالتك...',
+                  hintText: context.loc.typeMessage,
                   hintStyle: GoogleFonts.cairo(color: Colors.grey),
                   border: InputBorder.none,
                 ),

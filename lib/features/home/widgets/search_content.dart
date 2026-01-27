@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import 'large_property_card.dart'; // Import LargePropertyCard
 import 'native_ad_widget.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class SearchContent extends StatelessWidget {
   const SearchContent({super.key});
@@ -35,7 +36,7 @@ class SearchContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'الشقق المتاحة',
+                        context.loc.availableApartments,
                         style: GoogleFonts.cairo(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -43,7 +44,7 @@ class SearchContent extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '$count عقارات متاحة',
+                        context.loc.propertiesCount(count),
                         style: GoogleFonts.cairo(
                           fontSize: 12,
                           color: Colors.grey,
@@ -97,7 +98,7 @@ class SearchContent extends StatelessWidget {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        'تصفية',
+                        context.loc.filter,
                         style: GoogleFonts.cairo(
                           color: const Color(0xFF39BB5E),
                           fontWeight: FontWeight.bold,
@@ -139,7 +140,7 @@ class SearchContent extends StatelessWidget {
               if (snapshot.hasError) {
                 return Center(
                   child: Text(
-                    'حدث خطأ في تحميل البيانات',
+                    context.loc.errorLoadingData,
                     style: GoogleFonts.cairo(color: Colors.red),
                   ),
                 );
@@ -150,7 +151,7 @@ class SearchContent extends StatelessWidget {
               if (properties.isEmpty) {
                 return Center(
                   child: Text(
-                    'لا توجد عقارات متاحة حالياً',
+                    context.loc.noPropertiesAvailable,
                     style: GoogleFonts.cairo(color: Colors.grey),
                   ),
                 );

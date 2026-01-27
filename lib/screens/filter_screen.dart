@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class FilterScreen extends StatefulWidget {
   const FilterScreen({Key? key}) : super(key: key);
@@ -16,181 +17,180 @@ class _FilterScreenState extends State<FilterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
-            onPressed: () => Navigator.pop(context),
-          ),
-          centerTitle: true,
-          title: Text(
-            'تصفية البحث',
-            style: GoogleFonts.cairo(
-              color: Theme.of(context).textTheme.bodyLarge?.color,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _currentRangeValues = const RangeValues(500, 3000);
-                  _selectedHousingType = 'Single room';
-                  _selectedGender = 'Male';
-                  _selectedSmoking = 'Forbidden';
-                });
-              },
-              child: Text(
-                'إعادة تعيين',
-                style: GoogleFonts.cairo(
-                  color: const Color(0xFF39BB5E),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
+          onPressed: () => Navigator.pop(context),
         ),
-        bottomNavigationBar: Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).padding.bottom + 10,
-            top: 10,
-          ),
-          child: Container(
-            width: double.infinity,
-            height: 50,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: Theme.of(context).brightness == Brightness.dark
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: const Color(0xFF008695).withOpacity(0.3),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-            ),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                'تطبيق التصفية',
-                style: GoogleFonts.cairo(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+        centerTitle: true,
+        title: Text(
+          context.loc.searchFilter,
+          style: GoogleFonts.cairo(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Price Range
-                _buildSectionTitle('نطاق السعر (ر.س/شهر)'),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildPriceInput(
-                        context,
-                        '${_currentRangeValues.start.round()}',
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      '-',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildPriceInput(
-                        context,
-                        '${_currentRangeValues.end.round()}',
-                      ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _currentRangeValues = const RangeValues(500, 3000);
+                _selectedHousingType = 'Single room';
+                _selectedGender = 'Male';
+                _selectedSmoking = 'Forbidden';
+              });
+            },
+            child: Text(
+              context.loc.reset,
+              style: GoogleFonts.cairo(
+                color: const Color(0xFF39BB5E),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(context).padding.bottom + 10,
+          top: 10,
+        ),
+        child: Container(
+          width: double.infinity,
+          height: 50,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: Theme.of(context).brightness == Brightness.dark
+                ? []
+                : [
+                    BoxShadow(
+                      color: const Color(0xFF008695).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
                   ],
-                ),
-                RangeSlider(
-                  values: _currentRangeValues,
-                  min: 0,
-                  max: 5000,
-                  divisions: 50,
-                  activeColor: const Color(0xFF39BB5E),
-                  inactiveColor: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey.shade800
-                      : Colors.grey.shade300,
-                  labels: RangeLabels(
-                    _currentRangeValues.start.round().toString(),
-                    _currentRangeValues.end.round().toString(),
+          ),
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              context.loc.applyFilter,
+              style: GoogleFonts.cairo(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Price Range
+              _buildSectionTitle(
+                context.loc.priceRangeMonthly(context.loc.currency),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildPriceInput(
+                      context,
+                      '${_currentRangeValues.start.round()}',
+                    ),
                   ),
-                  onChanged: (RangeValues values) {
-                    setState(() {
-                      _currentRangeValues = values;
-                    });
-                  },
+                  const SizedBox(width: 10),
+                  Text(
+                    '-',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildPriceInput(
+                      context,
+                      '${_currentRangeValues.end.round()}',
+                    ),
+                  ),
+                ],
+              ),
+              RangeSlider(
+                values: _currentRangeValues,
+                min: 0,
+                max: 5000,
+                divisions: 50,
+                activeColor: const Color(0xFF39BB5E),
+                inactiveColor: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade300,
+                labels: RangeLabels(
+                  _currentRangeValues.start.round().toString(),
+                  _currentRangeValues.end.round().toString(),
                 ),
+                onChanged: (RangeValues values) {
+                  setState(() {
+                    _currentRangeValues = values;
+                  });
+                },
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // Housing Type
-                _buildSectionTitle('نوع السكن'),
-                _buildRadioOption('سرير في غرفة مشتركة', 'Bed'),
-                _buildRadioOption('غرفة مفردة', 'Single room'),
-                _buildRadioOption('شقة كاملة', 'Apartment'),
+              // Housing Type
+              _buildSectionTitle(context.loc.housingType),
+              _buildRadioOption(context.loc.bedInSharedRoom, 'Bed'),
+              _buildRadioOption(context.loc.singleRoom, 'Single room'),
+              _buildRadioOption(context.loc.fullApartment, 'Apartment'),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // Gender
-                _buildSectionTitle('الجنس المسموح'),
-                Row(
-                  children: [
-                    _buildChip('ذكور', 'Male'),
-                    const SizedBox(width: 10),
-                    _buildChip('إناث', 'Female'),
-                    // Removed Mixed option
-                  ],
-                ),
+              // Gender
+              _buildSectionTitle(context.loc.allowedGender),
+              Row(
+                children: [
+                  _buildChip(context.loc.males, 'Male'),
+                  const SizedBox(width: 10),
+                  _buildChip(context.loc.females, 'Female'),
+                  // Removed Mixed option
+                ],
+              ),
 
-                const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-                // Smoking
-                _buildSectionTitle('التدخين'),
-                Row(
-                  children: [
-                    _buildChip('مسموح', 'Allowed'),
-                    const SizedBox(width: 10),
-                    _buildChip('ممنوع', 'Forbidden'),
-                  ],
-                ),
-              ],
-            ),
+              // Smoking
+              _buildSectionTitle(context.loc.smoking),
+              Row(
+                children: [
+                  _buildChip(context.loc.allowed, 'Allowed'),
+                  const SizedBox(width: 10),
+                  _buildChip(context.loc.forbidden, 'Forbidden'),
+                ],
+              ),
+            ],
           ),
         ),
       ),

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
@@ -16,26 +17,26 @@ class _IntroScreenState extends State<IntroScreen> {
   final PageController _controller = PageController();
   int _currentIndex = 0;
 
-  final List<IntroContent> _contents = [
-    IntroContent(
-      image: 'assets/images/intro2.png',
-      title: 'سكنك وانت مطمن',
-      description: 'شقق موثوقة ومجهزة للمغتربين. احجز أونلاين بكل أمان.',
-    ),
-    IntroContent(
-      image: 'assets/images/intro3.png',
-      title: 'شوف سكنك المستقبلي\nوانت بمكانك',
-      description: 'جولات افتراضية 360 تخليك تتفرج على كل زاوية قبل ما تحجز.',
-    ),
-    IntroContent(
-      image: 'assets/images/intro.png',
-      title: 'ادفع وانت مرتاح',
-      description: 'طرق دفع متعددة وآمنة. ابدأ رحلتك معنا الآن.',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<IntroContent> contents = [
+      IntroContent(
+        image: 'assets/images/intro2.png',
+        title: context.loc.intro1Title,
+        description: context.loc.intro1Desc,
+      ),
+      IntroContent(
+        image: 'assets/images/intro3.png',
+        title: context.loc.intro2Title,
+        description: context.loc.intro2Desc,
+      ),
+      IntroContent(
+        image: 'assets/images/intro.png',
+        title: context.loc.intro3Title,
+        description: context.loc.intro3Desc,
+      ),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -99,7 +100,7 @@ class _IntroScreenState extends State<IntroScreen> {
                           ),
                         ),
                         child: Text(
-                          'تخطي',
+                          context.loc.skip,
                           style: GoogleFonts.cairo(
                             color: Colors.teal[800],
                             fontWeight: FontWeight.bold,
@@ -114,14 +115,14 @@ class _IntroScreenState extends State<IntroScreen> {
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
-                  itemCount: _contents.length,
+                  itemCount: contents.length,
                   onPageChanged: (int index) {
                     setState(() {
                       _currentIndex = index;
                     });
                   },
                   itemBuilder: (context, index) {
-                    return IntroContentWidget(content: _contents[index]);
+                    return IntroContentWidget(content: contents[index]);
                   },
                 ),
               ),
@@ -137,7 +138,7 @@ class _IntroScreenState extends State<IntroScreen> {
                     // Worm Indicator
                     SmoothPageIndicator(
                       controller: _controller,
-                      count: _contents.length,
+                      count: contents.length,
                       effect: const WormEffect(
                         dotHeight: 12,
                         dotWidth: 12,
@@ -169,7 +170,7 @@ class _IntroScreenState extends State<IntroScreen> {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          if (_currentIndex == _contents.length - 1) {
+                          if (_currentIndex == contents.length - 1) {
                             _navigateToHome();
                           } else {
                             _controller.nextPage(
@@ -188,9 +189,9 @@ class _IntroScreenState extends State<IntroScreen> {
                           ),
                         ),
                         child: Text(
-                          _currentIndex == _contents.length - 1
-                              ? 'ابدأ رحلتك'
-                              : 'التالي',
+                          _currentIndex == contents.length - 1
+                              ? context.loc.getStarted
+                              : context.loc.next,
                           style: GoogleFonts.cairo(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

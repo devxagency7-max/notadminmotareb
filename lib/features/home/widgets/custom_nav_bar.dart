@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class CustomNavBar extends StatelessWidget {
   const CustomNavBar({super.key});
@@ -32,10 +33,10 @@ class CustomNavBar extends StatelessWidget {
       child: Stack(
         children: [
           // Moving Bubble
-          AnimatedPositioned(
+          AnimatedPositionedDirectional(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOutBack,
-            right:
+            start:
                 (homeProvider.selectedIndex * itemWidth) +
                 (itemWidth - bubbleWidth) / 2,
             top: (65 - bubbleHeight) / 2,
@@ -62,10 +63,34 @@ class CustomNavBar extends StatelessWidget {
           // Icons Layer
           Row(
             children: [
-              _navItem(context, Icons.home_rounded, 0, itemWidth),
-              _navItem(context, Icons.search, 1, itemWidth),
-              _navItem(context, Icons.chat_bubble_outline, 2, itemWidth),
-              _navItem(context, Icons.person_outline, 3, itemWidth),
+              _navItem(
+                context,
+                Icons.home_rounded,
+                0,
+                itemWidth,
+                context.loc.navHome,
+              ),
+              _navItem(
+                context,
+                Icons.search,
+                1,
+                itemWidth,
+                context.loc.navSearch,
+              ),
+              _navItem(
+                context,
+                Icons.chat_bubble_outline,
+                2,
+                itemWidth,
+                context.loc.navChat,
+              ),
+              _navItem(
+                context,
+                Icons.person_outline,
+                3,
+                itemWidth,
+                context.loc.navProfile,
+              ),
             ],
           ),
         ],
@@ -78,6 +103,7 @@ class CustomNavBar extends StatelessWidget {
     IconData icon,
     int index,
     double width,
+    String label,
   ) {
     final homeProvider = context.read<HomeProvider>();
     // We can use read here because the parent checks the index for the bubble,
@@ -95,10 +121,13 @@ class CustomNavBar extends StatelessWidget {
         width: width,
         height: 65,
         color: Colors.transparent, // Hit test behavior
-        child: Icon(
-          icon,
-          color: isSelected ? Colors.white : Colors.grey.shade400,
-          size: 28,
+        child: Tooltip(
+          message: label,
+          child: Icon(
+            icon,
+            color: isSelected ? Colors.white : Colors.grey.shade400,
+            size: 28,
+          ),
         ),
       ),
     );

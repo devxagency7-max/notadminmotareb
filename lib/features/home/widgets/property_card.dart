@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/property_model.dart';
 import '../../favorites/providers/favorites_provider.dart';
 import '../../../screens/property_details_screen.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class PropertyCard extends StatelessWidget {
   final Property property;
@@ -189,7 +190,7 @@ class PropertyCard extends StatelessWidget {
               ),
               child: Center(
                 child: Text(
-                  'احجز الآن',
+                  context.loc.bookNow,
                   style: GoogleFonts.cairo(color: Colors.white, fontSize: 11),
                 ),
               ),

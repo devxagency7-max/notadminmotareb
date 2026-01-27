@@ -7,6 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 
 import 'package:motareb/core/providers/theme_provider.dart';
+import 'package:motareb/core/providers/locale_provider.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../../screens/verification_screen.dart';
@@ -27,8 +29,9 @@ class _ProfileContentState extends State<ProfileContent> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final themeProvider = context.watch<ThemeProvider>();
-    String userName = authProvider.userData?['name'] ?? 'زائر';
-    String userEmail = authProvider.user?.email ?? 'سجل دخولك الآن';
+    final localeProvider = context.watch<LocaleProvider>();
+    String userName = authProvider.userData?['name'] ?? context.loc.guest;
+    String userEmail = authProvider.user?.email ?? context.loc.loginNow;
     final isDark = themeProvider.isDarkMode;
 
     return Stack(
@@ -183,7 +186,7 @@ class _ProfileContentState extends State<ProfileContent> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildStatItem('المفضلة', '12'),
+                              _buildStatItem(context.loc.favorites, '12'),
                               Container(
                                 width: 1,
                                 height: 40,
@@ -191,7 +194,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                     ? const Color(0xFF2A3038)
                                     : Colors.grey.shade200,
                               ),
-                              _buildStatItem('المراجعات', '5'),
+                              _buildStatItem(context.loc.reviews, '5'),
                               Container(
                                 width: 1,
                                 height: 40,
@@ -199,7 +202,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                     ? const Color(0xFF2A3038)
                                     : Colors.grey.shade200,
                               ),
-                              _buildStatItem('الحجوزات', '3'),
+                              _buildStatItem(context.loc.myBookings, '3'),
                             ],
                           ),
                         ),
@@ -262,7 +265,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'توثيق الحساب',
+                                        context.loc.verification,
                                         style: GoogleFonts.cairo(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
@@ -270,7 +273,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                         ),
                                       ),
                                       Text(
-                                        'قم بتوثيق حسابك للاستفادة من كافة الميزات',
+                                        context.loc.verificationDetail,
                                         style: GoogleFonts.cairo(
                                           fontSize: 12,
                                           color: const Color(0xFF856404),
@@ -293,22 +296,25 @@ class _ProfileContentState extends State<ProfileContent> {
                       // Theme Toggle Tile
                       _buildThemeToggle(context, themeProvider),
 
+                      // Language Toggle Tile (Expansion Style)
+                      _buildLanguageToggle(context, localeProvider),
+
                       // 4. Menu Items
                       if (authProvider.user != null) ...[
                         _buildProfileMenuItem(
-                          'المعلومات الشخصية',
+                          context.loc.personalInfo,
                           Icons.person_outline,
                           delay: 100,
                           onTap: () {},
                         ),
                         _buildProfileMenuItem(
-                          'حجوزاتي',
+                          context.loc.myBookings,
                           Icons.calendar_today_outlined,
                           delay: 200,
                           onTap: () {},
                         ),
                         _buildProfileMenuItem(
-                          'المفضلة',
+                          context.loc.favorites,
                           Icons.favorite_border,
                           delay: 300,
                           onTap: () {
@@ -321,13 +327,13 @@ class _ProfileContentState extends State<ProfileContent> {
                           },
                         ),
                         _buildProfileMenuItem(
-                          'الإعدادات',
+                          context.loc.settings,
                           Icons.settings_outlined,
                           delay: 400,
                           onTap: () {},
                         ),
                         _buildProfileMenuItem(
-                          'تسجيل الخروج',
+                          context.loc.logout,
                           Icons.logout,
                           isDestructive: true,
                           delay: 500,
@@ -345,7 +351,7 @@ class _ProfileContentState extends State<ProfileContent> {
                         ),
                       ] else ...[
                         _buildProfileMenuItem(
-                          'تسجيل الدخول',
+                          context.loc.login,
                           Icons.login,
                           delay: 100,
                           onTap: () {
@@ -358,7 +364,7 @@ class _ProfileContentState extends State<ProfileContent> {
                           },
                         ),
                         _buildProfileMenuItem(
-                          'الإعدادات',
+                          context.loc.settings,
                           Icons.settings_outlined,
                           delay: 200,
                           onTap: () {},
@@ -499,6 +505,121 @@ class _ProfileContentState extends State<ProfileContent> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLanguageToggle(BuildContext context, LocaleProvider provider) {
+    bool isDark = Theme.of(context).brightness == Brightness.dark;
+    bool isArabic = provider.locale?.languageCode == 'ar';
+
+    return FadeInUp(
+      duration: const Duration(milliseconds: 500),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 15),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(16),
+          border: isDark ? Border.all(color: AppTheme.darkBorder) : null,
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: const Color(0xFF008695).withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 5,
+            ),
+            leading: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                shape: BoxShape.circle,
+                boxShadow: isDark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: const Color(0xFF39BB5E).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+              ),
+              child: const Icon(Icons.language, color: Colors.white, size: 22),
+            ),
+            title: Text(
+              context.loc.language,
+              style: GoogleFonts.cairo(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isArabic ? 'العربية' : 'English',
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF16A34A),
+                ),
+              ],
+            ),
+            children: [
+              _buildLanguageItem(
+                context: context,
+                label: 'العربية',
+                isSelected: isArabic,
+                onTap: () => provider.setLocale(const Locale('ar')),
+              ),
+              _buildLanguageItem(
+                context: context,
+                label: 'English',
+                isSelected: !isArabic,
+                onTap: () => provider.setLocale(const Locale('en')),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageItem({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 30),
+      title: Text(
+        label,
+        style: GoogleFonts.cairo(
+          fontSize: 14,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? const Color(0xFF16A34A) : Colors.grey,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 20)
+          : null,
     );
   }
 

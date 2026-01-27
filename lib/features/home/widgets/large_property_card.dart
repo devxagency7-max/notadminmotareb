@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/property_model.dart';
 import '../../../screens/property_details_screen.dart';
 import '../../favorites/providers/favorites_provider.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class LargePropertyCard extends StatelessWidget {
   final Property property;
@@ -94,7 +95,7 @@ class LargePropertyCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'موثق',
+                            context.loc.verified,
                             style: GoogleFonts.cairo(
                               color: Colors.white,
                               fontSize: 12,
@@ -145,7 +146,7 @@ class LargePropertyCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'متاح الآن',
+                        context.loc.availableNow,
                         style: GoogleFonts.cairo(
                           color: Colors.white,
                           fontSize: 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 // import '../../../admin/admin_dashboard.dart'; // Removed
 import '../../../core/models/property_model.dart';
@@ -15,16 +16,7 @@ import '../screens/university_properties_screen.dart';
 import 'native_ad_widget.dart';
 
 class HomeContent extends StatelessWidget {
-  HomeContent({super.key});
-
-  final List<String> _categories = [
-    'الكل',
-    'جامعة',
-    'شباب',
-    'بنات',
-    'سرير ',
-    'غرفة',
-  ];
+  const HomeContent({super.key});
 
   // Dummy Data
 
@@ -32,6 +24,14 @@ class HomeContent extends StatelessWidget {
   Widget build(BuildContext context) {
     // Access providers
     final authProvider = context.watch<AuthProvider>();
+    final List<String> categoriesList = [
+      context.loc.all,
+      context.loc.university,
+      context.loc.youth,
+      context.loc.girls,
+      context.loc.bed,
+      context.loc.room,
+    ];
 
     return SingleChildScrollView(
       padding: EdgeInsets.only(
@@ -46,7 +46,7 @@ class HomeContent extends StatelessWidget {
           const SizedBox(height: 20),
           _buildSearchBar(context),
           const SizedBox(height: 20),
-          _buildCategories(context),
+          _buildCategories(context, categoriesList),
           const SizedBox(height: 20),
           StreamBuilder<List<Property>>(
             stream: context.read<HomeProvider>().propertiesStream,
@@ -55,14 +55,16 @@ class HomeContent extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                return Center(child: Text('حدث خطأ: ${snapshot.error}'));
+                return Center(
+                  child: Text(
+                    '${context.loc.errorOccurred}: ${snapshot.error}',
+                  ),
+                );
               }
 
               final properties = snapshot.data ?? [];
               if (properties.isEmpty) {
-                return const Center(
-                  child: Text('لا توجد عقارات مضافة حتى الآن'),
-                );
+                return Center(child: Text(context.loc.noPropertiesFound));
               }
 
               // Check selected category
@@ -79,10 +81,10 @@ class HomeContent extends StatelessWidget {
                 }
 
                 if (allUniversities.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Text('لا توجد جامعات مرتبطة بالعقارات المتاحة'),
+                      padding: const EdgeInsets.all(20.0),
+                      child: Text(context.loc.noUniversitiesFound),
                     ),
                   );
                 }
@@ -102,7 +104,7 @@ class HomeContent extends StatelessWidget {
                         _buildSectionTitle(
                           context,
                           ' ${uni}',
-                          'عرض الكل',
+                          context.loc.viewAll,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -132,7 +134,7 @@ class HomeContent extends StatelessWidget {
                     .where(
                       (p) =>
                           p.gender == 'male' ||
-                          p.tags.contains('شباب') ||
+                          p.tags.contains(context.loc.youth) ||
                           p.tags.contains('ذكور'),
                     )
                     .toList();
@@ -144,7 +146,7 @@ class HomeContent extends StatelessWidget {
                     .where(
                       (p) =>
                           p.gender == 'female' ||
-                          p.tags.contains('بنات') ||
+                          p.tags.contains(context.loc.girls) ||
                           p.tags.contains('إناث'),
                     )
                     .toList();
@@ -153,14 +155,22 @@ class HomeContent extends StatelessWidget {
               // Index 4: Bed
               if (selectedCategoryIndex == 4) {
                 final filtered = properties
-                    .where((p) => p.type == 'سرير' || p.type.contains('سرير'))
+                    .where(
+                      (p) =>
+                          p.type == context.loc.bed ||
+                          p.type.contains(context.loc.bed),
+                    )
                     .toList();
                 return _buildFilteredList(context, filtered);
               }
               // Index 5: Room
               if (selectedCategoryIndex == 5) {
                 final filtered = properties
-                    .where((p) => p.type == 'غرفة' || p.type.contains('غرفة'))
+                    .where(
+                      (p) =>
+                          p.type == context.loc.room ||
+                          p.type.contains(context.loc.room),
+                    )
                     .toList();
                 return _buildFilteredList(context, filtered);
               }
@@ -184,11 +194,15 @@ class HomeContent extends StatelessWidget {
 
               return Column(
                 children: [
-                  _buildSectionTitle(context, 'مميزة لك ✨', 'عرض الكل'),
+                  _buildSectionTitle(
+                    context,
+                    context.loc.featuredForYou,
+                    context.loc.viewAll,
+                  ),
                   const SizedBox(height: 15),
                   _buildFeaturedList(context, displayFeatured),
                   const SizedBox(height: 25),
-                  _buildSectionTitle(context, 'أضيف حديثاً 🆕', ''),
+                  _buildSectionTitle(context, context.loc.recentlyAdded, ''),
                   const SizedBox(height: 15),
                   _buildRecentlyAddedList(context, properties),
                   const SizedBox(height: 20),
@@ -267,11 +281,11 @@ class HomeContent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'صباح الخير',
+                  context.loc.goodMorning,
                   style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  'أهلاً ${authProvider.userData?['name'] ?? 'زائر'}',
+                  '${context.loc.welcome} ${authProvider.userData?['name'] ?? context.loc.guest}',
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -345,7 +359,7 @@ class HomeContent extends StatelessWidget {
                   child: TextField(
                     textAlign: TextAlign.right,
                     decoration: InputDecoration(
-                      hintText:"حابب تسكن فين..؟",
+                      hintText: context.loc.searchHint,
                       hintStyle: GoogleFonts.cairo(color: Colors.grey),
                       border: InputBorder.none,
                     ),
@@ -392,12 +406,12 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildCategories(BuildContext context) {
+  Widget _buildCategories(BuildContext context, List<String> categories) {
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
+        itemCount: categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final selectedIndex = context
@@ -427,7 +441,7 @@ class HomeContent extends StatelessWidget {
                       ),
               ),
               child: Text(
-                _categories[index],
+                categories[index],
                 style: GoogleFonts.cairo(
                   color: isSelected
                       ? Colors.white
@@ -581,7 +595,7 @@ class HomeContent extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'جديد',
+                            context.loc.newLabel,
                             style: GoogleFonts.cairo(
                               color: Colors.green,
                               fontSize: 10,
@@ -649,10 +663,10 @@ class HomeContent extends StatelessWidget {
 
   Widget _buildFilteredList(BuildContext context, List<Property> properties) {
     if (properties.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Text('لا توجد عقارات متاحة في هذا التصنيف حالياً'),
+          padding: const EdgeInsets.all(20.0),
+          child: Text(context.loc.noCategoryProperties),
         ),
       );
     }

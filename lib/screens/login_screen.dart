@@ -3,6 +3,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 import 'signup_screen.dart';
 import 'home_screen.dart';
@@ -48,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         CustomSnackBar.show(
           context: context,
-          message: 'تم تسجيل الدخول بنجاح!',
+          message: context.loc.loginSuccess,
           isError: false,
         );
         Navigator.pushReplacement(
@@ -73,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted && context.read<AuthProvider>().isAuthenticated) {
         CustomSnackBar.show(
           context: context,
-          message: 'تم تسجيل الدخول بجوجل بنجاح!',
+          message: context.loc.googleLoginSuccess,
           isError: false,
         );
         Navigator.pushReplacement(
@@ -98,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted && context.read<AuthProvider>().isAuthenticated) {
         CustomSnackBar.show(
           context: context,
-          message: 'تم تسجيل الدخول بفيسبوك بنجاح!',
+          message: context.loc.facebookLoginSuccess,
           isError: false,
         );
         Navigator.pushReplacement(
@@ -165,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         end: Alignment.centerLeft,
                       ).createShader(bounds),
                       child: Text(
-                        'مرحباً بعودتك',
+                        context.loc.welcomeBack,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.cairo(
                           fontSize: 32,
@@ -180,7 +181,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 400),
                     child: Text(
-                      'سجّل الدخول للمتابعة في البحث عن سكنك',
+                      context.loc.loginToContinue,
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
@@ -271,9 +272,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      validator: (value) => (value == null || value.isEmpty)
-          ? 'يرجى إدخال البريد الإلكتروني'
-          : null,
+      validator: (value) =>
+          (value == null || value.isEmpty) ? context.loc.enterEmail : null,
       decoration: InputDecoration(
         hintText: 'example@mail.com',
         prefixIcon: const Icon(Icons.email_outlined, color: Colors.teal),
@@ -305,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: _passwordController,
       obscureText: !_isPasswordVisible,
       validator: (value) =>
-          (value == null || value.isEmpty) ? 'يرجى إدخال كلمة المرور' : null,
+          (value == null || value.isEmpty) ? context.loc.enterPassword : null,
       decoration: InputDecoration(
         hintText: '........',
         prefixIcon: const Icon(Icons.lock_outline, color: Colors.teal),
@@ -347,9 +347,12 @@ class _LoginScreenState extends State<LoginScreen> {
         alignment: Alignment.centerRight,
         child: TextButton(
           onPressed: () {},
-          child: const Text(
-            'هل نسيت كلمة المرور؟',
-            style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+          child: Text(
+            context.loc.forgotPassword,
+            style: const TextStyle(
+              color: Colors.teal,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
@@ -393,9 +396,9 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'تسجيل الدخول',
-                      style: TextStyle(
+                  : Text(
+                      context.loc.loginAction,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -437,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Image.asset('assets/images/google.png', height: 24, width: 24),
                 const SizedBox(width: 15),
                 Text(
-                  'التسجيل بـ Google',
+                  context.loc.continueWithGoogle,
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -484,7 +487,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(width: 15),
                 Text(
-                  'التسجيل بـ Facebook',
+                  context.loc.continueWithFacebook,
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -505,7 +508,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('ليس لديك حساب؟'),
+          Text(context.loc.noAccount),
           TextButton(
             onPressed: () {
               Navigator.push(
@@ -513,9 +516,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 MaterialPageRoute(builder: (context) => const SignupScreen()),
               );
             },
-            child: const Text(
-              'أنشئ حساباً جديداً',
-              style: TextStyle(color: Colors.teal, fontWeight: FontWeight.bold),
+            child: Text(
+              context.loc.createAccount,
+              style: const TextStyle(
+                color: Colors.teal,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

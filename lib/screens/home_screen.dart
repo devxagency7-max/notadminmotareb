@@ -19,130 +19,127 @@ class HomeScreen extends StatelessWidget {
     final homeProvider = context.watch<HomeProvider>();
     final authProvider = context.watch<AuthProvider>();
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: Stack(
-          children: [
-            // Ambient Gradient Background (Glows - Enhanced Diffusion)
-            Positioned(
-              top: -150,
-              right: -150,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppTheme.ambientGlow.withOpacity(
-                        Theme.of(context).brightness == Brightness.dark
-                            ? 0.12
-                            : 0.5,
-                      ),
-                      AppTheme.ambientGlow.withOpacity(0),
-                    ],
-                    stops: const [0.2, 1.0],
-                  ),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          // Ambient Gradient Background (Glows - Enhanced Diffusion)
+          Positioned(
+            top: -150,
+            right: -150,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.ambientGlow.withOpacity(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 0.12
+                          : 0.5,
+                    ),
+                    AppTheme.ambientGlow.withOpacity(0),
+                  ],
+                  stops: const [0.2, 1.0],
                 ),
               ),
             ),
-            Positioned(
-              bottom: -150,
-              left: -150,
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppTheme.ambientGlow.withOpacity(
-                        Theme.of(context).brightness == Brightness.dark
-                            ? 0.12
-                            : 0.5,
-                      ),
-                      AppTheme.ambientGlow.withOpacity(0),
-                    ],
-                    stops: const [0.2, 1.0],
-                  ),
+          ),
+          Positioned(
+            bottom: -150,
+            left: -150,
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.ambientGlow.withOpacity(
+                      Theme.of(context).brightness == Brightness.dark
+                          ? 0.12
+                          : 0.5,
+                    ),
+                    AppTheme.ambientGlow.withOpacity(0),
+                  ],
+                  stops: const [0.2, 1.0],
                 ),
               ),
             ),
-            // Dynamic Content Body with Padding
-            Positioned.fill(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  bottom: 65 + 20 + MediaQuery.of(context).padding.bottom + 10,
-                ),
-                child: _buildBody(homeProvider.selectedIndex),
+          ),
+          // Dynamic Content Body with Padding
+          Positioned.fill(
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: 65 + 20 + MediaQuery.of(context).padding.bottom + 10,
               ),
+              child: _buildBody(homeProvider.selectedIndex),
             ),
+          ),
 
-            // Bottom Navigation Bar
-            Positioned(
-              bottom: 20 + MediaQuery.of(context).padding.bottom,
-              left: 20,
-              right: 20,
-              child: const CustomNavBar(),
-            ),
-          ],
-        ),
-        floatingActionButton: authProvider.isOwner
-            ? Padding(
-                padding: EdgeInsets.only(
-                  bottom: 65 + 20 + 20 + MediaQuery.of(context).padding.bottom,
-                ),
-                child: Container(
-                  height: 65,
-                  width: 65,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF39BB5E).withOpacity(0.5),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withOpacity(0.2),
-                        blurRadius: 5,
-                        offset: const Offset(-2, -2),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddPropertyScreen(),
-                        ),
-                      );
-                    },
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    child: const Icon(
-                      Icons.add_rounded,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                  ),
-                ),
-              )
-            : null,
+          // Bottom Navigation Bar
+          Positioned(
+            bottom: 20 + MediaQuery.of(context).padding.bottom,
+            left: 20,
+            right: 20,
+            child: const CustomNavBar(),
+          ),
+        ],
       ),
+      floatingActionButton: authProvider.isOwner
+          ? Padding(
+              padding: EdgeInsets.only(
+                bottom: 65 + 20 + 20 + MediaQuery.of(context).padding.bottom,
+              ),
+              child: Container(
+                height: 65,
+                width: 65,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF39BB5E).withOpacity(0.5),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.2),
+                      blurRadius: 5,
+                      offset: const Offset(-2, -2),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1,
+                  ),
+                ),
+                child: FloatingActionButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddPropertyScreen(),
+                      ),
+                    );
+                  },
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+              ),
+            )
+          : null,
     );
   }
 
