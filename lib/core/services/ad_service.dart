@@ -5,7 +5,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:motareb/features/home/widgets/custom_ad_widget.dart';
 import 'package:motareb/features/home/widgets/native_ad_widget.dart';
 import 'custom_ad_service.dart';
-import 'dart:math';
 
 class AdService {
   static final AdService _instance = AdService._internal();
@@ -137,7 +136,7 @@ class AdService {
           Future.delayed(const Duration(seconds: 10), () => _fillSmallPool());
         },
       ),
-    )..load();
+    ).load();
   }
 
   void _fillMediumPool() {
@@ -163,7 +162,7 @@ class AdService {
           Future.delayed(const Duration(seconds: 10), () => _fillMediumPool());
         },
       ),
-    )..load();
+    ).load();
   }
 
   NativeAd? getNativeAd(String factoryId) {
@@ -188,8 +187,12 @@ class AdService {
   void dispose() {
     _timer?.cancel();
     _interstitialAd?.dispose();
-    for (var ad in _smallAdsPool) ad.dispose();
-    for (var ad in _mediumAdsPool) ad.dispose();
+    for (var ad in _smallAdsPool) {
+      ad.dispose();
+    }
+    for (var ad in _mediumAdsPool) {
+      ad.dispose();
+    }
     _smallAdsPool.clear();
     _mediumAdsPool.clear();
   }

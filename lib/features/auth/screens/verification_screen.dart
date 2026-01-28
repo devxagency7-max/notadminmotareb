@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,8 +9,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mime/mime.dart';
 
-import '../features/auth/providers/auth_provider.dart';
-import '../services/r2_upload_service.dart';
+import '../providers/auth_provider.dart';
+import '../../../services/r2_upload_service.dart';
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});
@@ -216,10 +215,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
     } catch (e) {
       _showError('حدث خطأ أثناء الإرسال: $e');
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isSubmitting = false;
         });
+      }
     }
   }
 
@@ -446,17 +446,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
           ),
           const SizedBox(height: 30),
-          _buildActionButton(
-            ' المحاولة مرةأخرى',
-            Icons.refresh_rounded,
-            () {
-              setState(() {
-                _isRetrying = true;
-                _idFrontImage = null;
-                _idBackImage = null;
-              });
-            },
-          ),
+          _buildActionButton(' المحاولة مرةأخرى', Icons.refresh_rounded, () {
+            setState(() {
+              _isRetrying = true;
+              _idFrontImage = null;
+              _idBackImage = null;
+            });
+          }),
         ],
       ),
     );
@@ -560,7 +556,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ],
       ),
       child: DropdownButtonFormField<String>(
-        value: _selectedGovernorate,
+        initialValue: _selectedGovernorate,
         decoration: InputDecoration(
           labelText: 'المحافظة',
           labelStyle: GoogleFonts.cairo(color: Colors.grey, fontSize: 13),

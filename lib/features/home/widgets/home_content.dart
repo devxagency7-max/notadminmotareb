@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
-// import '../../../admin/admin_dashboard.dart'; // Removed
 import '../../../core/models/property_model.dart';
-import '../../../screens/filter_screen.dart';
-import '../../../screens/property_details_screen.dart';
+import '../screens/filter_screen.dart';
+import '../../property_details/screens/property_details_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/home_provider.dart';
-import 'large_property_card.dart'; // Import LargePropertyCard
+import 'large_property_card.dart';
 import 'property_card.dart';
 import '../screens/university_properties_screen.dart';
 
@@ -19,12 +19,16 @@ import 'package:motareb/core/services/ad_service.dart';
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
 
-  // Dummy Data
-
   @override
   Widget build(BuildContext context) {
     // Access providers
     final authProvider = context.watch<AuthProvider>();
+    final homeProvider = context.watch<HomeProvider>();
+
+    if (homeProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final List<String> categoriesList = [
       context.loc.all,
       context.loc.university,
@@ -34,193 +38,149 @@ class HomeContent extends StatelessWidget {
       context.loc.room,
     ];
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 20,
-        left: 20,
-        right: 20,
-        bottom: 20,
-      ),
-      child: Column(
-        children: [
-          _buildHeader(context, authProvider),
-          const SizedBox(height: 20),
-          _buildSearchBar(context),
-          const SizedBox(height: 20),
-          _buildCategories(context, categoriesList),
-          const SizedBox(height: 20),
-          StreamBuilder<List<Property>>(
-            stream: context.read<HomeProvider>().propertiesStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    '${context.loc.errorOccurred}: ${snapshot.error}',
-                  ),
-                );
-              }
-
-              final properties = snapshot.data ?? [];
-              if (properties.isEmpty) {
-                return Center(child: Text(context.loc.noPropertiesFound));
-              }
-
-              // Check selected category
-              final selectedCategoryIndex = context
-                  .watch<HomeProvider>()
-                  .selectedCategoryIndex;
-
-              // If "University" category is selected (Index 1)
-              if (selectedCategoryIndex == 1) {
-                // Collect all unique universities from properties
-                final Set<String> allUniversities = {};
-                for (var p in properties) {
-                  allUniversities.addAll(p.universities);
-                }
-
-                if (allUniversities.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Text(context.loc.noUniversitiesFound),
-                    ),
-                  );
-                }
-
-                final sortedUniversities = allUniversities.toList()..sort();
-
-                return Column(
-                  children: sortedUniversities.map((uni) {
-                    final uniProperties = properties
-                        .where((p) => p.universities.contains(uni))
-                        .toList();
-
-                    if (uniProperties.isEmpty) return const SizedBox.shrink();
-
-                    return Column(
-                      children: [
-                        _buildSectionTitle(
-                          context,
-                          ' ${uni}',
-                          context.loc.viewAll,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    UniversityPropertiesScreen(
-                                      universityName: uni,
-                                      properties: uniProperties,
-                                    ),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 15),
-                        _buildFeaturedList(context, uniProperties),
-                        const SizedBox(height: 25),
-                      ],
-                    );
-                  }).toList(),
-                );
-              }
-
-              // Filtering Logic for other categories
-              // Index 2: Youth (Male)
-              if (selectedCategoryIndex == 2) {
-                final filtered = properties
-                    .where(
-                      (p) =>
-                          p.gender == 'male' ||
-                          p.tags.contains(context.loc.youth) ||
-                          p.tags.contains('ذكور'),
-                    )
-                    .toList();
-                return _buildFilteredList(context, filtered);
-              }
-              // Index 3: Girls (Female)
-              if (selectedCategoryIndex == 3) {
-                final filtered = properties
-                    .where(
-                      (p) =>
-                          p.gender == 'female' ||
-                          p.tags.contains(context.loc.girls) ||
-                          p.tags.contains('إناث'),
-                    )
-                    .toList();
-                return _buildFilteredList(context, filtered);
-              }
-              // Index 4: Bed
-              if (selectedCategoryIndex == 4) {
-                final filtered = properties
-                    .where(
-                      (p) =>
-                          p.type == context.loc.bed ||
-                          p.type.contains(context.loc.bed),
-                    )
-                    .toList();
-                return _buildFilteredList(context, filtered);
-              }
-              // Index 5: Room
-              if (selectedCategoryIndex == 5) {
-                final filtered = properties
-                    .where(
-                      (p) =>
-                          p.type == context.loc.room ||
-                          p.type.contains(context.loc.room),
-                    )
-                    .toList();
-                return _buildFilteredList(context, filtered);
-              }
-
-              // Default View (All, or other categories if not handled specifically)
-              // For other categories (Youth, Girls, Bed), you might want to filter too,
-              // but the requirement specifically requested grouping for "University".
-              // For now, we apply basic filtering if needed, or just show default "Featured + Recent".
-
-              // Note: If you want to filter by "Youth" (Index 2), "Girls" (Index 3), etc.
-              // you should add that logic here or in the provider query.
-              // Assuming for now standard behavior for others as per current code.
-
-              final featuredProperties = properties
-                  .where((p) => p.rating >= 4.5)
-                  .toList();
-
-              final displayFeatured = featuredProperties.isNotEmpty
-                  ? featuredProperties
-                  : properties.take(5).toList();
-
-              return Column(
-                children: [
-                  _buildSectionTitle(
-                    context,
-                    context.loc.featuredForYou,
-                    context.loc.viewAll,
-                  ),
-                  const SizedBox(height: 15),
-                  _buildFeaturedList(context, displayFeatured),
-                  const SizedBox(height: 25),
-                  _buildSectionTitle(context, context.loc.recentlyAdded, ''),
-                  const SizedBox(height: 15),
-                  _buildRecentlyAddedList(context, properties),
-                  const SizedBox(height: 20),
-                ],
-              );
-            },
-          ),
-        ],
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification scrollInfo) {
+        if (!homeProvider.isLoadingMore &&
+            scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+          context.read<HomeProvider>().loadMoreProperties();
+        }
+        return true;
+      },
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 20,
+          left: 20,
+          right: 20,
+          bottom: 20,
+        ),
+        child: Column(
+          children: [
+            _buildHeader(context, authProvider),
+            const SizedBox(height: 20),
+            _buildSearchBar(context),
+            const SizedBox(height: 20),
+            _buildCategories(context, categoriesList),
+            const SizedBox(height: 20),
+            _buildContent(context, homeProvider),
+            if (homeProvider.isLoadingMore)
+              const Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _buildContent(BuildContext context, HomeProvider homeProvider) {
+    if (homeProvider.error != null) {
+      return Center(
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 10),
+            Text('${context.loc.errorOccurred}: ${homeProvider.error}'),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () => context
+                  .read<HomeProvider>()
+                  .loadMoreProperties(), // Or retry logic
+              child: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ... remaining logic ...
+
+    if (homeProvider.allProperties.isEmpty) {
+      return Center(child: Text(context.loc.noPropertiesFound));
+    }
+
+    // Logic Delegated to Provider
+    final selectedIndex = homeProvider.selectedCategoryIndex;
+
+    // 1. University View
+    if (selectedIndex == 1) {
+      final universities = homeProvider.uniqueUniversities;
+
+      if (universities.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Text(context.loc.noUniversitiesFound),
+          ),
+        );
+      }
+
+      return Column(
+        children: universities.map((uni) {
+          final uniProperties = homeProvider.getPropertiesForUniversity(uni);
+          if (uniProperties.isEmpty) return const SizedBox.shrink();
+
+          return Column(
+            children: [
+              _buildSectionTitle(
+                context,
+                ' $uni',
+                context.loc.viewAll,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => UniversityPropertiesScreen(
+                        universityName: uni,
+                        properties: uniProperties,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 15),
+              _buildFeaturedList(context, uniProperties),
+              const SizedBox(height: 25),
+            ],
+          );
+        }).toList(),
+      );
+    }
+
+    // 2. Filtered View (Youth, Girls, Bed, Room) - Index 2, 3, 4, 5
+    if (selectedIndex > 1) {
+      // Note: We might need to pass localized strings to provider if strict matching required,
+      // but assuming Provider handles generalized tagging.
+      final filtered = homeProvider.filteredByCategory;
+      return _buildFilteredList(context, filtered);
+    }
+
+    // 0. Default View (All)
+    return Column(
+      children: [
+        _buildSectionTitle(
+          context,
+          context.loc.featuredForYou,
+          context.loc.viewAll,
+        ),
+        const SizedBox(height: 15),
+        _buildFeaturedList(context, homeProvider.featuredProperties),
+        const SizedBox(height: 25),
+        _buildSectionTitle(context, context.loc.recentlyAdded, ''),
+        const SizedBox(height: 15),
+        _buildRecentlyAddedList(context, homeProvider.recentProperties),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  // ... [Rest of the widgets: _buildHeader, _buildSearchBar, _buildCategories, etc. unchanged] ...
+  // Re-pasting helper methods to ensure file completeness if replacing entire file
 
   Widget _buildHeader(BuildContext context, AuthProvider authProvider) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Greeting
         Row(
           children: [
             Container(
@@ -297,11 +257,8 @@ class HomeContent extends StatelessWidget {
             ),
           ],
         ),
-        // Actions Row
         Row(
           children: [
-            // Admin Button Removed
-            // Notification
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -365,7 +322,6 @@ class HomeContent extends StatelessWidget {
                       border: InputBorder.none,
                     ),
                     onSubmitted: (value) {
-                      // Switch to search tab on submit
                       context.read<HomeProvider>().setIndex(1);
                     },
                   ),
@@ -415,10 +371,10 @@ class HomeContent extends StatelessWidget {
         itemCount: categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final selectedIndex = context
+          final selectedCategoryIndex = context
               .watch<HomeProvider>()
               .selectedCategoryIndex;
-          final isSelected = index == selectedIndex;
+          final isSelected = index == selectedCategoryIndex;
           return GestureDetector(
             onTap: () => context.read<HomeProvider>().setCategoryIndex(index),
             child: Container(
@@ -504,7 +460,6 @@ class HomeContent extends StatelessWidget {
         itemCount: properties.length,
         separatorBuilder: (_, __) => const SizedBox(width: 15),
         itemBuilder: (context, index) {
-          // Use PropertyCard for cleaner code
           return PropertyCard(property: properties[index]);
         },
       ),
@@ -515,7 +470,6 @@ class HomeContent extends StatelessWidget {
     BuildContext context,
     List<Property> properties,
   ) {
-    // Ad every 5 items
     final totalItems = properties.length + (properties.length ~/ 5);
 
     return ListView.separated(
@@ -524,7 +478,6 @@ class HomeContent extends StatelessWidget {
       itemCount: totalItems,
       separatorBuilder: (_, __) => const SizedBox(height: 15),
       itemBuilder: (context, index) {
-        // Ad position: Every 6th slot (index 5, 11, etc.)
         if ((index + 1) % 6 == 0) {
           return AdService().getAdWidget(
             factoryId: 'listTileSmall',
@@ -532,134 +485,141 @@ class HomeContent extends StatelessWidget {
           );
         }
 
-        // Calculate actual property index
         final propertyIndex = index - (index ~/ 6);
         if (propertyIndex >= properties.length) return const SizedBox.shrink();
 
         final property = properties[propertyIndex];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PropertyDetailsScreen(property: property),
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return OpenContainer(
+          transitionType: ContainerTransitionType.fade,
+          transitionDuration: const Duration(milliseconds: 500),
+          closedColor: Theme.of(context).cardTheme.color ?? Colors.white,
+          closedElevation: isDark ? 0 : 2,
+          openElevation: 0,
+          closedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: isDark
+                ? BorderSide(color: Theme.of(context).dividerColor)
+                : BorderSide.none,
+          ),
+          openBuilder: (context, _) =>
+              PropertyDetailsScreen(property: property),
+          closedBuilder: (context, openContainer) {
+            return Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                // Border handled by Shape
+                // Shadow handled by OpenContainer elevation
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: CachedNetworkImage(
+                      imageUrl: property.imageUrl,
+                      height: 80,
+                      width: 80,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 80,
+                        width: 80,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 80,
+                        width: 80,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.bed, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (property.isNew)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              context.loc.newLabel,
+                              style: GoogleFonts.cairo(
+                                color: Colors.green,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        Text(
+                          property.title,
+                          style: GoogleFonts.cairo(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${property.location} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
+                          style: GoogleFonts.cairo(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 5),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              size: 14,
+                              color: Colors.amber.shade600,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              property.rating.toString(),
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    property.price,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF008695),
+                    ),
+                  ),
+                ],
               ),
             );
           },
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(20),
-              border: Theme.of(context).brightness == Brightness.dark
-                  ? Border.all(color: Theme.of(context).dividerColor)
-                  : null,
-              boxShadow: Theme.of(context).brightness == Brightness.dark
-                  ? []
-                  : const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-            ),
-            child: Row(
-              children: [
-                // Image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: Image.network(
-                    property.imageUrl,
-                    height: 80,
-                    width: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 80,
-                      width: 80,
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.bed, color: Colors.grey),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                // Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (property.isNew)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            context.loc.newLabel,
-                            style: GoogleFonts.cairo(
-                              color: Colors.green,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      Text(
-                        property.title,
-                        style: GoogleFonts.cairo(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        '${property.location} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
-                        style: GoogleFonts.cairo(
-                          fontSize: 10,
-                          color: Colors.grey,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 5),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.star,
-                            size: 14,
-                            color: Colors.amber.shade600,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            property.rating.toString(),
-                            style: GoogleFonts.cairo(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(
-                                context,
-                              ).textTheme.bodySmall?.color,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  property.price,
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF008695),
-                  ),
-                ),
-              ],
-            ),
-          ),
         );
       },
     );

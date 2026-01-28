@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 
 class ChatDetailScreen extends StatefulWidget {
-  const ChatDetailScreen({Key? key}) : super(key: key);
+  const ChatDetailScreen({super.key});
 
   @override
   State<ChatDetailScreen> createState() => _ChatDetailScreenState();

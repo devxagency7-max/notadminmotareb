@@ -1,0 +1,219 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
+
+import '../../../core/models/property_model.dart';
+import '../../favorites/providers/favorites_provider.dart';
+import 'booking_request_screen.dart';
+
+import '../widgets/property_gallery.dart';
+import '../widgets/property_header.dart';
+import '../widgets/property_features.dart';
+import '../widgets/property_video.dart';
+import '../widgets/property_owner.dart';
+import '../widgets/property_booking.dart';
+import '../widgets/property_description.dart';
+import '../widgets/property_actions.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../providers/property_details_provider.dart';
+
+class PropertyDetailsScreen extends StatelessWidget {
+  final Property? property;
+
+  const PropertyDetailsScreen({super.key, this.property});
+
+  @override
+  Widget build(BuildContext context) {
+    // Handling dummy data if null, purely for UI fallback or testing
+    final activeProperty = property ?? _getDummyProperty();
+
+    return ChangeNotifierProvider(
+      create: (_) => PropertyDetailsProvider(property: activeProperty),
+      child: const _PropertyDetailsContent(),
+    );
+  }
+
+  Property _getDummyProperty() {
+    return Property(
+      id: 'default_1',
+      title: 'شقة فندقية مودرن - المعادي',
+      location: 'المعادي، القاهرة',
+      price: '3500',
+      imageUrl: 'https://via.placeholder.com/600',
+      type: 'شقة',
+      description: 'شقة فندقية مميزة بتصميم مودرن في قلب المعادي...',
+      rating: 4.8,
+      isVerified: true,
+      tags: ['سكن طالبات', 'فايبر سريع', 'مؤثثة', 'مطبخ'],
+      gender: 'female',
+      paymentMethods: ['monthly', 'term'],
+      universities: ['الجامعة الأمريكية'],
+      bedsCount: 2,
+      roomsCount: 1,
+      discountPrice: null,
+      bookingMode: 'unit',
+      isFullApartmentBooking: false,
+      totalBeds: 2,
+      apartmentRoomsCount: 1,
+      bedPrice: 0.0,
+      generalRoomType: '',
+      rooms: [
+        {'type': 'Single', 'beds': 1, 'price': 2000, 'bedPrice': 2000},
+        {'type': 'Double', 'beds': 2, 'price': 2000, 'bedPrice': 1000},
+      ],
+    );
+  }
+}
+
+class _PropertyDetailsContent extends StatefulWidget {
+  const _PropertyDetailsContent();
+
+  @override
+  State<_PropertyDetailsContent> createState() =>
+      _PropertyDetailsContentState();
+}
+
+class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
+  final GlobalKey _unitSelectionKey = GlobalKey();
+  bool _showSelectionError = false;
+
+  void _onBookNow(BuildContext context, PropertyDetailsProvider provider) {
+    if (!provider.validateBooking()) {
+      setState(() {
+        _showSelectionError = true;
+      });
+
+      // Scroll to unit selection section
+      if (_unitSelectionKey.currentContext != null) {
+        Scrollable.ensureVisible(
+          _unitSelectionKey.currentContext!,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  context.loc.bedsSelectionError,
+                  style: GoogleFonts.cairo(),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color.fromARGB(255, 255, 17, 0),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Proceed to booking
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BookingRequestScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Access Providers
+    final favoritesProvider = context.watch<FavoritesProvider>();
+    final detailsProvider = context.watch<PropertyDetailsProvider>();
+    final property = detailsProvider.property;
+
+    final isFavorite = favoritesProvider.isFavorite(property.id);
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            slivers: [
+              PropertyGallery(
+                property: property,
+                onBack: () => Navigator.pop(context),
+              ),
+              SliverToBoxAdapter(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // White Body Container
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                      ),
+                      transform: Matrix4.translationValues(0, -20, 0),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 45, 20, 100),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PropertyHeader(
+                              property: property,
+                              isFavorite: isFavorite,
+                              onToggleFavorite: () {
+                                favoritesProvider.toggleFavorite(property);
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            PropertyFeatures(tags: property.tags),
+                            PropertyVideo(videoUrl: property.videoUrl),
+                            const PropertyOwner(), // Internal logic via Provider
+                            PropertyBooking(
+                              unitSelectionKey: _unitSelectionKey,
+                              property: property,
+                              selectedBedCount:
+                                  detailsProvider.selectedBedCount,
+                              onBedCountChanged: (count) {
+                                detailsProvider.setBedCount(count, context);
+                              },
+                              isWholeApartment:
+                                  detailsProvider.isWholeApartment,
+                              selectedUnitKeys:
+                                  detailsProvider.selectedUnitKeys,
+                              showSelectionError: _showSelectionError,
+                              onUnitSelectionChanged: (isWhole, key) {
+                                setState(() {
+                                  _showSelectionError = false;
+                                });
+                                detailsProvider.toggleUnitSelection(
+                                  isWhole,
+                                  key,
+                                  context,
+                                );
+                              },
+                            ),
+                            PropertyDescription(
+                              description: property.description,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          PropertyActions(
+            property: property,
+            selectedPrice: detailsProvider.selectedPrice,
+            selectionLabel: detailsProvider.selectionLabel,
+            onBook: () => _onBookNow(context, detailsProvider),
+          ),
+        ],
+      ),
+    );
+  }
+}

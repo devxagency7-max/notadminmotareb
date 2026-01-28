@@ -5,12 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../services/auth_service.dart';
-import '../utils/custom_snackbar.dart';
-import '../utils/error_handler.dart';
+import '../../../utils/custom_snackbar.dart';
+import '../../../utils/error_handler.dart';
 import 'package:provider/provider.dart';
-import '../features/auth/providers/auth_provider.dart';
-import 'home_screen.dart';
+import '../providers/auth_provider.dart';
+import '../../home/screens/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

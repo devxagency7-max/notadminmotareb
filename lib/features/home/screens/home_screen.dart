@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../features/auth/providers/auth_provider.dart';
-import '../features/home/providers/home_provider.dart';
-import '../features/home/widgets/chat_content.dart';
-import '../features/home/widgets/custom_nav_bar.dart';
-import '../features/home/widgets/home_content.dart';
-import '../features/home/widgets/profile_content.dart';
-import '../features/home/widgets/search_content.dart';
-import '../owner/add_property_screen.dart';
-import '../core/theme/app_theme.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../providers/home_provider.dart';
+import '../widgets/chat_content.dart';
+import '../widgets/custom_nav_bar.dart';
+import '../widgets/home_content.dart';
+import '../widgets/profile_content.dart';
+import '../widgets/search_content.dart';
+import '../../owner/screens/add_property_screen.dart';
+import '../../../core/theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

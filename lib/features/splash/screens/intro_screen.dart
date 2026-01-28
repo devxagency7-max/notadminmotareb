@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'login_screen.dart';
+import '../../auth/screens/login_screen.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});

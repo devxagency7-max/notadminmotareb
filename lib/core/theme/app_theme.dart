@@ -66,7 +66,6 @@ class AppTheme {
         secondary: brandSecondary,
         surface: darkSurface,
         onSurface: darkPrimaryText,
-        background: darkBackground,
         error: errorRed,
       ),
 

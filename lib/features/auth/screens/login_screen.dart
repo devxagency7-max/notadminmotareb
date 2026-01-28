@@ -6,11 +6,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 import 'signup_screen.dart';
-import 'home_screen.dart';
+import '../../home/screens/home_screen.dart';
 import 'package:provider/provider.dart';
-import '../features/auth/providers/auth_provider.dart';
-import '../utils/custom_snackbar.dart';
-import '../utils/error_handler.dart';
+import '../providers/auth_provider.dart';
+import '../../../utils/custom_snackbar.dart';
+import '../../../utils/error_handler.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

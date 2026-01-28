@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:motareb/features/chat/models/message_model.dart';
+import 'package:motareb/features/chat/providers/chat_provider.dart';
+import 'package:motareb/features/home/widgets/banner_ad_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:intl/intl.dart';
@@ -9,10 +12,9 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-import '../providers/chat_provider.dart';
-import '../models/message_model.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../home/widgets/banner_ad_widget.dart';
+// import '../providers/chat_provider.dart';
+// import '../models/message_model.dart';
+// import '../../home/widgets/banner_ad_widget.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;

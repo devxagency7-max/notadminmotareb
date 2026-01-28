@@ -4,11 +4,12 @@ import '../models/property_model.dart';
 class PropertiesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<List<Property>> getPropertiesStream() {
+  Stream<List<Property>> getPropertiesStream({int limit = 10}) {
     return _firestore
         .collection('properties')
         .where('status', isEqualTo: 'approved')
         .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:motareb/core/services/ad_service.dart';
+import 'package:motareb/features/home/screens/filter_screen.dart';
 
-import '../../../core/models/property_model.dart';
-import '../../../screens/filter_screen.dart';
+// import '../../../screens/filter_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
-import 'large_property_card.dart'; // Import LargePropertyCard
+import 'large_property_card.dart';
 
 import 'package:motareb/core/extensions/loc_extension.dart';
 
@@ -16,6 +16,9 @@ class SearchContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Access provider
+    final homeProvider = context.watch<HomeProvider>();
+
     return Column(
       children: [
         // Header - Fixed at top
@@ -29,31 +32,24 @@ class SearchContent extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              StreamBuilder<List<Property>>(
-                stream: context.read<HomeProvider>().propertiesStream,
-                builder: (context, snapshot) {
-                  final count = snapshot.data?.length ?? 0;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.loc.availableApartments,
-                        style: GoogleFonts.cairo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                        ),
-                      ),
-                      Text(
-                        context.loc.propertiesCount(count),
-                        style: GoogleFonts.cairo(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.loc.availableApartments,
+                    style: GoogleFonts.cairo(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  Text(
+                    context.loc.propertiesCount(
+                      homeProvider.allProperties.length,
+                    ),
+                    style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
               ),
               GestureDetector(
                 onTap: () {
@@ -131,23 +127,23 @@ class SearchContent extends StatelessWidget {
 
         // List
         Expanded(
-          child: StreamBuilder<List<Property>>(
-            stream: context.read<HomeProvider>().propertiesStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          child: Builder(
+            builder: (context) {
+              if (homeProvider.isLoading &&
+                  homeProvider.allProperties.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (snapshot.hasError) {
+              if (homeProvider.error != null) {
                 return Center(
                   child: Text(
-                    context.loc.errorLoadingData,
+                    '${context.loc.errorLoadingData}: ${homeProvider.error}',
                     style: GoogleFonts.cairo(color: Colors.red),
                   ),
                 );
               }
 
-              final properties = snapshot.data ?? [];
+              final properties = homeProvider.allProperties;
 
               if (properties.isEmpty) {
                 return Center(
@@ -160,18 +156,17 @@ class SearchContent extends StatelessWidget {
 
               // Calculate total items including ads
               // Ad every 3 items
-              // Pattern: P1, P2, P3, Ad, P4, P5, P6, Ad...
               final totalItems = properties.length + (properties.length ~/ 3);
 
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: totalItems,
                 itemBuilder: (context, index) {
-                  // Ad position: Every 4th item (index 3, 7, 11...)
+                  // Ad position: Every 4th item
                   if ((index + 1) % 4 == 0) {
                     return AdService().getAdWidget(
                       factoryId: 'listTileLarge',
-                      height: 300, // Large card height
+                      height: 300,
                     );
                   }
 

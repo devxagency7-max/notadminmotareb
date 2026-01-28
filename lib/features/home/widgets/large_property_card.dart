@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/property_model.dart';
-import '../../../screens/property_details_screen.dart';
+import '../../property_details/screens/property_details_screen.dart';
 import '../../favorites/providers/favorites_provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
@@ -15,206 +17,219 @@ class LargePropertyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isFav = context.watch<FavoritesProvider>().isFavorite(property.id);
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PropertyDetailsScreen(property: property),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: OpenContainer(
+        transitionType: ContainerTransitionType.fade,
+        transitionDuration: const Duration(milliseconds: 500),
+        closedColor: Theme.of(context).cardTheme.color ?? Colors.white,
+        closedElevation: isDark ? 0 : 4,
+        openElevation: 0,
+        closedShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          border: Theme.of(context).brightness == Brightness.dark
-              ? Border.all(color: const Color(0xFF2A3038))
-              : null,
-          boxShadow: Theme.of(context).brightness == Brightness.dark
-              ? []
-              : [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+          side: isDark
+              ? BorderSide(color: const Color(0xFF2A3038))
+              : BorderSide.none,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image + Badges
-            Stack(
+        openBuilder: (context, _) => PropertyDetailsScreen(property: property),
+        closedBuilder: (context, openContainer) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              // Border handled by Shape
+              // Shadow handled by OpenContainer elevation
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  child: Image.network(
-                    property.imageUrl,
-                    height: 180,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 180,
-                      width: double.infinity,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[800]
-                          : Colors.grey.shade200,
-                      child: Icon(
-                        Icons.image,
-                        size: 50,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.grey[600]
-                            : Colors.grey,
+                // Image + Badges
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      child: CachedNetworkImage(
+                        imageUrl: property.imageUrl,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          height: 180,
+                          width: double.infinity,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : Colors.grey.shade200,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          height: 180,
+                          width: double.infinity,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : Colors.grey.shade200,
+                          child: Icon(
+                            Icons.image,
+                            size: 50,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey[600]
+                                : Colors.grey,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                if (property.isVerified)
-                  Positioned(
-                    top: 15,
-                    right: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF008695),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline,
-                            color: Colors.white,
-                            size: 14,
+                    if (property.isVerified)
+                      Positioned(
+                        top: 15,
+                        right: 15,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            context.loc.verified,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF008695),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                context.loc.verified,
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    Positioned(
+                      top: 15,
+                      left: 15,
+                      child: GestureDetector(
+                        onTap: () {
+                          context.read<FavoritesProvider>().toggleFavorite(
+                            property,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.black.withOpacity(0.5)
+                                : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFav ? Icons.favorite : Icons.favorite_border,
+                            size: 20,
+                            color: isFav ? Colors.red : Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (property.isNew)
+                      Positioned(
+                        bottom: 15,
+                        left: 15,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF69F0AE),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            context.loc.availableNow,
                             style: GoogleFonts.cairo(
                               color: Colors.white,
                               fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+
+                // Details
+                Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            property.price,
+                            style: GoogleFonts.cairo(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF008695),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-
-                Positioned(
-                  top: 15,
-                  left: 15,
-                  child: GestureDetector(
-                    onTap: () {
-                      context.read<FavoritesProvider>().toggleFavorite(
-                        property,
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.black.withOpacity(0.5)
-                            : Colors.white,
-                        shape: BoxShape.circle,
+                      const SizedBox(height: 5),
+                      Text(
+                        property.type,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                       ),
-                      child: Icon(
-                        isFav ? Icons.favorite : Icons.favorite_border,
-                        size: 20,
-                        color: isFav ? Colors.red : Colors.grey,
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            property.location,
+                            style: GoogleFonts.cairo(color: Colors.grey),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      // Tags
+                      if (property.tags.isNotEmpty)
+                        Wrap(
+                          spacing: 8,
+                          children: property.tags
+                              .map(
+                                (tag) => _buildTag(context, Icons.check, tag),
+                              )
+                              .toList(),
+                        ),
+                    ],
                   ),
                 ),
-
-                if (property.isNew)
-                  Positioned(
-                    bottom: 15,
-                    left: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF69F0AE),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        context.loc.availableNow,
-                        style: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
-
-            // Details
-            Padding(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        property.price,
-                        style: GoogleFonts.cairo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF008695),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    property.type,
-                    style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        property.location,
-                        style: GoogleFonts.cairo(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Tags
-                  if (property.tags.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      children: property.tags
-                          .map((tag) => _buildTag(context, Icons.check, tag))
-                          .toList(),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

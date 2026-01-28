@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../utils/custom_snackbar.dart';
+import '../../../utils/custom_snackbar.dart';
 
 class AddPropertyScreen extends StatefulWidget {
   const AddPropertyScreen({super.key});
@@ -278,7 +278,7 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
 
               // Governorate Dropdown
               DropdownButtonFormField<String>(
-                value: _selectedGovernorate,
+                initialValue: _selectedGovernorate,
                 decoration: InputDecoration(
                   labelText: 'المحافظة',
                   labelStyle: GoogleFonts.cairo(color: Colors.grey),
@@ -358,10 +358,11 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                     selected: _paymentMethods.contains('monthly'),
                     onSelected: (bool selected) {
                       setState(() {
-                        if (selected)
+                        if (selected) {
                           _paymentMethods.add('monthly');
-                        else
+                        } else {
                           _paymentMethods.remove('monthly');
+                        }
                       });
                     },
                     selectedColor: const Color(0xFF39BB5E).withOpacity(0.2),
@@ -372,10 +373,11 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                     selected: _paymentMethods.contains('term'),
                     onSelected: (bool selected) {
                       setState(() {
-                        if (selected)
+                        if (selected) {
                           _paymentMethods.add('term');
-                        else
+                        } else {
                           _paymentMethods.remove('term');
+                        }
                       });
                     },
                     selectedColor: const Color(0xFF39BB5E).withOpacity(0.2),
@@ -399,10 +401,11 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
                       selected: _selectedUniversities.contains(uni),
                       onSelected: (bool selected) {
                         setState(() {
-                          if (selected)
+                          if (selected) {
                             _selectedUniversities.add(uni);
-                          else
+                          } else {
                             _selectedUniversities.remove(uni);
+                          }
                         });
                       },
                       selectedColor: const Color(0xFF008695).withOpacity(0.2),

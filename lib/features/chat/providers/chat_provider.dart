@@ -3,7 +3,6 @@ import 'dart:io';
 import '../../../../services/r2_upload_service.dart';
 import 'package:flutter/material.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../models/chat_model.dart';
 import '../models/message_model.dart';
 import '../services/chat_service.dart';
 

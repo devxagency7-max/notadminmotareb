@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 
@@ -11,8 +12,8 @@ import 'package:motareb/core/providers/locale_provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../../../screens/verification_screen.dart';
-import '../../../screens/login_screen.dart';
+import '../../auth/screens/verification_screen.dart';
+import '../../auth/screens/login_screen.dart';
 import '../../favorites/screens/favorites_screen.dart';
 import 'banner_ad_widget.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -500,7 +501,7 @@ class _ProfileContentState extends State<ProfileContent> {
             trailing: Switch(
               value: isDark,
               onChanged: (val) => provider.toggleTheme(),
-              activeColor: const Color(0xFF16A34A),
+              activeThumbColor: const Color(0xFF16A34A),
             ),
           ),
         ),

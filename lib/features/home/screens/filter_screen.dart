@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 class FilterScreen extends StatefulWidget {
-  const FilterScreen({Key? key}) : super(key: key);
+  const FilterScreen({super.key});
 
   @override
   State<FilterScreen> createState() => _FilterScreenState();
