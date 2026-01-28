@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/property_details_provider.dart';
 
+import '../../../utils/guest_checker.dart';
+
 class PropertyOwner extends StatelessWidget {
   const PropertyOwner({super.key});
 
@@ -98,6 +100,7 @@ class PropertyOwner extends StatelessWidget {
   Widget _buildContactNumberItem(BuildContext context, String number) {
     return InkWell(
       onTap: () async {
+        if (!GuestChecker.check(context)) return;
         final Uri launchUri = Uri(scheme: 'tel', path: number);
         try {
           if (await canLaunchUrl(launchUri)) {

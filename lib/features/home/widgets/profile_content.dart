@@ -14,7 +14,9 @@ import 'package:motareb/core/extensions/loc_extension.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/screens/verification_screen.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../auth/screens/signup_screen.dart';
 import '../../favorites/screens/favorites_screen.dart';
+import '../../favorites/providers/favorites_provider.dart';
 import 'banner_ad_widget.dart';
 import '../../../../core/theme/app_theme.dart';
 
@@ -33,6 +35,7 @@ class _ProfileContentState extends State<ProfileContent> {
     final localeProvider = context.watch<LocaleProvider>();
     String userName = authProvider.userData?['name'] ?? context.loc.guest;
     String userEmail = authProvider.user?.email ?? context.loc.loginNow;
+    final favoritesProvider = context.watch<FavoritesProvider>();
     final isDark = themeProvider.isDarkMode;
 
     return Stack(
@@ -65,7 +68,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                 Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white.withValues(alpha: 0.2),
                                     shape: BoxShape.circle,
                                   ),
                                   child: CircleAvatar(
@@ -145,7 +148,7 @@ class _ProfileContentState extends State<ProfileContent> {
                             Text(
                               userEmail,
                               style: GoogleFonts.cairo(
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                                 fontSize: 14,
                               ),
                             ),
@@ -178,7 +181,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                     BoxShadow(
                                       color: const Color(
                                         0xFF008695,
-                                      ).withOpacity(0.15),
+                                      ).withValues(alpha: 0.15),
                                       blurRadius: 20,
                                       offset: const Offset(0, 10),
                                     ),
@@ -187,7 +190,10 @@ class _ProfileContentState extends State<ProfileContent> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildStatItem(context.loc.favorites, '12'),
+                              _buildStatItem(
+                                context.loc.favorites,
+                                favoritesProvider.favorites.length.toString(),
+                              ),
                               Container(
                                 width: 1,
                                 height: 40,
@@ -195,7 +201,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                     ? const Color(0xFF2A3038)
                                     : Colors.grey.shade200,
                               ),
-                              _buildStatItem(context.loc.reviews, '5'),
+                              _buildStatItem(context.loc.reviews, '0'),
                               Container(
                                 width: 1,
                                 height: 40,
@@ -203,7 +209,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                     ? const Color(0xFF2A3038)
                                     : Colors.grey.shade200,
                               ),
-                              _buildStatItem(context.loc.myBookings, '3'),
+                              _buildStatItem(context.loc.myBookings, '0'),
                             ],
                           ),
                         ),
@@ -219,80 +225,87 @@ class _ProfileContentState extends State<ProfileContent> {
                   child: Column(
                     children: [
                       // 3. Verification Alert
-                      FadeInUp(
-                        duration: const Duration(milliseconds: 600),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const VerificationScreen(),
+                      if (!authProvider.isGuest)
+                        FadeInUp(
+                          duration: const Duration(milliseconds: 600),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const VerificationScreen(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 25),
+                              padding: const EdgeInsets.all(15),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(
+                                      0xFFFFC107,
+                                    ).withValues(alpha: 0.1),
+                                    const Color(
+                                      0xFFFF9800,
+                                    ).withValues(alpha: 0.1),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFFFC107,
+                                  ).withValues(alpha: 0.5),
+                                ),
                               ),
-                            );
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 25),
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  const Color(0xFFFFC107).withOpacity(0.1),
-                                  const Color(0xFFFF9800).withOpacity(0.1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFFFC107).withOpacity(0.5),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFF3CD),
-                                    borderRadius: BorderRadius.circular(12),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF3CD),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.verified_user_outlined,
+                                      color: Color(0xFF856404),
+                                    ),
                                   ),
-                                  child: const Icon(
-                                    Icons.verified_user_outlined,
+                                  const SizedBox(width: 15),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          context.loc.verification,
+                                          style: GoogleFonts.cairo(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: const Color(0xFF856404),
+                                          ),
+                                        ),
+                                        Text(
+                                          context.loc.verificationDetail,
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 12,
+                                            color: const Color(0xFF856404),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_forward_ios,
+                                    size: 16,
                                     color: Color(0xFF856404),
                                   ),
-                                ),
-                                const SizedBox(width: 15),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        context.loc.verification,
-                                        style: GoogleFonts.cairo(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          color: const Color(0xFF856404),
-                                        ),
-                                      ),
-                                      Text(
-                                        context.loc.verificationDetail,
-                                        style: GoogleFonts.cairo(
-                                          fontSize: 12,
-                                          color: const Color(0xFF856404),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: Color(0xFF856404),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
                       // Theme Toggle Tile
                       _buildThemeToggle(context, themeProvider),
@@ -301,7 +314,8 @@ class _ProfileContentState extends State<ProfileContent> {
                       _buildLanguageToggle(context, localeProvider),
 
                       // 4. Menu Items
-                      if (authProvider.user != null) ...[
+                      if (authProvider.isAuthenticated &&
+                          !authProvider.isGuest) ...[
                         _buildProfileMenuItem(
                           context.loc.personalInfo,
                           Icons.person_outline,
@@ -352,7 +366,7 @@ class _ProfileContentState extends State<ProfileContent> {
                         ),
                       ] else ...[
                         _buildProfileMenuItem(
-                          context.loc.login,
+                          context.loc.loginAction,
                           Icons.login,
                           delay: 100,
                           onTap: () {
@@ -365,9 +379,35 @@ class _ProfileContentState extends State<ProfileContent> {
                           },
                         ),
                         _buildProfileMenuItem(
+                          context.loc.createAccount,
+                          Icons.person_add_outlined,
+                          delay: 150,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignupScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildProfileMenuItem(
+                          context.loc.favorites,
+                          Icons.favorite_border,
+                          delay: 200,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FavoritesScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _buildProfileMenuItem(
                           context.loc.settings,
                           Icons.settings_outlined,
-                          delay: 200,
+                          delay: 300,
                           onTap: () {},
                         ),
                       ],
@@ -406,7 +446,7 @@ class _ProfileContentState extends State<ProfileContent> {
                                           BoxShadow(
                                             color: const Color(
                                               0xFF008695,
-                                            ).withOpacity(0.2),
+                                            ).withValues(alpha: 0.2),
                                             blurRadius: 25,
                                             offset: const Offset(0, 10),
                                           ),
@@ -458,7 +498,7 @@ class _ProfileContentState extends State<ProfileContent> {
                 ? []
                 : [
                     BoxShadow(
-                      color: const Color(0xFF008695).withOpacity(0.05),
+                      color: const Color(0xFF008695).withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -478,7 +518,7 @@ class _ProfileContentState extends State<ProfileContent> {
                     ? []
                     : [
                         BoxShadow(
-                          color: const Color(0xFF39BB5E).withOpacity(0.3),
+                          color: const Color(0xFF39BB5E).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -491,7 +531,7 @@ class _ProfileContentState extends State<ProfileContent> {
               ),
             ),
             title: Text(
-              isDark ? 'الوضع الليلي' : 'الوضع النهاري',
+              isDark ? context.loc.darkMode : context.loc.lightMode,
               style: GoogleFonts.cairo(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -525,7 +565,7 @@ class _ProfileContentState extends State<ProfileContent> {
               ? []
               : [
                   BoxShadow(
-                    color: const Color(0xFF008695).withOpacity(0.05),
+                    color: const Color(0xFF008695).withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -547,7 +587,7 @@ class _ProfileContentState extends State<ProfileContent> {
                     ? []
                     : [
                         BoxShadow(
-                          color: const Color(0xFF39BB5E).withOpacity(0.3),
+                          color: const Color(0xFF39BB5E).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -625,6 +665,7 @@ class _ProfileContentState extends State<ProfileContent> {
   }
 
   Widget _buildStatItem(String label, String count) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Text(
@@ -632,7 +673,7 @@ class _ProfileContentState extends State<ProfileContent> {
           style: GoogleFonts.cairo(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF008695),
+            color: isDark ? Colors.white : Colors.black87,
           ),
         ),
         Text(label, style: GoogleFonts.cairo(color: Colors.grey, fontSize: 12)),
@@ -663,7 +704,7 @@ class _ProfileContentState extends State<ProfileContent> {
                 ? []
                 : [
                     BoxShadow(
-                      color: const Color(0xFF008695).withOpacity(0.05),
+                      color: const Color(0xFF008695).withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -680,8 +721,8 @@ class _ProfileContentState extends State<ProfileContent> {
                 gradient: isDestructive
                     ? LinearGradient(
                         colors: [
-                          Colors.red.withOpacity(0.1),
-                          Colors.red.withOpacity(0.05),
+                          Colors.red.withValues(alpha: 0.1),
+                          Colors.red.withValues(alpha: 0.05),
                         ],
                       )
                     : AppTheme.primaryGradient,
@@ -690,7 +731,7 @@ class _ProfileContentState extends State<ProfileContent> {
                     ? []
                     : [
                         BoxShadow(
-                          color: const Color(0xFF39BB5E).withOpacity(0.3),
+                          color: const Color(0xFF39BB5E).withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),

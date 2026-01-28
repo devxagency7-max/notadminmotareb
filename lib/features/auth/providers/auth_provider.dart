@@ -35,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
+  bool get isGuest => _user != null && _user!.isAnonymous;
 
   // Initialize Auth State (Check current user on startup)
   Future<void> checkAuthStatus() async {
@@ -110,13 +111,13 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> signInWithFacebook() async {
+  Future<void> signInAnonymously() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final userCredential = await _authService.signInWithFacebook();
+      final userCredential = await _authService.signInAnonymously();
       if (userCredential != null) {
         _user = _authService.getCurrentUser();
         await _fetchUserRolesAndData();

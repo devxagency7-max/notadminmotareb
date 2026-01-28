@@ -3,14 +3,52 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
-class PropertyFeatures extends StatelessWidget {
+class PropertyFeatures extends StatefulWidget {
   final List<String> tags;
 
   const PropertyFeatures({super.key, required this.tags});
 
   @override
+  State<PropertyFeatures> createState() => _PropertyFeaturesState();
+}
+
+class _PropertyFeaturesState extends State<PropertyFeatures> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showArrow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkScroll();
+    });
+    _scrollController.addListener(_checkScroll);
+  }
+
+  void _checkScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final bool canScroll = _scrollController.position.maxScrollExtent > 0;
+    final bool atEnd =
+        _scrollController.offset >=
+        _scrollController.position.maxScrollExtent - 20;
+
+    if (mounted) {
+      setState(() {
+        _showArrow = canScroll && !atEnd;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (tags.isEmpty) return const SizedBox.shrink();
+    if (widget.tags.isEmpty) return const SizedBox.shrink();
 
     return FadeInUp(
       delay: const Duration(milliseconds: 100),
@@ -26,33 +64,92 @@ class PropertyFeatures extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
-          Wrap(
-            spacing: 15,
-            runSpacing: 15,
-            children: tags.map((tag) {
-              IconData icon = Icons.star_border_rounded;
-              if (tag.contains('wifi') || tag.contains('واي')) {
-                icon = Icons.wifi_rounded;
-              }
-              if (tag.contains('تكييف') || tag.contains('ac')) {
-                icon = Icons.ac_unit_rounded;
-              }
-              if (tag.contains('مطبخ')) icon = Icons.kitchen_rounded;
-              if (tag.contains('مؤثثة') || tag.contains('فرش')) {
-                icon = Icons.chair_rounded;
-              }
-              if (tag.contains('أسانسير')) icon = Icons.elevator_rounded;
-              if (tag.contains('أمن')) icon = Icons.security_rounded;
-              return _buildFeatureItem(
-                context,
-                icon,
-                tag,
-                const Color(0xFF008695),
-                const Color(0xFF008695),
-              );
-            }).toList(),
+          Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              SingleChildScrollView(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.only(
+                  top: 5,
+                  bottom: 5,
+                  left: 30, // Space for arrow on the left
+                  right: 0,
+                ),
+                child: Row(
+                  children: widget.tags.map((tag) {
+                    IconData icon = Icons.star_border_rounded;
+                    if (tag.toLowerCase().contains('wifi') ||
+                        tag.contains('واي')) {
+                      icon = Icons.wifi_rounded;
+                    }
+                    if (tag.toLowerCase().contains('ac') ||
+                        tag.contains('تكييف') ||
+                        tag.contains('مكيف')) {
+                      icon = Icons.ac_unit_rounded;
+                    }
+                    if (tag.contains('مطبخ')) icon = Icons.kitchen_rounded;
+                    if (tag.contains('مؤثثة') || tag.contains('فرش')) {
+                      icon = Icons.chair_rounded;
+                    }
+                    if (tag.contains('أسانسير')) icon = Icons.elevator_rounded;
+                    if (tag.contains('أمن')) icon = Icons.security_rounded;
+                    if (tag.contains('غسالة')) {
+                      icon = Icons.local_laundry_service;
+                    }
+                    if (tag.contains('تلفزيون') || tag.contains('tv')) {
+                      icon = Icons.tv_rounded;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        right: 20,
+                      ), // Padding on right for RTL start
+                      child: _buildFeatureItem(
+                        context,
+                        icon,
+                        tag,
+                        const Color(0xFF008695),
+                        const Color(0xFF008695),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              if (_showArrow)
+                Positioned(
+                  left: -5,
+                  child: IgnorePointer(
+                    child: FadeInLeft(
+                      duration: const Duration(milliseconds: 500),
+                      child: Container(
+                        height: 50,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Theme.of(context).scaffoldBackgroundColor,
+                              Theme.of(
+                                context,
+                              ).scaffoldBackgroundColor.withValues(alpha: 0.1),
+                            ],
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 16,
+                          color: Color(0xFF008695),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 25),
         ],
       ),
     );

@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -31,8 +30,7 @@ class AuthService {
       await _googleSignIn.signOut();
 
       // ✅ v7: use authenticate() instead of signIn()
-      final GoogleSignInAccount googleUser = await _googleSignIn
-          .authenticate();
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
       // ✅ v7: Accessing authentication tokens is synchronous
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
@@ -93,78 +91,41 @@ class AuthService {
   }
 
   // ------------------------------------------------------------
-  // Facebook Sign-In (Stub for UI integration)
+  // Anonymous Sign-In
   // ------------------------------------------------------------
-  Future<UserCredential?> signInWithFacebook() async {
+  Future<UserCredential?> signInAnonymously() async {
     try {
-      // 1. Trigger Facebook Login
-      final LoginResult result = await FacebookAuth.instance.login(
-        permissions: ['email', 'public_profile'],
-      );
+      final UserCredential userCredential = await _auth.signInAnonymously();
 
-      if (result.status == LoginStatus.cancelled) {
-        debugPrint("Facebook Login: User cancelled.");
-        return null;
-      }
-
-      if (result.status == LoginStatus.failed) {
-        throw Exception("Facebook Login Validation Failed: ${result.message}");
-      }
-
-      // 2. Get Access Token
-      final AccessToken? accessToken = result.accessToken;
-      if (accessToken == null) {
-        throw Exception("Facebook Access Token is null");
-      }
-
-      // 3. Create Credential
-      final OAuthCredential credential = FacebookAuthProvider.credential(
-        accessToken.tokenString,
-      );
-
-      // 4. Sign in to Firebase
-      final UserCredential userCredential = await _auth.signInWithCredential(
-        credential,
-      );
-
-      // 5. Create/Update User in Firestore
       final user = userCredential.user;
       if (user != null) {
-        // Fetch Facebook Graph Data for a better profile picture
-        final Map<String, dynamic> fbData = await FacebookAuth.instance
-            .getUserData();
-        final String? fbPhotoUrl = fbData['picture']?['data']?['url'];
-
         final userDoc = _firestore.collection('users').doc(user.uid);
         final doc = await userDoc.get();
 
         if (!doc.exists) {
           await userDoc.set({
             'uid': user.uid,
-            'name': user.displayName ?? fbData['name'] ?? 'Facebook User',
-            'email': user.email ?? fbData['email'],
-            'photoUrl': fbPhotoUrl ?? user.photoURL,
+            'name': 'Guest',
+            'email': null,
+            'photoUrl': null,
             'role': 'seeker',
-            'provider': 'facebook',
+            'provider': 'anonymous',
             'createdAt': FieldValue.serverTimestamp(),
             'lastLoginAt': FieldValue.serverTimestamp(),
             'isBanned': false,
           });
         } else {
-          await userDoc.update({
-            'photoUrl': fbPhotoUrl ?? user.photoURL,
-            'lastLoginAt': FieldValue.serverTimestamp(),
-          });
+          await userDoc.update({'lastLoginAt': FieldValue.serverTimestamp()});
         }
       }
 
       return userCredential;
     } on FirebaseAuthException catch (e, s) {
-      debugPrint("Firebase Auth (Facebook) Error: [${e.code}] ${e.message}");
+      debugPrint("Firebase Auth (Anonymous) Error: [${e.code}] ${e.message}");
       debugPrint("Stack: $s");
       rethrow;
     } catch (e, s) {
-      debugPrint("Facebook Sign-In Error: $e");
+      debugPrint("Anonymous Sign-In Error: $e");
       debugPrint("Stack: $s");
       rethrow;
     }

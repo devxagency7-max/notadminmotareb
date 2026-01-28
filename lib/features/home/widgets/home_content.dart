@@ -15,6 +15,7 @@ import 'property_card.dart';
 import '../screens/university_properties_screen.dart';
 
 import 'package:motareb/core/services/ad_service.dart';
+import '../../../utils/guest_checker.dart';
 
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
@@ -41,141 +42,214 @@ class HomeContent extends StatelessWidget {
     return NotificationListener<ScrollNotification>(
       onNotification: (ScrollNotification scrollInfo) {
         if (!homeProvider.isLoadingMore &&
-            scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+            scrollInfo.metrics.pixels >=
+                scrollInfo.metrics.maxScrollExtent - 200) {
+          // Trigger earlier
           context.read<HomeProvider>().loadMoreProperties();
         }
         return true;
       },
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 20,
-          left: 20,
-          right: 20,
-          bottom: 20,
-        ),
-        child: Column(
-          children: [
-            _buildHeader(context, authProvider),
-            const SizedBox(height: 20),
-            _buildSearchBar(context),
-            const SizedBox(height: 20),
-            _buildCategories(context, categoriesList),
-            const SizedBox(height: 20),
-            _buildContent(context, homeProvider),
-            if (homeProvider.isLoadingMore)
-              const Padding(
+      child: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 20,
+              left: 20,
+              right: 20,
+              bottom: 20,
+            ),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildHeader(context, authProvider),
+                const SizedBox(height: 20),
+                _buildSearchBar(context),
+                const SizedBox(height: 20),
+                _buildCategories(context, categoriesList),
+                const SizedBox(height: 20),
+              ]),
+            ),
+          ),
+          ..._buildContentSlivers(context, homeProvider),
+          if (homeProvider.isLoadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
                 padding: EdgeInsets.all(20.0),
                 child: Center(child: CircularProgressIndicator()),
               ),
-          ],
-        ),
+            ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+        ],
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, HomeProvider homeProvider) {
+  List<Widget> _buildContentSlivers(
+    BuildContext context,
+    HomeProvider homeProvider,
+  ) {
     if (homeProvider.error != null) {
-      return Center(
-        child: Column(
-          children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 10),
-            Text('${context.loc.errorOccurred}: ${homeProvider.error}'),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => context
-                  .read<HomeProvider>()
-                  .loadMoreProperties(), // Or retry logic
-              child: const Text('إعادة المحاولة'),
+      return [
+        SliverToBoxAdapter(
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+                const SizedBox(height: 10),
+                Text('${context.loc.errorOccurred}: ${homeProvider.error}'),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () =>
+                      context.read<HomeProvider>().loadMoreProperties(),
+                  child: const Text('إعادة المحاولة'),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      );
+      ];
     }
-
-    // ... remaining logic ...
 
     if (homeProvider.allProperties.isEmpty) {
-      return Center(child: Text(context.loc.noPropertiesFound));
+      return [
+        SliverToBoxAdapter(
+          child: Center(child: Text(context.loc.noPropertiesFound)),
+        ),
+      ];
     }
 
-    // Logic Delegated to Provider
+    // New: Check for empty search results
+    final bool isSearchActive = homeProvider.searchQuery.isNotEmpty;
     final selectedIndex = homeProvider.selectedCategoryIndex;
+
+    bool isEmptySearchResult = false;
+    if (isSearchActive) {
+      if (selectedIndex == 1 && homeProvider.uniqueUniversities.isEmpty) {
+        isEmptySearchResult = true;
+      } else if (selectedIndex > 1 && homeProvider.filteredByCategory.isEmpty) {
+        isEmptySearchResult = true;
+      } else if (selectedIndex == 0 &&
+          homeProvider.featuredProperties.isEmpty &&
+          homeProvider.recentProperties.isEmpty) {
+        isEmptySearchResult = true;
+      }
+    }
+
+    if (isEmptySearchResult) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search_off_rounded,
+                  size: 64,
+                  color: Colors.grey[300],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  context.loc.noSearchResults,
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ];
+    }
 
     // 1. University View
     if (selectedIndex == 1) {
       final universities = homeProvider.uniqueUniversities;
 
       if (universities.isEmpty) {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(context.loc.noUniversitiesFound),
+        return [
+          SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(context.loc.noUniversitiesFound),
+              ),
+            ),
           ),
-        );
+        ];
       }
 
-      return Column(
-        children: universities.map((uni) {
-          final uniProperties = homeProvider.getPropertiesForUniversity(uni);
-          if (uniProperties.isEmpty) return const SizedBox.shrink();
+      return [
+        SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final uni = universities[index];
+            final uniProperties = homeProvider.getPropertiesForUniversity(uni);
+            if (uniProperties.isEmpty) return const SizedBox.shrink();
 
-          return Column(
-            children: [
-              _buildSectionTitle(
-                context,
-                ' $uni',
-                context.loc.viewAll,
-                onTap: () {
-                  Navigator.push(
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  _buildSectionTitle(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => UniversityPropertiesScreen(
-                        universityName: uni,
-                        properties: uniProperties,
-                      ),
-                    ),
-                  );
-                },
+                    ' $uni',
+                    context.loc.viewAll,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UniversityPropertiesScreen(
+                            universityName: uni,
+                            properties: uniProperties,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  _buildFeaturedList(context, uniProperties),
+                  const SizedBox(height: 25),
+                ],
               ),
-              const SizedBox(height: 15),
-              _buildFeaturedList(context, uniProperties),
-              const SizedBox(height: 25),
-            ],
-          );
-        }).toList(),
-      );
+            );
+          }, childCount: universities.length),
+        ),
+      ];
     }
 
-    // 2. Filtered View (Youth, Girls, Bed, Room) - Index 2, 3, 4, 5
+    // 2. Filtered View (Youth, Girls, Bed, Room)
     if (selectedIndex > 1) {
-      // Note: We might need to pass localized strings to provider if strict matching required,
-      // but assuming Provider handles generalized tagging.
       final filtered = homeProvider.filteredByCategory;
-      return _buildFilteredList(context, filtered);
+      return _buildFilteredListSlivers(context, filtered);
     }
 
     // 0. Default View (All)
-    return Column(
-      children: [
-        _buildSectionTitle(
-          context,
-          context.loc.featuredForYou,
-          context.loc.viewAll,
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverToBoxAdapter(
+          child: Column(
+            children: [
+              _buildSectionTitle(context, context.loc.featuredForYou, ''),
+              const SizedBox(height: 15),
+              _buildFeaturedList(context, homeProvider.featuredProperties),
+              const SizedBox(height: 25),
+              _buildSectionTitle(context, context.loc.recentlyAdded, ''),
+              const SizedBox(height: 15),
+            ],
+          ),
         ),
-        const SizedBox(height: 15),
-        _buildFeaturedList(context, homeProvider.featuredProperties),
-        const SizedBox(height: 25),
-        _buildSectionTitle(context, context.loc.recentlyAdded, ''),
-        const SizedBox(height: 15),
-        _buildRecentlyAddedList(context, homeProvider.recentProperties),
-        const SizedBox(height: 20),
-      ],
-    );
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: _buildRecentlyAddedSliverList(
+          context,
+          homeProvider.recentProperties,
+        ),
+      ),
+    ];
   }
-
-  // ... [Rest of the widgets: _buildHeader, _buildSearchBar, _buildCategories, etc. unchanged] ...
-  // Re-pasting helper methods to ensure file completeness if replacing entire file
 
   Widget _buildHeader(BuildContext context, AuthProvider authProvider) {
     return Row(
@@ -194,7 +268,7 @@ class HomeContent extends StatelessWidget {
                     ? []
                     : [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -311,19 +385,21 @@ class HomeContent extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.search, color: Colors.grey),
-                const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
                     textAlign: TextAlign.right,
+                    onChanged: (value) {
+                      context.read<HomeProvider>().setSearchQuery(value);
+                    },
                     decoration: InputDecoration(
                       hintText: context.loc.searchHint,
-                      hintStyle: GoogleFonts.cairo(color: Colors.grey),
+                      hintStyle: GoogleFonts.cairo(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
                       border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    onSubmitted: (value) {
-                      context.read<HomeProvider>().setIndex(1);
-                    },
                   ),
                 ),
               ],
@@ -331,86 +407,33 @@ class HomeContent extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (c) => FilterScreen()),
-            );
-          },
-          child: Container(
-            height: 50,
-            width: 50,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
-              ),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF008695).withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+        // Search Button with Gradient Design (Moved from inside search bar)
+        Container(
+          height: 50,
+          width: 50,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
             ),
-            child: const Icon(Icons.tune, color: Colors.white),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF008695).withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
+          child: const Icon(Icons.search_rounded, color: Colors.white),
         ),
       ],
     );
   }
 
   Widget _buildCategories(BuildContext context, List<String> categories) {
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final selectedCategoryIndex = context
-              .watch<HomeProvider>()
-              .selectedCategoryIndex;
-          final isSelected = index == selectedCategoryIndex;
-          return GestureDetector(
-            onTap: () => context.read<HomeProvider>().setCategoryIndex(index),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? const LinearGradient(
-                        colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft,
-                      )
-                    : null,
-                color: isSelected ? null : Theme.of(context).cardTheme.color,
-                borderRadius: BorderRadius.circular(20),
-                border: isSelected
-                    ? null
-                    : Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Theme.of(context).dividerColor
-                            : Colors.grey.shade200,
-                      ),
-              ),
-              child: Text(
-                categories[index],
-                style: GoogleFonts.cairo(
-                  color: isSelected
-                      ? Colors.white
-                      : Theme.of(context).textTheme.bodyMedium?.color,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+    return _HomeCategories(categories: categories);
   }
 
   Widget _buildSectionTitle(
@@ -466,22 +489,21 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentlyAddedList(
+  Widget _buildRecentlyAddedSliverList(
     BuildContext context,
     List<Property> properties,
   ) {
     final totalItems = properties.length + (properties.length ~/ 5);
 
-    return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: totalItems,
-      separatorBuilder: (_, __) => const SizedBox(height: 15),
-      itemBuilder: (context, index) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate((context, index) {
         if ((index + 1) % 6 == 0) {
-          return AdService().getAdWidget(
-            factoryId: 'listTileSmall',
-            height: 100,
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 15),
+            child: AdService().getAdWidget(
+              factoryId: 'listTileSmall',
+              height: 100,
+            ),
           );
         }
 
@@ -491,156 +513,297 @@ class HomeContent extends StatelessWidget {
         final property = properties[propertyIndex];
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        return OpenContainer(
-          transitionType: ContainerTransitionType.fade,
-          transitionDuration: const Duration(milliseconds: 500),
-          closedColor: Theme.of(context).cardTheme.color ?? Colors.white,
-          closedElevation: isDark ? 0 : 2,
-          openElevation: 0,
-          closedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: isDark
-                ? BorderSide(color: Theme.of(context).dividerColor)
-                : BorderSide.none,
-          ),
-          openBuilder: (context, _) =>
-              PropertyDetailsScreen(property: property),
-          closedBuilder: (context, openContainer) {
-            return Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardTheme.color,
-                // Border handled by Shape
-                // Shadow handled by OpenContainer elevation
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: CachedNetworkImage(
-                      imageUrl: property.imageUrl,
-                      height: 80,
-                      width: 80,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 80,
-                        width: 80,
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        height: 80,
-                        width: 80,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.bed, color: Colors.grey),
-                      ),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 15),
+          child: GestureDetector(
+            onTap: () {
+              if (!GuestChecker.check(context)) return;
+            },
+            child: AbsorbPointer(
+              absorbing: context.watch<AuthProvider>().isGuest,
+              child: OpenContainer(
+                transitionType: ContainerTransitionType.fade,
+                transitionDuration: const Duration(milliseconds: 500),
+                closedColor: Theme.of(context).cardTheme.color ?? Colors.white,
+                closedElevation: isDark ? 0 : 2,
+                openElevation: 0,
+                closedShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: isDark
+                      ? BorderSide(color: Theme.of(context).dividerColor)
+                      : BorderSide.none,
+                ),
+                openBuilder: (context, _) =>
+                    PropertyDetailsScreen(property: property),
+                closedBuilder: (context, openContainer) {
+                  return Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardTheme.color,
                     ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        if (property.isNew)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              context.loc.newLabel,
-                              style: GoogleFonts.cairo(
-                                color: Colors.green,
-                                fontSize: 10,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: CachedNetworkImage(
+                            imageUrl: property.imageUrl,
+                            height: 80,
+                            width: 80,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              height: 80,
+                              width: 80,
+                              color: Colors.grey.shade200,
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        Text(
-                          property.title,
-                          style: GoogleFonts.cairo(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '${property.location} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
-                          style: GoogleFonts.cairo(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 5),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.star,
-                              size: 14,
-                              color: Colors.amber.shade600,
+                            errorWidget: (context, url, error) => Container(
+                              height: 80,
+                              width: 80,
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.bed, color: Colors.grey),
                             ),
-                            const SizedBox(width: 2),
-                            Text(
-                              property.rating.toString(),
-                              style: GoogleFonts.cairo(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodySmall?.color,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (property.isNew)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    context.loc.newLabel,
+                                    style: GoogleFonts.cairo(
+                                      color: Colors.green,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              Text(
+                                property.title,
+                                style: GoogleFonts.cairo(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
                               ),
+                              Text(
+                                '${property.location} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.right,
+                              ),
+                            ],
+                          ),
+                        ),
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                            begin: Alignment.centerRight,
+                            end: Alignment.centerLeft,
+                          ).createShader(bounds),
+                          child: Text(
+                            property.price,
+                            style: GoogleFonts.cairo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  Text(
-                    property.price,
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF008695),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ),
         );
-      },
+      }, childCount: totalItems),
     );
   }
 
-  Widget _buildFilteredList(BuildContext context, List<Property> properties) {
+  List<Widget> _buildFilteredListSlivers(
+    BuildContext context,
+    List<Property> properties,
+  ) {
     if (properties.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Text(context.loc.noCategoryProperties),
+      return [
+        SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(context.loc.noCategoryProperties),
+            ),
+          ),
         ),
-      );
+      ];
     }
-    return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: properties.length,
-      itemBuilder: (context, index) {
-        return LargePropertyCard(property: properties[index]);
-      },
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: LargePropertyCard(property: properties[index]),
+            );
+          }, childCount: properties.length),
+        ),
+      ),
+    ];
+  }
+}
+
+class _HomeCategories extends StatefulWidget {
+  final List<String> categories;
+  const _HomeCategories({required this.categories});
+
+  @override
+  State<_HomeCategories> createState() => _HomeCategoriesState();
+}
+
+class _HomeCategoriesState extends State<_HomeCategories> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showArrow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_checkScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkScroll());
+  }
+
+  void _checkScroll() {
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    final show = maxScroll > 0 && currentScroll < maxScroll - 10;
+    if (show != _showArrow) {
+      if (mounted) setState(() => _showArrow = show);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          ListView.separated(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.categories.length,
+            padding: EdgeInsets.only(left: _showArrow ? 30 : 0),
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final selectedCategoryIndex = context
+                  .watch<HomeProvider>()
+                  .selectedCategoryIndex;
+              final isSelected = index == selectedCategoryIndex;
+              return GestureDetector(
+                onTap: () =>
+                    context.read<HomeProvider>().setCategoryIndex(index),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? const LinearGradient(
+                            colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                            begin: Alignment.centerRight,
+                            end: Alignment.centerLeft,
+                          )
+                        : null,
+                    color: isSelected
+                        ? null
+                        : Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(20),
+                    border: isSelected
+                        ? null
+                        : Border.all(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).dividerColor
+                                : Colors.grey.shade200,
+                          ),
+                  ),
+                  child: Text(
+                    widget.categories[index],
+                    style: GoogleFonts.cairo(
+                      color: isSelected
+                          ? Colors.white
+                          : Theme.of(context).textTheme.bodyMedium?.color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (_showArrow)
+            Positioned(
+              left: -5,
+              child: IgnorePointer(
+                child: Container(
+                  height: 40,
+                  width: 40,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Theme.of(context).scaffoldBackgroundColor,
+                        Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor.withValues(alpha: 0.1),
+                      ],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 18,
+                    color: Color(0xFF008695),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

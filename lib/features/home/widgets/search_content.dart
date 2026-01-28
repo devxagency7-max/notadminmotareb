@@ -60,7 +60,7 @@ class SearchContent extends StatelessWidget {
                           FilterScreen(),
                       transitionsBuilder:
                           (context, animation, secondaryAnimation, child) {
-                            const begin = Offset(0.0, 1.0);
+                            const begin = Offset(1.0, 0.0);
                             const end = Offset.zero;
                             const curve = Curves.easeInOut;
 
@@ -79,42 +79,35 @@ class SearchContent extends StatelessWidget {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: 22,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF39BB5E).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF39BB5E).withOpacity(0.4),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.tune,
-                        size: 16,
-                        color: Color(0xFF39BB5E),
-                      ),
-                      const SizedBox(width: 5),
+                      const Icon(Icons.tune, size: 20, color: Colors.white),
+                      const SizedBox(width: 8),
                       Text(
                         context.loc.filter,
                         style: GoogleFonts.cairo(
-                          color: const Color(0xFF39BB5E),
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF39BB5E),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '3',
-                          style: GoogleFonts.cairo(
-                            color: Colors.white,
-                            fontSize: 10,
-                            height: 1,
-                          ),
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -143,13 +136,45 @@ class SearchContent extends StatelessWidget {
                 );
               }
 
-              final properties = homeProvider.allProperties;
+              final properties = homeProvider.filteredProperties;
 
               if (properties.isEmpty) {
                 return Center(
-                  child: Text(
-                    context.loc.noPropertiesAvailable,
-                    style: GoogleFonts.cairo(color: Colors.grey),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.search_off,
+                        size: 60,
+                        color: Colors.grey.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        // Context is available here
+                        // You might want to add a localized string "No properties match your filter"
+                        // reusing generic 'noPropertiesAvailable' for now or a custom message
+                        context.loc.noPropertiesAvailable,
+                        style: GoogleFonts.cairo(
+                          color: Colors.grey,
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (homeProvider.filterHousingTypes.isNotEmpty ||
+                          homeProvider.filterGenders.isNotEmpty)
+                        TextButton(
+                          onPressed: () {
+                            homeProvider.resetFilters();
+                          },
+                          child: Text(
+                            context
+                                .loc
+                                .reset, // Ensure this exists or use 'Reset'
+                            style: GoogleFonts.cairo(
+                              color: const Color(0xFF39BB5E),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 );
               }

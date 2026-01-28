@@ -80,7 +80,7 @@ class BookingRequestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -160,7 +160,7 @@ class BookingRequestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -204,7 +204,7 @@ class BookingRequestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -244,7 +244,7 @@ class BookingRequestScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2F1).withOpacity(0.5),
+                      color: const Color(0xFFE0F2F1).withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
@@ -270,7 +270,7 @@ class BookingRequestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -296,7 +296,7 @@ class BookingRequestScreen extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
@@ -314,10 +314,10 @@ class BookingRequestScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2F1).withOpacity(0.5),
+                      color: const Color(0xFFE0F2F1).withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(15),
                       border: Border.all(
-                        color: const Color(0xFF80CBC4).withOpacity(0.5),
+                        color: const Color(0xFF80CBC4).withValues(alpha: 0.5),
                       ),
                     ),
                     child: Row(
@@ -424,7 +424,7 @@ class BookingRequestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -467,10 +467,10 @@ class BookingRequestScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFFE0F2F1).withOpacity(0.3),
+                color: const Color(0xFFE0F2F1).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
-                  color: const Color(0xFF008695).withOpacity(0.3),
+                  color: const Color(0xFF008695).withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -516,7 +516,7 @@ class BookingRequestScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF39BB5E).withOpacity(0.3),
+                    color: const Color(0xFF39BB5E).withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),

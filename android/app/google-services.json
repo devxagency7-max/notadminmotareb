@@ -103,6 +103,14 @@
           }
         },
         {
+          "client_id": "562885198822-es3i0smt7qtnar2senesvtrur952sckp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.khaliyk.qarib",
+            "certificate_hash": "d7e4fa8aa872acd67d71535bcdf6b089ab3b3400"
+          }
+        },
+        {
           "client_id": "562885198822-siravv97bb6nsun6cnald9ajb1qm76jo.apps.googleusercontent.com",
           "client_type": 3
         }

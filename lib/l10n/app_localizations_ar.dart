@@ -87,7 +87,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get featuredForYou => 'مميزة لك ✨';
 
   @override
-  String get recentlyAdded => 'أضيف حديثاً 🆕';
+  String get recentlyAdded => 'أضيف حديثاً ';
 
   @override
   String get viewAll => 'عرض الكل';
@@ -107,6 +107,16 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get noCategoryProperties =>
       'لا توجد عقارات متاحة في هذا التصنيف حالياً';
+
+  @override
+  String get noSearchResults => 'لا توجد نتائج بحث تطابق طلبك';
+
+  @override
+  String get noFavorites => 'لا توجد عقارات في المفضلة';
+
+  @override
+  String get noFavoritesDesc =>
+      'استكشف العقارات وأضفها لقائمتك للرجوع إليها لاحقاً';
 
   @override
   String get reviews => 'المراجعات';
@@ -156,13 +166,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bookNow => 'احجز الآن';
 
   @override
+  String get divided => 'متقسمة';
+
+  @override
   String get loginSuccess => 'تم تسجيل الدخول بنجاح!';
 
   @override
   String get googleLoginSuccess => 'تم تسجيل الدخول بجوجل بنجاح!';
-
-  @override
-  String get facebookLoginSuccess => 'تم تسجيل الدخول بفيسبوك بنجاح!';
 
   @override
   String get welcomeBack => 'مرحباً بعودتك';
@@ -186,7 +196,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get continueWithGoogle => 'التسجيل بـ Google';
 
   @override
-  String get continueWithFacebook => 'التسجيل بـ Facebook';
+  String get continueAsGuest => 'الدخول كضيف';
 
   @override
   String get noAccount => 'ليس لديك حساب؟';
@@ -202,6 +212,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get getStarted => 'ابدأ رحلتك';
+
+  @override
+  String get guestActionRestricted => 'يجب تسجيل الدخول';
+
+  @override
+  String get guestActionRestrictedDesc =>
+      'يرجى تسجيل الدخول أو إنشاء حساب جديد للقيام بهذا الإجراء';
+
+  @override
+  String get signInNow => 'سجل الدخول الآن';
+
+  @override
+  String get cancel => 'إلغاء';
 
   @override
   String get intro1Title => 'سكنك وانت مطمن';
@@ -224,13 +247,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get intro3Desc => 'طرق دفع متعددة وآمنة. ابدأ رحلتك معنا الآن.';
 
   @override
-  String get navHome => 'Home';
+  String get navHome => 'الرئيسية';
 
   @override
-  String get navSearch => 'Search';
+  String get navSearch => 'بحث';
 
   @override
-  String get navChat => 'Chat';
+  String get navChat => 'محادثات';
 
   @override
   String get navProfile => 'حسابي';
@@ -456,9 +479,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get submitRequest => 'إرسال الطلب';
-
-  @override
-  String get cancel => 'إلغاء';
 
   @override
   String get requestSentSuccess => 'تم إرسال الطلب بنجاح';

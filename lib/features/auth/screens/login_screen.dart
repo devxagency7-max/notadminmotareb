@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 import 'signup_screen.dart';
@@ -93,15 +93,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _signInWithFacebook() async {
+  Future<void> _signInAnonymously() async {
     try {
-      await context.read<AuthProvider>().signInWithFacebook();
+      await context.read<AuthProvider>().signInAnonymously();
       if (mounted && context.read<AuthProvider>().isAuthenticated) {
-        CustomSnackBar.show(
-          context: context,
-          message: context.loc.facebookLoginSuccess,
-          isError: false,
-        );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -130,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(color: Colors.white.withOpacity(0.0)),
+            child: Container(color: Colors.white.withValues(alpha: 0.0)),
           ),
 
           SafeArea(
@@ -219,8 +214,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 15),
 
-                  // Facebook Button
-                  _buildFacebookButton(),
+                  // Guest Button
+                  _buildGuestButton(),
 
                   const Spacer(flex: 2),
 
@@ -248,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFE0F2F1).withOpacity(0.8),
+              color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
             ),
           ),
         ),
@@ -260,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFE0F2F1).withOpacity(0.8),
+              color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
             ),
           ),
         ),
@@ -374,7 +369,7 @@ class _LoginScreenState extends State<LoginScreen> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF008695).withOpacity(0.3),
+              color: const Color(0xFF008695).withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -423,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -455,18 +450,19 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildFacebookButton() {
+  Widget _buildGuestButton() {
     return FadeInUp(
       delay: const Duration(milliseconds: 850),
       child: Container(
         width: double.infinity,
         height: 55,
         decoration: BoxDecoration(
-          color: const Color(0xFF1877F2), // Facebook Blue
+          color: Colors.white,
           borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1877F2).withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -476,22 +472,18 @@ class _LoginScreenState extends State<LoginScreen> {
           color: Colors.transparent,
           child: InkWell(
             borderRadius: BorderRadius.circular(15),
-            onTap: _signInWithFacebook,
+            onTap: _signInAnonymously,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  FontAwesomeIcons.facebook,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                const Icon(Icons.person_outline, color: Colors.teal, size: 24),
                 const SizedBox(width: 15),
                 Text(
-                  context.loc.continueWithFacebook,
+                  context.loc.continueAsGuest,
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black87,
                   ),
                 ),
               ],

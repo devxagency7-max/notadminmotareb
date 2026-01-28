@@ -88,6 +88,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
@@ -97,11 +98,19 @@ class _VerificationScreenState extends State<VerificationScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF39BB5E),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: const Color(0xFF39BB5E),
+                    onPrimary: Colors.white,
+                    surface: Theme.of(context).cardTheme.color!,
+                    onSurface: Colors.white,
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFF39BB5E),
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
+            dialogBackgroundColor: Theme.of(context).cardTheme.color,
           ),
           child: child!,
         );
@@ -264,7 +273,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
           ),
         ),
         body: Container(
-          decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 120, 20, 40),
             child: Column(
@@ -306,7 +317,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
           const SizedBox(height: 100),
           const CircularProgressIndicator(color: Color(0xFF39BB5E)),
           const SizedBox(height: 20),
-          Text(_loadingMessage, style: GoogleFonts.cairo(fontSize: 16)),
+          Text(
+            _loadingMessage,
+            style: GoogleFonts.cairo(
+              fontSize: 16,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
         ],
       ),
     );
@@ -318,28 +335,34 @@ class _VerificationScreenState extends State<VerificationScreen> {
     required String title,
     required String message,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       child: Container(
         margin: const EdgeInsets.only(top: 40),
         padding: const EdgeInsets.all(30),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+          border: isDark
+              ? Border.all(color: Theme.of(context).dividerColor)
+              : null,
         ),
         child: Column(
           children: [
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 60, color: color),
@@ -359,7 +382,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.cairo(
                 fontSize: 15,
-                color: Colors.grey.shade700,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 height: 1.6,
               ),
             ),
@@ -370,6 +393,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Widget _buildRejectionState(String? reason) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return FadeInUp(
       child: Column(
         children: [
@@ -377,23 +401,29 @@ class _VerificationScreenState extends State<VerificationScreen> {
             padding: const EdgeInsets.all(25),
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.red.withOpacity(0.05),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-              border: Border.all(color: Colors.red.withOpacity(0.1)),
+              boxShadow: isDark
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.red.withValues(alpha: 0.05),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+              border: Border.all(
+                color: isDark
+                    ? Theme.of(context).dividerColor
+                    : Colors.red.withValues(alpha: 0.1),
+              ),
             ),
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -412,13 +442,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Divider(),
+                Divider(color: Theme.of(context).dividerColor),
                 const SizedBox(height: 20),
                 Text(
                   'سبب الرفض:',
                   style: GoogleFonts.cairo(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -427,16 +457,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   padding: const EdgeInsets.all(20),
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: isDark
+                        ? Theme.of(context).scaffoldBackgroundColor
+                        : Colors.grey.shade50,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(
+                      color: isDark
+                          ? Theme.of(context).dividerColor
+                          : Colors.grey.shade200,
+                    ),
                   ),
                   child: Text(
                     reason ?? 'لم يتم تحديد سبب، يرجى التواصل مع الدعم الفني.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.cairo(
                       fontSize: 16,
-                      color: Colors.black87,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontWeight: FontWeight.w600,
                       height: 1.5,
                     ),
@@ -513,7 +549,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF008695).withOpacity(0.1),
+              color: const Color(0xFF008695).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: const Color(0xFF008695), size: 24),
@@ -528,11 +564,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   style: GoogleFonts.cairo(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey),
+                  style: GoogleFonts.cairo(
+                    fontSize: 12,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  ),
                 ),
               ],
             ),
@@ -543,20 +585,27 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Widget _buildGovernorateDropdown() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+        border: isDark
+            ? Border.all(color: Theme.of(context).dividerColor)
+            : null,
       ),
       child: DropdownButtonFormField<String>(
         initialValue: _selectedGovernorate,
+        dropdownColor: Theme.of(context).cardTheme.color,
         decoration: InputDecoration(
           labelText: 'المحافظة',
           labelStyle: GoogleFonts.cairo(color: Colors.grey, fontSize: 13),
@@ -566,13 +615,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).cardTheme.color,
         ),
         items: _governorates
             .map(
               (g) => DropdownMenuItem(
                 value: g,
-                child: Text(g, style: GoogleFonts.cairo()),
+                child: Text(
+                  g,
+                  style: GoogleFonts.cairo(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
               ),
             )
             .toList(),
@@ -622,7 +676,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF39BB5E).withOpacity(0.3),
+            color: const Color(0xFF39BB5E).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -663,22 +717,31 @@ class _VerificationScreenState extends State<VerificationScreen> {
     bool readOnly = false,
     VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+        border: isDark
+            ? Border.all(color: Theme.of(context).dividerColor)
+            : null,
       ),
       child: TextField(
         controller: controller,
         readOnly: readOnly,
         onTap: onTap,
+        style: GoogleFonts.cairo(
+          color: Theme.of(context).textTheme.bodyLarge?.color,
+        ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.cairo(color: Colors.grey, fontSize: 13),
@@ -688,7 +751,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).cardTheme.color,
         ),
       ),
     );
@@ -700,26 +763,31 @@ class _VerificationScreenState extends State<VerificationScreen> {
     VoidCallback? onTap,
     VoidCallback? onDelete,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: image == null ? onTap : null,
       child: Container(
         height: 160,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
             color: image != null
-                ? const Color(0xFF39BB5E).withOpacity(0.3)
-                : Colors.grey.shade200,
+                ? const Color(0xFF39BB5E).withValues(alpha: 0.3)
+                : (isDark
+                      ? Theme.of(context).dividerColor
+                      : Colors.grey.shade200),
             width: 2,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
         ),
         child: image != null
             ? Stack(
@@ -756,7 +824,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF008695).withOpacity(0.05),
+                      color: const Color(0xFF008695).withValues(alpha: 0.05),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -771,7 +839,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     style: GoogleFonts.cairo(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   Text(

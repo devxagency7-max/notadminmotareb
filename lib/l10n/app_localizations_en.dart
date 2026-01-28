@@ -87,7 +87,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featuredForYou => 'Featured for you ✨';
 
   @override
-  String get recentlyAdded => 'Recently added 🆕';
+  String get recentlyAdded => 'Recently added ';
 
   @override
   String get viewAll => 'View all';
@@ -108,6 +108,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noCategoryProperties =>
       'No properties available in this category currently';
+
+  @override
+  String get noSearchResults => 'No search results found matching your request';
+
+  @override
+  String get noFavorites => 'No favorites yet';
+
+  @override
+  String get noFavoritesDesc =>
+      'Explore properties and add them to your list to find them later';
 
   @override
   String get reviews => 'Reviews';
@@ -157,13 +167,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bookNow => 'Book Now';
 
   @override
+  String get divided => 'Divided';
+
+  @override
   String get loginSuccess => 'Logged in successfully!';
 
   @override
   String get googleLoginSuccess => 'Successfully logged in with Google!';
-
-  @override
-  String get facebookLoginSuccess => 'Successfully logged in with Facebook!';
 
   @override
   String get welcomeBack => 'Welcome Back';
@@ -187,7 +197,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueWithGoogle => 'Continue with Google';
 
   @override
-  String get continueWithFacebook => 'Continue with Facebook';
+  String get continueAsGuest => 'Continue as Guest';
 
   @override
   String get noAccount => 'Don\'t have an account?';
@@ -203,6 +213,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get getStarted => 'Get Started';
+
+  @override
+  String get guestActionRestricted => 'Sign in required';
+
+  @override
+  String get guestActionRestrictedDesc =>
+      'Please sign in or create an account to perform this action';
+
+  @override
+  String get signInNow => 'Sign In Now';
+
+  @override
+  String get cancel => 'Cancel';
 
   @override
   String get intro1Title => 'Your home, safely';
@@ -463,9 +486,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submitRequest => 'Submit Request';
-
-  @override
-  String get cancel => 'Cancel';
 
   @override
   String get requestSentSuccess => 'Request sent successfully';

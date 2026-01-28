@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
+import '../../../utils/guest_checker.dart';
+
 class CustomNavBar extends StatelessWidget {
   const CustomNavBar({super.key});
 
@@ -116,7 +118,10 @@ class CustomNavBar extends StatelessWidget {
     bool isSelected = selectedIndex == index;
 
     return GestureDetector(
-      onTap: () => homeProvider.setIndex(index),
+      onTap: () {
+        if (index == 2 && !GuestChecker.check(context)) return;
+        homeProvider.setIndex(index);
+      },
       child: Container(
         width: width,
         height: 65,

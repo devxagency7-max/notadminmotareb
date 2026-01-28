@@ -99,60 +99,168 @@ class HomeProvider extends ChangeNotifier {
   }
 
   // Business Logic: Filtering & Sorting
+  String _searchQuery = '';
+  RangeValues _priceRange = const RangeValues(0, 10000);
+  List<String> _filterHousingTypes = [];
+  List<String> _filterGenders = [];
+
+  String get searchQuery => _searchQuery;
+  RangeValues get priceRange => _priceRange;
+  List<String> get filterHousingTypes => _filterHousingTypes;
+  List<String> get filterGenders => _filterGenders;
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void applyFilters({
+    required RangeValues priceRange,
+    required List<String> housingTypes,
+    required List<String> genders,
+  }) {
+    _priceRange = priceRange;
+    _filterHousingTypes = housingTypes;
+    _filterGenders = genders;
+    notifyListeners();
+  }
+
+  void resetFilters() {
+    _priceRange = const RangeValues(0, 10000);
+    _filterHousingTypes = [];
+    _filterGenders = [];
+    _searchQuery = '';
+    notifyListeners();
+  }
+
+  List<Property> get filteredProperties {
+    return _applyFullFilters(_allProperties);
+  }
 
   List<Property> get featuredProperties {
-    final featured = _allProperties.where((p) => p.rating >= 4.5).toList();
-    return featured.isNotEmpty ? featured : _allProperties.take(5).toList();
+    var list = _applySearchOnly(_allProperties);
+    final featured = list.where((p) => p.rating >= 4.5).toList();
+    return featured.isNotEmpty ? featured : list.take(5).toList();
   }
 
   List<Property> get recentProperties {
-    return _allProperties;
+    return _applySearchOnly(_allProperties);
+  }
+
+  // Used for Home Screen: Only applies Text Search
+  List<Property> _applySearchOnly(List<Property> properties) {
+    if (_searchQuery.isEmpty) return properties;
+
+    final query = _searchQuery.toLowerCase();
+    return properties.where((p) {
+      return p.title.toLowerCase().contains(query) ||
+          p.location.toLowerCase().contains(query) ||
+          p.universities.any((u) => u.toLowerCase().contains(query)) ||
+          p.tags.any((t) => t.toLowerCase().contains(query));
+    }).toList();
+  }
+
+  // Used for Search Screen: Applies Search + Advanced Filters
+  List<Property> _applyFullFilters(List<Property> properties) {
+    return properties.where((p) {
+      // 1. Search Query
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final matchesSearch =
+            p.title.toLowerCase().contains(query) ||
+            p.location.toLowerCase().contains(query) ||
+            p.universities.any((u) => u.toLowerCase().contains(query)) ||
+            p.tags.any((t) => t.toLowerCase().contains(query));
+        if (!matchesSearch) return false;
+      }
+
+      // 2. Price Range
+      // Assuming price format is "2000 ج.م" or similar
+      try {
+        // Remove non-numeric characters except dot
+        String priceString = p.price.replaceAll(RegExp(r'[^0-9.]'), '');
+        double price = double.tryParse(priceString) ?? 0.0;
+        if (price < _priceRange.start || price > _priceRange.end) {
+          return false;
+        }
+      } catch (e) {
+        // If parsing fails, ignore price filter or exclude? currently ignoring
+      }
+
+      // 3. Housing Type
+      // 'Bed' -> 'سرير'
+      // 'Apartment' -> 'شقة' (or 'شقه كامله')
+      // 'Room' -> 'غرفة' (or 'متقسمه')
+      if (_filterHousingTypes.isNotEmpty) {
+        bool matchesType = false;
+        // Check exact matches or mapped values
+        // You might need to adjust these strings based on your actual data
+        for (var type in _filterHousingTypes) {
+          if (type == 'Bed' &&
+              (p.type.contains('سرير') || p.bookingMode == 'bed'))
+            matchesType = true;
+          if (type == 'Apartment' &&
+              (p.type.contains('شقة') || p.isFullApartmentBooking))
+            matchesType = true;
+          if (type == 'Room' &&
+              (p.type.contains('غرفة') || p.generalRoomType != null))
+            matchesType = true;
+        }
+        if (!matchesType) return false;
+      }
+
+      // 4. Gender
+      if (_filterGenders.isNotEmpty) {
+        bool matchesGender = false;
+        // Assuming p.gender is 'male', 'female', or null/mixed
+        // Adjust based on your actual data values
+        String? propGender = p.gender?.toLowerCase();
+
+        if (_filterGenders.contains('Male') &&
+            (propGender == 'male' ||
+                p.tags.contains('شباب') ||
+                p.tags.contains('ذكور')))
+          matchesGender = true;
+        if (_filterGenders.contains('Female') &&
+            (propGender == 'female' ||
+                p.tags.contains('بنات') ||
+                p.tags.contains('إناث')))
+          matchesGender = true;
+        // If property has no gender specified, deciding whether to show it.
+        // Usually assume mixed or show all? strictly filtering:
+        if (propGender == null && !matchesGender) {
+          // Check headers/tags if not in gender field
+          if (_filterGenders.contains('Male') && p.title.contains('شباب'))
+            matchesGender = true;
+          if (_filterGenders.contains('Female') && p.title.contains('بنات'))
+            matchesGender = true;
+        }
+
+        if (!matchesGender) return false;
+      }
+
+      return true;
+    }).toList();
   }
 
   List<String> get uniqueUniversities {
     final Set<String> allUniversities = {};
-    for (var p in _allProperties) {
+    for (var p in _applySearchOnly(_allProperties)) {
       allUniversities.addAll(p.universities);
     }
     return allUniversities.toList()..sort();
   }
 
   List<Property> getPropertiesForUniversity(String universityName) {
-    return _allProperties
-        .where((p) => p.universities.contains(universityName))
-        .toList();
+    return _applySearchOnly(
+      _allProperties,
+    ).where((p) => p.universities.contains(universityName)).toList();
   }
 
+  // Deprecated usage of category index filter, consider removing if moving fully to new filter system
+  // Keeping it for backward compatibility but making it use the new filter logic if needed OR just ignore it
   List<Property> get filteredByCategory {
-    switch (_selectedCategoryIndex) {
-      case 2: // Youth (Male)
-        return _allProperties
-            .where(
-              (p) =>
-                  p.gender == 'male' ||
-                  p.tags.contains('شباب') ||
-                  p.tags.contains('ذكور'),
-            )
-            .toList();
-      case 3: // Girls (Female)
-        return _allProperties
-            .where(
-              (p) =>
-                  p.gender == 'female' ||
-                  p.tags.contains('بنات') ||
-                  p.tags.contains('إناث'),
-            )
-            .toList();
-      case 4: // Bed
-        return _allProperties
-            .where((p) => p.type.contains('سرير') || p.type.contains('Bed'))
-            .toList();
-      case 5: // Room
-        return _allProperties
-            .where((p) => p.type.contains('غرفة') || p.type.contains('Room'))
-            .toList();
-      default:
-        return _allProperties;
-    }
+    // If using new filters, return filteredProperties
+    return _applySearchOnly(_allProperties);
   }
 }

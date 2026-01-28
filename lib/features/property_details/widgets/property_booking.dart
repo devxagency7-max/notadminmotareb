@@ -50,12 +50,14 @@ class PropertyBooking extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
                 ],
-          border: Border.all(color: const Color(0xFF39BB5E).withOpacity(0.3)),
+          border: Border.all(
+            color: const Color(0xFF39BB5E).withValues(alpha: 0.3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +67,7 @@ class PropertyBooking extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF39BB5E).withOpacity(0.1),
+                    color: const Color(0xFF39BB5E).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.bed, color: Color(0xFF39BB5E)),
@@ -100,7 +102,7 @@ class PropertyBooking extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -217,9 +219,11 @@ class PropertyBooking extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 25),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF008695).withOpacity(0.08),
+          color: const Color(0xFF008695).withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFF008695).withOpacity(0.3)),
+          border: Border.all(
+            color: const Color(0xFF008695).withValues(alpha: 0.3),
+          ),
         ),
         child: Column(
           children: [
@@ -228,7 +232,7 @@ class PropertyBooking extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF008695).withOpacity(0.1),
+                    color: const Color(0xFF008695).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -328,11 +332,11 @@ class PropertyBooking extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white.withOpacity(0.05)
+                            ? Colors.white.withValues(alpha: 0.05)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(0xFF008695).withOpacity(0.1),
+                          color: const Color(0xFF008695).withValues(alpha: 0.1),
                         ),
                       ),
                       child: Row(
@@ -397,13 +401,13 @@ class PropertyBooking extends StatelessWidget {
         border: Border.all(
           color: onPressed == null
               ? Colors.grey.shade200
-              : const Color(0xFF008695).withOpacity(0.5),
+              : const Color(0xFF008695).withValues(alpha: 0.5),
         ),
         boxShadow: onPressed == null
             ? []
             : [
                 BoxShadow(
-                  color: const Color(0xFF008695).withOpacity(0.1),
+                  color: const Color(0xFF008695).withValues(alpha: 0.1),
                   blurRadius: 5,
                   offset: const Offset(0, 2),
                 ),
@@ -540,7 +544,7 @@ class UnitSelectionWidget extends StatelessWidget {
               boxShadow: isWholeApartment
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF008695).withOpacity(0.3),
+                        color: const Color(0xFF008695).withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -589,7 +593,7 @@ class UnitSelectionWidget extends StatelessWidget {
               width: showError ? 2 : 1,
             ),
             color: showError
-                ? Colors.red.withOpacity(0.05)
+                ? Colors.red.withValues(alpha: 0.05)
                 : Theme.of(context).brightness == Brightness.dark
                 ? Theme.of(context).cardTheme.color
                 : const Color(0xFFF5F5F5),
@@ -649,7 +653,7 @@ class UnitSelectionWidget extends StatelessWidget {
                                 color:
                                     Theme.of(context).brightness ==
                                         Brightness.dark
-                                    ? Colors.grey[800]?.withOpacity(0.5)
+                                    ? Colors.grey[800]?.withValues(alpha: 0.5)
                                     : Colors.grey[200],
                                 width: double.infinity,
                                 child: Text(
@@ -746,7 +750,7 @@ class UnitSelectionWidget extends StatelessWidget {
       onTap: onTap,
       child: Container(
         color: isSelected
-            ? const Color(0xFF008695).withOpacity(0.15)
+            ? const Color(0xFF008695).withValues(alpha: 0.15)
             : Colors.transparent,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

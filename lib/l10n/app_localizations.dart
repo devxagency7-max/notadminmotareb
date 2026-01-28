@@ -257,7 +257,7 @@ abstract class AppLocalizations {
   /// No description provided for @recentlyAdded.
   ///
   /// In en, this message translates to:
-  /// **'Recently added 🆕'**
+  /// **'Recently added '**
   String get recentlyAdded;
 
   /// No description provided for @viewAll.
@@ -295,6 +295,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No properties available in this category currently'**
   String get noCategoryProperties;
+
+  /// No description provided for @noSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No search results found matching your request'**
+  String get noSearchResults;
+
+  /// No description provided for @noFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites yet'**
+  String get noFavorites;
+
+  /// No description provided for @noFavoritesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore properties and add them to your list to find them later'**
+  String get noFavoritesDesc;
 
   /// No description provided for @reviews.
   ///
@@ -386,6 +404,12 @@ abstract class AppLocalizations {
   /// **'Book Now'**
   String get bookNow;
 
+  /// No description provided for @divided.
+  ///
+  /// In en, this message translates to:
+  /// **'Divided'**
+  String get divided;
+
   /// No description provided for @loginSuccess.
   ///
   /// In en, this message translates to:
@@ -397,12 +421,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Successfully logged in with Google!'**
   String get googleLoginSuccess;
-
-  /// No description provided for @facebookLoginSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Successfully logged in with Facebook!'**
-  String get facebookLoginSuccess;
 
   /// No description provided for @welcomeBack.
   ///
@@ -446,11 +464,11 @@ abstract class AppLocalizations {
   /// **'Continue with Google'**
   String get continueWithGoogle;
 
-  /// No description provided for @continueWithFacebook.
+  /// No description provided for @continueAsGuest.
   ///
   /// In en, this message translates to:
-  /// **'Continue with Facebook'**
-  String get continueWithFacebook;
+  /// **'Continue as Guest'**
+  String get continueAsGuest;
 
   /// No description provided for @noAccount.
   ///
@@ -481,6 +499,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get Started'**
   String get getStarted;
+
+  /// No description provided for @guestActionRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in required'**
+  String get guestActionRestricted;
+
+  /// No description provided for @guestActionRestrictedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in or create an account to perform this action'**
+  String get guestActionRestrictedDesc;
+
+  /// No description provided for @signInNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In Now'**
+  String get signInNow;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
 
   /// No description provided for @intro1Title.
   ///
@@ -967,12 +1009,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Submit Request'**
   String get submitRequest;
-
-  /// No description provided for @cancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cancel;
 
   /// No description provided for @requestSentSuccess.
   ///

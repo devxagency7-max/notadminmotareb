@@ -3,7 +3,6 @@ import 'package:animate_do/animate_do.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../utils/custom_snackbar.dart';
 import '../../../utils/error_handler.dart';
@@ -125,31 +124,6 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future<void> _signInWithFacebook() async {
-    try {
-      await context.read<AuthProvider>().signInWithFacebook();
-      if (mounted && context.read<AuthProvider>().isAuthenticated) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'تم تسجيل الدخول بفيسبوك بنجاح!',
-          isError: false,
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: ErrorHandler.getMessage(e),
-          isError: true,
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Scrollable Layout as requested
@@ -175,7 +149,7 @@ class _SignupScreenState extends State<SignupScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE0F2F1).withOpacity(0.8),
+                color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -188,14 +162,14 @@ class _SignupScreenState extends State<SignupScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE0F2F1).withOpacity(0.8),
+                color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
               ),
             ),
           ),
           // Blur Effect
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(color: Colors.white.withOpacity(0.0)),
+            child: Container(color: Colors.white.withValues(alpha: 0.0)),
           ),
 
           // Content
@@ -288,7 +262,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.15),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.15,
+                                        ),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -509,7 +485,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF008695).withOpacity(0.3),
+                            color: const Color(
+                              0xFF008695,
+                            ).withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 5),
                           ),
@@ -551,11 +529,6 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // Google Sign In Button
                   _buildGoogleButton(),
-
-                  const SizedBox(height: 15),
-
-                  // Facebook Sign In Button
-                  _buildFacebookButton(),
 
                   const SizedBox(height: 20),
 
@@ -603,7 +576,7 @@ class _SignupScreenState extends State<SignupScreen> {
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -625,53 +598,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFacebookButton() {
-    return FadeInUp(
-      delay: const Duration(milliseconds: 750),
-      child: Container(
-        width: double.infinity,
-        height: 55,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1877F2), // Facebook Blue
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1877F2).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(15),
-            onTap: _signInWithFacebook,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  FontAwesomeIcons.facebook,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                const SizedBox(width: 15),
-                Text(
-                  'التسجيل بـ Facebook',
-                  style: GoogleFonts.cairo(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
                   ),
                 ),
               ],

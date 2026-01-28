@@ -25,10 +25,10 @@ class R2UploadService {
       final contentType =
           lookupMimeType(file.path) ?? 'application/octet-stream';
 
-      print('🚀 Starting upload for: $fileName ($contentType)');
+      // print('🚀 Starting upload for: $fileName ($contentType)');
 
       // 1) Get Presigned URL from Cloud Function
-      print('⏳ Requesting upload URL...');
+      // print('⏳ Requesting upload URL...');
       final result = await _functions
           .httpsCallable('getR2UploadUrl')
           .call({
@@ -41,11 +41,11 @@ class R2UploadService {
       final data = Map<String, dynamic>.from(result.data);
       final uploadUrl = data['uploadUrl'] as String;
       final publicUrl = data['publicUrl'] as String;
-      print('✅ Got upload URL. Uploading to R2...');
+      // print('✅ Got upload URL. Uploading to R2...');
 
       // 2) Upload file directly to R2 using Dio (Streaming)
       final int fileSize = await file.length();
-      print('📦 File Size: ${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
+      // print('📦 File Size: ${(fileSize / 1024 / 1024).toStringAsFixed(2)} MB');
 
       // Create stream
       final stream = file.openRead();
@@ -66,7 +66,7 @@ class R2UploadService {
         },
       );
 
-      print('🎉 Upload successful: $publicUrl');
+      // print('🎉 Upload successful: $publicUrl');
       return publicUrl;
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'permission-denied') {

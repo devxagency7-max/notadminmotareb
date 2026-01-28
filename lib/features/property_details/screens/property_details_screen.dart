@@ -14,6 +14,7 @@ import '../widgets/property_owner.dart';
 import '../widgets/property_booking.dart';
 import '../widgets/property_description.dart';
 import '../widgets/property_actions.dart';
+import '../../../utils/guest_checker.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/property_details_provider.dart';
@@ -79,6 +80,8 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
   bool _showSelectionError = false;
 
   void _onBookNow(BuildContext context, PropertyDetailsProvider provider) {
+    if (!GuestChecker.check(context)) return;
+
     if (!provider.validateBooking()) {
       setState(() {
         _showSelectionError = true;
@@ -163,7 +166,9 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
                               property: property,
                               isFavorite: isFavorite,
                               onToggleFavorite: () {
-                                favoritesProvider.toggleFavorite(property);
+                                if (GuestChecker.check(context)) {
+                                  favoritesProvider.toggleFavorite(property);
+                                }
                               },
                             ),
                             const SizedBox(height: 20),

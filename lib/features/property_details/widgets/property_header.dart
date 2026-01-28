@@ -65,6 +65,7 @@ class PropertyHeader extends StatelessWidget {
                 ],
                 const SizedBox(height: 12),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -82,16 +83,20 @@ class PropertyHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        property.governorate != null
-                            ? '${property.governorate} - ${property.location}'
-                            : property.location,
-                        style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          property.governorate != null
+                              ? '${property.governorate} - ${property.location}'
+                              : property.location,
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
