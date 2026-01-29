@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -208,7 +209,7 @@ class LargePropertyCard extends StatelessWidget {
                                       end: Alignment.centerLeft,
                                     ).createShader(bounds),
                                 child: Text(
-                                  property.price,
+                                  '${NumberFormat.decimalPattern().format(property.price)} ${context.loc.currency}',
                                   style: GoogleFonts.cairo(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
@@ -220,7 +221,7 @@ class LargePropertyCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 5),
                           Text(
-                            property.title,
+                            property.localizedTitle(context),
                             style: GoogleFonts.cairo(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -244,7 +245,7 @@ class LargePropertyCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  property.location,
+                                  property.localizedLocation(context),
                                   style: GoogleFonts.cairo(color: Colors.grey),
                                 ),
                               ),

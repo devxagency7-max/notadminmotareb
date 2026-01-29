@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -163,7 +164,7 @@ class PropertyCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    property.title,
+                    property.localizedTitle(context),
                     style: GoogleFonts.cairo(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -173,7 +174,7 @@ class PropertyCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    property.location,
+                    property.localizedLocation(context),
                     style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey),
                   ),
                   const SizedBox(height: 5),
@@ -187,7 +188,7 @@ class PropertyCard extends StatelessWidget {
                           end: Alignment.centerLeft,
                         ).createShader(bounds),
                         child: Text(
-                          property.price,
+                          '${NumberFormat.decimalPattern().format(property.price)} ${context.loc.currency}',
                           style: GoogleFonts.cairo(
                             fontWeight: FontWeight.w900,
                             fontSize: 14,

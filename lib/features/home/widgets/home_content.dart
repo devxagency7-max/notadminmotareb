@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:animations/animations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 import '../../../core/models/property_model.dart';
-import '../screens/filter_screen.dart';
+
 import '../../property_details/screens/property_details_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/home_provider.dart';
@@ -596,7 +597,7 @@ class HomeContent extends StatelessWidget {
                                   ),
                                 ),
                               Text(
-                                property.title,
+                                property.localizedTitle(context),
                                 style: GoogleFonts.cairo(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -609,7 +610,7 @@ class HomeContent extends StatelessWidget {
                                 textAlign: TextAlign.right,
                               ),
                               Text(
-                                '${property.location} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
+                                '${property.localizedLocation(context)} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
                                 style: GoogleFonts.cairo(
                                   fontSize: 10,
                                   color: Colors.grey,
@@ -628,7 +629,7 @@ class HomeContent extends StatelessWidget {
                             end: Alignment.centerLeft,
                           ).createShader(bounds),
                           child: Text(
-                            property.price,
+                            '${NumberFormat.decimalPattern().format(property.price)} ${context.loc.currency}',
                             style: GoogleFonts.cairo(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,

@@ -40,7 +40,7 @@ class PropertyDetailsScreen extends StatelessWidget {
       id: 'default_1',
       title: 'شقة فندقية مودرن - المعادي',
       location: 'المعادي، القاهرة',
-      price: '3500',
+      price: 3500, // Changed to double
       imageUrl: 'https://via.placeholder.com/600',
       type: 'شقة',
       description: 'شقة فندقية مميزة بتصميم مودرن في قلب المعادي...',
@@ -117,10 +117,33 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
       return;
     }
 
+    // Prepare selection details
+    String selectionDetails = '';
+    // double totalPrice = 0.0;
+
+    if (provider.isWholeApartment) {
+      selectionDetails = context.loc.fullApartment;
+      // totalPrice = provider.property.price.toDouble();
+    } else {
+      if (provider.property.bookingMode == 'bed') {
+        selectionDetails = '${provider.selectedBedCount} ${context.loc.beds}';
+        // totalPrice = provider.selectedBedCount * provider.property.bedPrice;
+      } else {
+        // Unit mode
+        selectionDetails = provider.selectionLabel ?? '';
+      }
+    }
+
     // Proceed to booking
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const BookingRequestScreen()),
+      MaterialPageRoute(
+        builder: (_) => BookingRequestScreen(
+          property: provider.property,
+          selectionDetails: selectionDetails,
+          price: provider.selectedPrice,
+        ),
+      ),
     );
   }
 
@@ -200,7 +223,9 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
                               },
                             ),
                             PropertyDescription(
-                              description: property.description,
+                              description: property.localizedDescription(
+                                context,
+                              ), // Use localized
                             ),
                           ],
                         ),

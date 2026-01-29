@@ -162,6 +162,46 @@ class _PropertyFeaturesState extends State<PropertyFeatures> {
     Color bgColor,
     Color iconColor,
   ) {
+    // Logic to handle bilingual labels (e.g. "تكييف / AC" or "AC / تكييف")
+    String localizedLabel = label;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
+    if (label.contains('/')) {
+      final parts = label.split('/');
+      if (isAr) {
+        // Try to find if any part is Arabic
+        localizedLabel = parts
+            .firstWhere(
+              (p) => p.trim().contains(RegExp(r'[\u0600-\u06FF]')),
+              orElse: () => parts[0],
+            )
+            .trim();
+      } else {
+        localizedLabel = parts
+            .firstWhere(
+              (p) => !p.trim().contains(RegExp(r'[\u0600-\u06FF]')),
+              orElse: () => parts.length > 1 ? parts[1] : parts[0],
+            )
+            .trim();
+      }
+    } else if (label.contains(' - ')) {
+      final parts = label.split(' - ');
+      if (isAr) {
+        localizedLabel = parts[0].trim();
+      } else {
+        localizedLabel = parts.length > 1 ? parts[1].trim() : parts[0].trim();
+      }
+    } else if (label.startsWith('{') && label.endsWith('}')) {
+      // Logic for map-like strings
+      final arMatch = RegExp(r'ar:\s*([^,}]+)').firstMatch(label);
+      final enMatch = RegExp(r'en:\s*([^,}]+)').firstMatch(label);
+      if (isAr && arMatch != null) {
+        localizedLabel = arMatch.group(1)!.trim();
+      } else if (!isAr && enMatch != null) {
+        localizedLabel = enMatch.group(1)!.trim();
+      }
+    }
+
     return Column(
       children: [
         Container(
@@ -183,7 +223,7 @@ class _PropertyFeaturesState extends State<PropertyFeatures> {
         ),
         const SizedBox(height: 8),
         Text(
-          label,
+          localizedLabel,
           style: GoogleFonts.cairo(
             fontSize: 12,
             fontWeight: FontWeight.bold,

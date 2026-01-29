@@ -178,8 +178,8 @@ class HomeProvider extends ChangeNotifier {
       // Assuming price format is "2000 ج.م" or similar
       try {
         // Remove non-numeric characters except dot
-        String priceString = p.price.replaceAll(RegExp(r'[^0-9.]'), '');
-        double price = double.tryParse(priceString) ?? 0.0;
+        // String priceString = p.price.replaceAll(RegExp(r'[^0-9.]'), '');
+        double price = p.price;
         if (price < _priceRange.start || price > _priceRange.end) {
           return false;
         }

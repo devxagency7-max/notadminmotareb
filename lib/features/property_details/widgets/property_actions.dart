@@ -47,40 +47,46 @@ class PropertyActions extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  selectionLabel ?? context.loc.price,
-                  style: GoogleFonts.cairo(
-                    fontSize: 12,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '${NumberFormat.decimalPattern().format(selectedPrice ?? 0)} ${context.loc.currency}',
-                  style: GoogleFonts.cairo(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFE6F4F4)
-                        : const Color(0xFF008695),
-                  ),
-                ),
-                if (property.discountPrice != null)
-                  Text(
-                    property.price,
-                    style: GoogleFonts.cairo(
-                      fontSize: 14,
-                      color: Colors.grey.withOpacity(0.6),
-                      decoration: TextDecoration.lineThrough,
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      selectionLabel ?? context.loc.price,
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-              ],
+                  Text(
+                    '${NumberFormat.decimalPattern().format(selectedPrice ?? 0)} ${context.loc.currency}',
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFE6F4F4)
+                          : const Color(0xFF008695),
+                    ),
+                  ),
+                  if (property.discountPrice != null)
+                    Text(
+                      NumberFormat.decimalPattern().format(property.price),
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        color: Colors.grey.withOpacity(0.6),
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                ],
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 10),
             Container(
               height: 50,
               padding: const EdgeInsets.symmetric(horizontal: 30),

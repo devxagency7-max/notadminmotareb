@@ -84,10 +84,7 @@ class PropertyDetailsProvider extends ChangeNotifier {
   }
 
   void _calculatePrice({BuildContext? context}) {
-    double base =
-        property.discountPrice ??
-        double.tryParse(property.price.replaceAll(RegExp(r'[^0-9.]'), '')) ??
-        0.0;
+    double base = property.discountPrice ?? property.price;
 
     // 1. Bed Mode
     if (property.bookingMode == 'bed') {
@@ -115,6 +112,9 @@ class PropertyDetailsProvider extends ChangeNotifier {
       if (context != null) _selectionLabel = context.loc.fullApartmentPrice;
     } else if (_selectedUnitKeys.isNotEmpty) {
       double total = 0.0;
+      final roomCounts = <String, int>{};
+      final bedCounts = <String, int>{};
+
       for (var key in _selectedUnitKeys) {
         final parts = key.split('_');
         final roomIdx = int.parse(parts[0].substring(1));
@@ -122,22 +122,79 @@ class PropertyDetailsProvider extends ChangeNotifier {
         if (roomIdx < 0 || roomIdx >= property.rooms.length) continue;
 
         final room = property.rooms[roomIdx];
+        final type = room['type'] ?? 'Room';
 
         if (parts.length > 1) {
           // Bed selection
           total += (room['bedPrice'] as num?)?.toDouble() ?? 0.0;
+          bedCounts[type] = (bedCounts[type] ?? 0) + 1;
         } else {
           // Room selection
           total += (room['price'] as num?)?.toDouble() ?? 0.0;
+          roomCounts[type] = (roomCounts[type] ?? 0) + 1;
         }
       }
       _selectedPrice = total;
-      if (context != null) _selectionLabel = context.loc.totalChoices;
+
+      if (context != null) {
+        final List<String> parts = [];
+        roomCounts.forEach((type, count) {
+          final label = _getRoomLabel(context, type, count);
+          parts.add(label);
+        });
+        bedCounts.forEach((type, count) {
+          final label = _getBedLabel(context, type, count);
+          parts.add(label);
+        });
+        _selectionLabel = parts.join(' + ');
+      } else {
+        _selectionLabel = null;
+      }
     } else {
       _selectedPrice = base;
       if (context != null) _selectionLabel = context.loc.apartmentPrice;
     }
     notifyListeners();
+  }
+
+  String _getRoomLabel(BuildContext context, String type, int count) {
+    String typeLabel = type;
+    if (type == 'Single')
+      typeLabel = context.loc.single;
+    else if (type == 'Double')
+      typeLabel = context.loc.double;
+    else if (type == 'Triple')
+      typeLabel = context.loc.triple;
+    else if (type == 'Quadruple')
+      typeLabel = context.loc.quadruple;
+
+    if (context.isAr) {
+      if (count == 1) return '${context.loc.room} $typeLabel';
+      if (count == 2) return '${context.loc.room}in $typeLabel';
+      return '$count ${context.loc.rooms} $typeLabel';
+    } else {
+      return '$count $typeLabel Room${count > 1 ? 's' : ''}';
+    }
+  }
+
+  String _getBedLabel(BuildContext context, String type, int count) {
+    String typeLabel = type;
+    if (type == 'Single')
+      typeLabel = context.loc.single;
+    else if (type == 'Double')
+      typeLabel = context.loc.double;
+    else if (type == 'Triple')
+      typeLabel = context.loc.triple;
+    else if (type == 'Quadruple')
+      typeLabel = context.loc.quadruple;
+
+    if (context.isAr) {
+      if (count == 1)
+        return '${context.loc.bed} ${context.loc.in_} ${context.loc.room} $typeLabel';
+      return '$count ${context.loc.beds} ${context.loc.in_} ${context.loc.room} $typeLabel';
+    } else {
+      return '$count Bed${count > 1 ? 's' : ''} in $typeLabel Room';
+    }
   }
 
   // Logic: Actions

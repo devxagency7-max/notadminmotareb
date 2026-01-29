@@ -9,7 +9,55 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appName => 'مطارب';
+  String get appTitle => 'موتارب';
+
+  @override
+  String get home => 'الرئيسية';
+
+  @override
+  String get search => 'بحث';
+
+  @override
+  String get searchHint => 'ابحث عن سكن...';
+
+  @override
+  String get filter => 'تصفية';
+
+  @override
+  String get price => 'السعر';
+
+  @override
+  String get location => 'الموقع';
+
+  @override
+  String get rooms => 'غرف';
+
+  @override
+  String get room => 'غرفة';
+
+  @override
+  String get beds => 'أسرة';
+
+  @override
+  String get bed => 'سرير';
+
+  @override
+  String get bathrooms => 'حمامات';
+
+  @override
+  String get amenities => 'المرافق';
+
+  @override
+  String get description => 'الوصف';
+
+  @override
+  String get bookNow => 'احجز الآن';
+
+  @override
+  String get login => 'تسجيل الدخول';
+
+  @override
+  String get signup => 'إنشاء حساب';
 
   @override
   String get profile => 'الملف الشخصي';
@@ -21,49 +69,388 @@ class AppLocalizationsAr extends AppLocalizations {
   String get language => 'اللغة';
 
   @override
+  String get english => 'English';
+
+  @override
+  String get arabic => 'العربية';
+
+  @override
+  String get single => 'فردية';
+
+  @override
+  String get double => 'مزدوجة';
+
+  @override
+  String get triple => 'ثلاثية';
+
+  @override
+  String get quadruple => 'رباعية';
+
+  @override
+  String get apartmentPrice => 'سعر الشقة بالكامل';
+
+  @override
+  String get fullApartmentPrice => 'سعر الشقة بالكامل';
+
+  @override
+  String get totalChoices => 'مجموع الاختيارات';
+
+  @override
+  String get currency => 'ج.م';
+
+  @override
+  String get requiredField => 'حقل مطلوب';
+
+  @override
+  String get invalidEmail => 'بريد إلكتروني غير صالح';
+
+  @override
+  String get passwordTooShort => 'كلمة المرور قصيرة جداً';
+
+  @override
+  String get passwordsDoNotMatch => 'كلمات المرور غير متطابقة';
+
+  @override
+  String get start => 'البداية';
+
+  @override
+  String get end => 'النهاية';
+
+  @override
+  String get select => 'اختر';
+
+  @override
+  String get cancel => 'إلغاء';
+
+  @override
+  String get confirm => 'تأكيد';
+
+  @override
+  String get success => 'تم بنجاح';
+
+  @override
+  String get error => 'حدث خطأ';
+
+  @override
+  String get loading => 'جاري التحميل...';
+
+  @override
+  String get noData => 'لا توجد بيانات';
+
+  @override
+  String get tryAgain => 'حاول مرة أخرى';
+
+  @override
   String get logout => 'تسجيل الخروج';
 
   @override
-  String get login => 'تسجيل الدخول';
+  String get account => 'الحساب';
 
   @override
-  String get personalInfo => 'المعلومات الشخصية';
+  String get notifications => 'الإشعارات';
 
   @override
-  String get myBookings => 'حجوزاتي';
+  String get privacyPolicy => 'سياسة الخصوصية';
 
   @override
-  String get favorites => 'المفضلة';
+  String get termsOfService => 'شروط الخدمة';
 
   @override
-  String get verification => 'توثيق الحساب';
+  String get contactUs => 'اتصل بنا';
 
   @override
-  String get verificationDetail => 'قم بتوثيق حسابك للاستفادة من كافة الميزات';
+  String get aboutUs => 'من نحن';
 
   @override
-  String get themeMode => 'وضع السمات';
+  String get version => 'الإصدار';
 
   @override
-  String get darkMode => 'الوضع الليلي';
+  String get selectDate => 'اختر التاريخ';
 
   @override
-  String get lightMode => 'الوضع النهاري';
+  String get selectTime => 'اختر الوقت';
 
   @override
-  String get guest => 'زائر';
+  String get selectLocation => 'اختر الموقع';
 
   @override
-  String get loginNow => 'سجل دخولك الآن';
+  String get selectRoom => 'اختر الغرفة';
+
+  @override
+  String get selectBed => 'اختر السرير';
+
+  @override
+  String get selectGuests => 'اختر الضيوف';
+
+  @override
+  String get guest => 'ضيف';
+
+  @override
+  String get guests => 'ضيوف';
+
+  @override
+  String get adults => 'بالغين';
+
+  @override
+  String get children => 'أطفال';
+
+  @override
+  String get infants => 'رضع';
+
+  @override
+  String get pets => 'حيوانات أليفة';
+
+  @override
+  String get apply => 'تطبيق';
+
+  @override
+  String get reset => 'إعادة تعيين';
+
+  @override
+  String get share => 'مشاركة';
+
+  @override
+  String get favorite => 'مفضلة';
+
+  @override
+  String get unfavorite => 'إلغاء المفضلة';
+
+  @override
+  String get rate => 'تقييم';
+
+  @override
+  String get review => 'مراجعة';
+
+  @override
+  String get reviews => 'مراجعات';
+
+  @override
+  String get writeReview => 'اكتب مراجعة';
+
+  @override
+  String get submit => 'إرسال';
+
+  @override
+  String get skip => 'تخطي';
+
+  @override
+  String get next => 'التالي';
+
+  @override
+  String get finish => 'إنهاء';
+
+  @override
+  String get welcome => 'مرحباً';
 
   @override
   String get goodMorning => 'صباح الخير';
 
   @override
-  String get welcome => 'أهلاً';
+  String get goodAfternoon => 'مساء الخير';
 
   @override
-  String get searchHint => 'حابب تسكن فين..؟';
+  String get goodEvening => 'مساء الخير';
+
+  @override
+  String get fullName => 'الاسم الكامل';
+
+  @override
+  String get email => 'البريد الإلكتروني';
+
+  @override
+  String get phoneNumber => 'رقم الهاتف';
+
+  @override
+  String get password => 'كلمة المرور';
+
+  @override
+  String get confirmPassword => 'تأكيد كلمة المرور';
+
+  @override
+  String get forgotPassword => 'نسيت كلمة المرور؟';
+
+  @override
+  String get resetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get otp => 'رمز التحقق';
+
+  @override
+  String get verify => 'تحقق';
+
+  @override
+  String get resend => 'إعادة إرسال';
+
+  @override
+  String get codeSent => 'تم إرسال الرمز';
+
+  @override
+  String get codeResent => 'تم إعادة إرسال الرمز';
+
+  @override
+  String get codeVerified => 'تم التحقق من الرمز';
+
+  @override
+  String get codeInvalid => 'الرمز غير صالح';
+
+  @override
+  String get codeExpired => 'انتهت صلاحية الرمز';
+
+  @override
+  String get camera => 'الكاثيرا';
+
+  @override
+  String get gallery => 'المعرض';
+
+  @override
+  String get upload => 'رفع';
+
+  @override
+  String get download => 'تنزيل';
+
+  @override
+  String get delete => 'حذف';
+
+  @override
+  String get edit => 'تعديل';
+
+  @override
+  String get save => 'حفظ';
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get back => 'رجوع';
+
+  @override
+  String get homeScreen => 'الرئيسية';
+
+  @override
+  String get searchScreen => 'بحث';
+
+  @override
+  String get bookingScreen => 'حجوزاتي';
+
+  @override
+  String get profileScreen => 'الملف الشخصي';
+
+  @override
+  String get settingsScreen => 'الإعدادات';
+
+  @override
+  String get languageScreen => 'اللغة';
+
+  @override
+  String get notificationsScreen => 'الإشعارات';
+
+  @override
+  String get privacyPolicyScreen => 'سياسة الخصوصية';
+
+  @override
+  String get termsOfServiceScreen => 'شروط الخدمة';
+
+  @override
+  String get contactUsScreen => 'اتصل بنا';
+
+  @override
+  String get aboutUsScreen => 'من نحن';
+
+  @override
+  String get myBookings => 'حجوزاتي';
+
+  @override
+  String get currentBookings => 'الحالية';
+
+  @override
+  String get pastBookings => 'الماضية';
+
+  @override
+  String get upcomingBookings => 'القادمة';
+
+  @override
+  String get cancelledBookings => 'الملغاة';
+
+  @override
+  String get bookingDetails => 'تفاصيل الحجز';
+
+  @override
+  String get bookingId => 'رقم الحجز';
+
+  @override
+  String get bookingDate => 'تاريخ الحجز';
+
+  @override
+  String get bookingStatus => 'حالة الحجز';
+
+  @override
+  String get bookingTotal => 'إجمالي الحجز';
+
+  @override
+  String get bookingPayment => 'دفع الحجز';
+
+  @override
+  String get paymentMethod => 'طريقة الدفع';
+
+  @override
+  String get paymentStatus => 'حالة الدفع';
+
+  @override
+  String get paymentDate => 'تاريخ الدفع';
+
+  @override
+  String get paymentTotal => 'إجمالي الدفع';
+
+  @override
+  String get paymentDetails => 'تفاصيل الدفع';
+
+  @override
+  String get paymentSuccess => 'تم الدفع بنجاح';
+
+  @override
+  String get paymentFailed => 'فشل الدفع';
+
+  @override
+  String get paymentPending => 'في انتظار الدفع';
+
+  @override
+  String get paymentCancelled => 'تم إلغاء الدفع';
+
+  @override
+  String get paymentRefunded => 'تم استرداد الدفع';
+
+  @override
+  String get in_ => 'في';
+
+  @override
+  String get available247 => 'متاح 24/7';
+
+  @override
+  String get jumpToPinned => 'الانتقال للمثبتة';
+
+  @override
+  String get errorOccurred => 'حصل خطأ';
+
+  @override
+  String get chatWelcome => 'مرحباً في المحادثة';
+
+  @override
+  String get pinned => 'تم التثبيت';
+
+  @override
+  String get typeMessage => 'اكتب رسالة';
+
+  @override
+  String get navHome => 'الرئيسية';
+
+  @override
+  String get navSearch => 'بحث';
+
+  @override
+  String get navChat => 'محادثة';
+
+  @override
+  String get navProfile => 'حسابي';
 
   @override
   String get all => 'الكل';
@@ -78,297 +465,117 @@ class AppLocalizationsAr extends AppLocalizations {
   String get girls => 'بنات';
 
   @override
-  String get bed => 'سرير';
+  String get noPropertiesFound => 'لا يوجد عقارات';
 
   @override
-  String get room => 'غرفة';
+  String get noSearchResults => 'لا يوجد نتائج';
 
   @override
-  String get featuredForYou => 'مميزة لك ✨';
-
-  @override
-  String get recentlyAdded => 'أضيف حديثاً ';
+  String get noUniversitiesFound => 'لا يوجد جامعات';
 
   @override
   String get viewAll => 'عرض الكل';
 
   @override
+  String get featuredForYou => 'مميز لك';
+
+  @override
+  String get recentlyAdded => 'أضيف مؤخراً';
+
+  @override
   String get newLabel => 'جديد';
 
   @override
-  String get errorOccurred => 'حدث خطأ';
+  String get noCategoryProperties => 'لا يوجد عقارات في هذا القسم';
 
   @override
-  String get noPropertiesFound => 'لا توجد عقارات مضافة حتى الآن';
+  String get loginNow => 'سجل الان';
 
   @override
-  String get noUniversitiesFound => 'لا توجد جامعات مرتبطة بالعقارات المتاحة';
+  String get favorites => 'المفضلة';
 
   @override
-  String get noCategoryProperties =>
-      'لا توجد عقارات متاحة في هذا التصنيف حالياً';
+  String get verification => 'التحقق';
 
   @override
-  String get noSearchResults => 'لا توجد نتائج بحث تطابق طلبك';
+  String get verificationDetail => 'تحقق من هويتك';
 
   @override
-  String get noFavorites => 'لا توجد عقارات في المفضلة';
+  String get personalInfo => 'المعلومات الشخصية';
 
   @override
-  String get noFavoritesDesc =>
-      'استكشف العقارات وأضفها لقائمتك للرجوع إليها لاحقاً';
+  String get loginAction => 'تسجيل دخول';
 
   @override
-  String get reviews => 'المراجعات';
+  String get createAccount => 'انشاء حساب';
 
   @override
-  String get techSupport => 'الدعم الفني والشكاوي';
+  String get darkMode => 'الوضع الليلي';
 
   @override
-  String get available247 => 'متواجدون لخدمتكم 24/7';
+  String get lightMode => 'الوضع النهاري';
 
   @override
-  String get jumpToPinned => 'الانتقال للرسائل المثبتة';
-
-  @override
-  String get chatWelcome => 'أهلاً بك 👋\nكيف يمكننا مساعدتك اليوم؟';
-
-  @override
-  String get pinned => 'مثبتة';
-
-  @override
-  String get typeMessage => 'اكتب رسالتك...';
-
-  @override
-  String get availableApartments => 'الشقق المتاحة';
+  String get availableApartments => 'شقق متاحة';
 
   @override
   String propertiesCount(int count) {
-    return '$count عقارات متاحة';
+    return '$count عقار';
   }
 
   @override
-  String get filter => 'تصفية';
+  String get errorLoadingData => 'خطأ في تحميل البيانات';
 
   @override
-  String get errorLoadingData => 'حدث خطأ في تحميل البيانات';
+  String get noPropertiesAvailable => 'لا يوجد عقارات متاحة';
 
   @override
-  String get noPropertiesAvailable => 'لا توجد عقارات متاحة حالياً';
+  String get guestActionRestricted => 'إجراء مقيد للزوار';
+
+  @override
+  String get guestActionRestrictedDesc =>
+      'الرجاء تسجيل الدخول للقيام بهذا الإجراء';
+
+  @override
+  String get signInNow => 'سجل دخول الآن';
+
+  @override
+  String get bedsSelectionError => 'الرجاء اختيار الأسرة';
+
+  @override
+  String get fullApartment => 'شقة بالكامل';
 
   @override
   String get verified => 'موثق';
 
   @override
-  String get availableNow => 'متاح الآن';
+  String get divided => 'مقسم';
 
   @override
-  String get bookNow => 'احجز الآن';
+  String get noFavorites => 'لا يوجد مفضلة';
 
   @override
-  String get divided => 'متقسمة';
+  String get noFavoritesDesc => 'أضف عقارات للمفضلة لتظهر هنا';
 
   @override
-  String get loginSuccess => 'تم تسجيل الدخول بنجاح!';
-
-  @override
-  String get googleLoginSuccess => 'تم تسجيل الدخول بجوجل بنجاح!';
-
-  @override
-  String get welcomeBack => 'مرحباً بعودتك';
-
-  @override
-  String get loginToContinue => 'سجّل الدخول للمتابعة في البحث عن سكنك';
-
-  @override
-  String get enterEmail => 'يرجى إدخال البريد الإلكتروني';
-
-  @override
-  String get enterPassword => 'يرجى إدخال كلمة المرور';
-
-  @override
-  String get forgotPassword => 'هل نسيت كلمة المرور؟';
-
-  @override
-  String get loginAction => 'تسجيل الدخول';
-
-  @override
-  String get continueWithGoogle => 'التسجيل بـ Google';
-
-  @override
-  String get continueAsGuest => 'الدخول كضيف';
-
-  @override
-  String get noAccount => 'ليس لديك حساب؟';
-
-  @override
-  String get createAccount => 'أنشئ حساباً جديداً';
-
-  @override
-  String get skip => 'تخطي';
-
-  @override
-  String get next => 'التالي';
-
-  @override
-  String get getStarted => 'ابدأ رحلتك';
-
-  @override
-  String get guestActionRestricted => 'يجب تسجيل الدخول';
-
-  @override
-  String get guestActionRestrictedDesc =>
-      'يرجى تسجيل الدخول أو إنشاء حساب جديد للقيام بهذا الإجراء';
-
-  @override
-  String get signInNow => 'سجل الدخول الآن';
-
-  @override
-  String get cancel => 'إلغاء';
-
-  @override
-  String get intro1Title => 'سكنك وانت مطمن';
-
-  @override
-  String get intro1Desc =>
-      'شقق موثوقة ومجهزة للمغتربين. احجز أونلاين بكل أمان.';
-
-  @override
-  String get intro2Title => 'شوف سكنك المستقبلي\nوانت بمكانك';
-
-  @override
-  String get intro2Desc =>
-      'جولات افتراضية 360 تخليك تتفرج على كل زاوية قبل ما تحجز.';
-
-  @override
-  String get intro3Title => 'ادفع وانت مرتاح';
-
-  @override
-  String get intro3Desc => 'طرق دفع متعددة وآمنة. ابدأ رحلتك معنا الآن.';
-
-  @override
-  String get navHome => 'الرئيسية';
-
-  @override
-  String get navSearch => 'بحث';
-
-  @override
-  String get navChat => 'محادثات';
-
-  @override
-  String get navProfile => 'حسابي';
-
-  @override
-  String get price => 'السعر';
-
-  @override
-  String get currency => 'ج.م';
-
-  @override
-  String get features => 'المميزات';
-
-  @override
-  String get propertyVideo => 'فيديو العقار';
-
-  @override
-  String get contactUs => 'تواصل معنا';
-
-  @override
-  String get noNumbersAvailable => 'لا توجد أرقام متاحة حالياً';
-
-  @override
-  String get aboutPlace => 'عن المكان';
-
-  @override
-  String get selectNeed => '(اختار احتياجك)';
-
-  @override
-  String get bookApartmentFull => 'حجز الشقة بالكامل';
-
-  @override
-  String get fullApartmentPrice => 'سعر الشقة بالكامل';
-
-  @override
-  String get selectUnitsFirst => 'يرجى تحديد الشقة أو الغرف المطلوبة أولاً';
-
-  @override
-  String get totalChoices => 'مجموع الاختيارات';
-
-  @override
-  String get apartmentPrice => 'سعر الشقة';
-
-  @override
-  String get bedsSelectionError =>
-      'يرجى اختيار وحدة (شقة كاملة أو غرفة/سرير) قبل الحجز';
-
-  @override
-  String get bookBeds => 'حجز سراير';
-
-  @override
-  String roomType(String type) {
-    return 'نوع الغرف: $type';
-  }
-
-  @override
-  String get shared => 'مشترك';
-
-  @override
-  String get requestedBedsCount => 'عدد السراير المطلوبة';
-
-  @override
-  String remainingBeds(int remaining, int total) {
-    return 'متبقي $remaining سراير من أصل $total';
-  }
-
-  @override
-  String get includesComponents => 'تشمل الشقة المكونات التالية:';
-
-  @override
-  String get bathrooms => 'حمامات';
-
-  @override
-  String get rooms => 'غرف';
-
-  @override
-  String get beds => 'سراير';
-
-  @override
-  String get single => 'سنجل';
-
-  @override
-  String get double => 'دابل';
-
-  @override
-  String get triple => 'ثلاثية';
-
-  @override
-  String get quadruple => 'رباعية';
-
-  @override
-  String get bedInSharedRoom => 'سرير في غرفة مشتركة';
-
-  @override
-  String get singleRoom => 'غرفة مفردة';
-
-  @override
-  String get fullApartment => 'شقة كاملة';
-
-  @override
-  String get searchFilter => 'تصفية البحث';
-
-  @override
-  String get reset => 'إعادة تعيين';
+  String get searchFilter => 'تصفية';
 
   @override
   String get applyFilter => 'تطبيق التصفية';
 
   @override
-  String priceRangeMonthly(Object currency) {
-    return 'نطاق السعر ($currency/شهر)';
+  String priceRangeMonthly(String currency) {
+    return 'نطاق السعر / شهر ($currency)';
   }
 
   @override
   String get housingType => 'نوع السكن';
+
+  @override
+  String get bedInSharedRoom => 'سرير بمشاركة';
+
+  @override
+  String get singleRoom => 'غرفة خاصة';
 
   @override
   String get allowedGender => 'الجنس المسموح';
@@ -380,25 +587,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get females => 'إناث';
 
   @override
-  String get smoking => 'التدخين';
+  String get endDateError => 'خطأ في تاريخ النهاية';
 
   @override
-  String get allowed => 'مسموح';
+  String get selectDatesError => 'الرجاء اختيار التواريخ';
 
   @override
-  String get forbidden => 'ممنوع';
-
-  @override
-  String get bookingRequest => 'طلب الحجز';
+  String get bookingRequest => 'طلب حجز';
 
   @override
   String get underReview => 'قيد المراجعة';
 
   @override
-  String get reviewNotice => 'سيتم مراجعة طلبك من قبل الوكيل خلال 24 ساعة';
-
-  @override
-  String get bookingDetails => 'تفاصيل الحجز';
+  String get reviewNotice => 'طلبك قيد المراجعة';
 
   @override
   String get monthlyPriceLabel => 'السعر الشهري';
@@ -410,103 +611,167 @@ class AppLocalizationsAr extends AppLocalizations {
   String get name => 'الاسم';
 
   @override
-  String get phone => 'رقم الجوال';
+  String get required => 'مطلوب';
 
   @override
-  String get email => 'البريد الإلكتروني';
+  String get phone => 'رقم الهاتف';
+
+  @override
+  String get examplePhoneNumber => '05xxxxxxxx';
 
   @override
   String get stayDuration => 'مدة الإقامة';
 
   @override
-  String get startDate => 'تاريخ البدء';
+  String get startDate => 'تاريخ البداية';
 
   @override
-  String get endDate => 'تاريخ الانتهاء';
+  String get selectStartMonth => 'اختر شهر البداية';
 
   @override
-  String totalDuration(String duration) {
-    return 'المدة الإجمالية: $duration';
+  String get endDate => 'تاريخ النهاية';
+
+  @override
+  String get selectEndMonth => 'اختر شهر النهاية';
+
+  @override
+  String totalDuration(int months) {
+    return 'المدة الكلية: $months شهر';
   }
 
   @override
-  String get identityVerification => 'تأكيد الهوية';
+  String get months => 'أشهر';
 
   @override
-  String get required => 'مطلوب';
+  String get identityVerification => 'التحقق من الهوية';
 
   @override
-  String get dataProtectedNotice => 'بياناتك محمية ولن يتم مشاركتها مع أي طرف';
+  String get dataProtectedNotice => 'بياناتك محمية';
 
   @override
-  String get fullNameInId => 'الاسم الكامل (كما في الهوية)';
+  String get fullNameInId => 'الاسم الكامل في الهوية';
 
   @override
-  String get nationalIdNumber => 'رقم الهوية الوطنية';
+  String get fullNameHint => 'أدخل الاسم الكامل';
 
   @override
-  String get uploadIdPhoto => 'تحميل صورة الهوية';
-
-  @override
-  String get idFrontFace => 'الوجه الأمامي للهوية';
-
-  @override
-  String get idBackFace => 'الوجه الخلفي للهوية';
-
-  @override
-  String get additionalNotes => 'ملاحظات إضافية';
-
-  @override
-  String get notesHint => 'اكتب أي ملاحظات أو متطلبات خاصة...';
-
-  @override
-  String get fullNameHint => 'أدخل اسمك الكامل';
+  String get nationalIdNumber => 'رقم الهوية / الإقامة';
 
   @override
   String get idNumberHint => 'أدخل رقم الهوية';
 
   @override
-  String get howBookingWorks => 'كيف تعمل عملية الحجز؟';
+  String get uploadIdPhoto => 'رفع صورة الهوية';
 
   @override
-  String get bookingStep1 => 'يتم إرسال طلبك للوكيل المعتمد';
+  String get idFrontFace => 'الوجه الأمامي';
 
   @override
-  String get bookingStep2 => 'الوكيل سيراجع طلبك خلال 24 ساعة';
+  String get idBackFace => 'الوجه الخلفي';
 
   @override
-  String get bookingStep3 => 'عند الموافقة، ستتمكن من إتمام الدفع';
+  String get additionalNotes => 'ملاحظات إضافية';
+
+  @override
+  String get notesHint => 'أدخل ملاحظاتك';
 
   @override
   String get submitRequest => 'إرسال الطلب';
 
   @override
+  String get pickPhotoHint => 'اضغط لاختيار صورة';
+
+  @override
+  String get features => 'المميزات';
+
+  @override
+  String get propertyVideo => 'فيديو العقار';
+
+  @override
+  String get noNumbersAvailable => 'لا يوجد أرقام متاحة';
+
+  @override
+  String get bookBeds => 'حجز أسرة';
+
+  @override
+  String roomType(String type) {
+    return 'نوع الغرفة: $type';
+  }
+
+  @override
+  String get requestedBedsCount => 'عدد الأسرة المطلوبة';
+
+  @override
+  String remainingBeds(int count) {
+    return 'متبقي $count أسرة';
+  }
+
+  @override
+  String get bookApartmentFull => 'حجز الشقة بالكامل';
+
+  @override
+  String get includesComponents => 'يشمل جميع الغرف والمرافق';
+
+  @override
+  String get selectNeed => 'اختر احتياجك';
+
+  @override
+  String get selectUnitsFirst => 'اختر الوحدات أولاً';
+
+  @override
+  String get aboutPlace => 'عن المكان';
+
+  @override
   String get requestSentSuccess => 'تم إرسال الطلب بنجاح';
 
   @override
-  String get pickPhotoHint => 'اختر من الاستديو أو التقط صورة';
+  String get loginSuccess => 'تم تسجيل الدخول بنجاح';
 
   @override
-  String get singleFurnishedRoom => 'غرفة مفردة مفروشة';
+  String get googleLoginSuccess => 'تم تسجيل الدخول بحساب جوجل بنجاح';
 
   @override
-  String get riyadhAlNakheel => 'الرياض - حي النخيل';
+  String get welcomeBack => 'مرحباً بعودتك!';
 
   @override
-  String get ahmedMohamed => 'أحمد محمد';
+  String get loginToContinue => 'سجل الدخول للمتابعة';
 
   @override
-  String get examplePhoneNumber => '0501234567';
+  String get enterEmail => 'أدخل البريد الإلكتروني';
 
   @override
-  String get exampleEmail => 'ahmed@email.com';
+  String get enterPassword => 'أدخل كلمة المرور';
 
   @override
-  String get february2026 => '1 فبراير 2026';
+  String get continueWithGoogle => 'المتابعة باستخدام جوجل';
 
   @override
-  String get june2026 => '1 يونيو 2026';
+  String get continueAsGuest => 'المتابعة كزائر';
 
   @override
-  String get months => 'أشهر';
+  String get noAccount => 'ليس لديك حساب؟';
+
+  @override
+  String get intro1Title => 'اعثر على سكنك المثالي';
+
+  @override
+  String get intro1Desc => 'اكتشف أفضل خيارات السكن الطلابي بالقرب من جامعتك.';
+
+  @override
+  String get intro2Title => 'حجز سهل وسريع';
+
+  @override
+  String get intro2Desc => 'احجز غرفتك أو سريرك بكل سهولة وبضع نقرات.';
+
+  @override
+  String get intro3Title => 'عقارات موثقة';
+
+  @override
+  String get intro3Desc => 'جميع العقارات موثقة لضمان أمانك وراحتك.';
+
+  @override
+  String get getStarted => 'ابدأ الآن';
+
+  @override
+  String get techSupport => 'الدعم الفني';
 }

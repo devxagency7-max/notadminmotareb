@@ -1,11 +1,15 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
+import 'package:animate_do/animate_do.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../utils/custom_snackbar.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/extensions/loc_extension.dart';
+import '../../../core/services/r2_upload_service.dart';
+import '../widgets/add_property/available_units_card.dart';
 
 class AddPropertyScreen extends StatefulWidget {
   const AddPropertyScreen({super.key});
@@ -15,529 +19,455 @@ class AddPropertyScreen extends StatefulWidget {
 }
 
 class _AddPropertyScreenState extends State<AddPropertyScreen> {
-  final _formKey = GlobalKey<FormState>();
+  // Basic Info
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
+  final _discountPriceController =
+      TextEditingController(); // For AvailableUnitsCard
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _bedsController = TextEditingController();
-  final _roomsController = TextEditingController();
-  final _customUniversityController = TextEditingController();
-  bool _isAddingUniversity = false;
+  final _bathroomsController = TextEditingController(text: '1');
+  final _areaController = TextEditingController();
 
-  // Image Upload
-  final List<String> _base64Images = [];
-  final ImagePicker _picker = ImagePicker();
+  // Helper Controllers for AvailableUnitsCard
+  final _roomsNotifier = ValueNotifier<List<Map<String, dynamic>>>([]);
+  final _bookingModeNotifier = ValueNotifier<String>('unit');
+  final _isFullApartmentNotifier = ValueNotifier<bool>(false);
+  final _totalBedsController = TextEditingController();
+  final _bedPriceController = TextEditingController();
+  final _apartmentRoomsCountController = TextEditingController();
+  final _roomTypeController = TextEditingController();
 
-  // Features / Amenities
-  final Map<String, bool> _amenities = {
-    'wifi': false,
-    'furnished': false,
-    'kitchen': false,
-    'ac': false,
-  };
+  final ValueNotifier<String?> _videoNotifier = ValueNotifier(null);
+  final ValueNotifier<List<String>> _imagesNotifier = ValueNotifier([]);
+  final ValueNotifier<bool> _isLoadingNotifier = ValueNotifier(false);
 
-  // Rules
-  final Map<String, bool> _rules = {
-    'no_smoking': false,
-    'quiet_hours': false,
-    'visitors_allowed': false,
-  };
+  // Upload progress state
+  final Map<String, double> _uploadProgress = {};
 
-  // Unit Type
-  String _selectedUnitType = 'room'; // bed, room, studio
-
-  // New Features State
-  String _selectedGender = 'male';
-  final List<String> _paymentMethods = [];
-  final List<String> _selectedUniversities = [];
-  final List<String> _availableUniversities = [
-    'جامعة النهضة',
-    'جامعة بني سويف الأهلية',
-    'جامعة تعليم صناعي',
-    'جامعة علوم اداريه',
-  ];
-
-  // Governorate
-  final List<String> _governorates = [
-    'القاهرة',
-    'الجيزة',
-    'القليوبية',
-    'الإسكندرية',
-    'البحيرة',
-    'مطروح',
-    'كفر الشيخ',
-    'الدقهلية',
-    'دمياط',
-    'الغربية',
-    'المنوفية',
-    'الشرقية',
-    'بورسعيد',
-    'الإسماعيلية',
-    'السويس',
-    'شمال سيناء',
-    'جنوب سيناء',
-    'الفيوم',
+  final ValueNotifier<String> _selectedGenderNotifier = ValueNotifier('male');
+  final ValueNotifier<String> _selectedGovernorateNotifier = ValueNotifier(
     'بني سويف',
-    'المنيا',
-    'أسيوط',
-    'سوهاج',
-    'قنا',
-    'الأقصر',
-    'أسوان',
-    'البحر الأحمر',
-    'الوادي الجديد',
-  ];
-  String _selectedGovernorate = 'بني سويف';
+  );
 
-  bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
+  final R2UploadService _uploadService = R2UploadService();
 
-  Future<void> _pickImage() async {
+  late String _tempDocId;
+  String? _ownerId;
+
+  @override
+  void initState() {
+    super.initState();
+    _tempDocId = FirebaseFirestore.instance
+        .collection('pending_properties')
+        .doc()
+        .id;
+    _ownerId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _priceController.dispose();
+    _discountPriceController.dispose();
+    _locationController.dispose();
+    _descriptionController.dispose();
+    _bathroomsController.dispose();
+    _areaController.dispose();
+    _imagesNotifier.dispose();
+    _isLoadingNotifier.dispose();
+    _selectedGenderNotifier.dispose();
+    _selectedGovernorateNotifier.dispose();
+    _videoNotifier.dispose();
+    _roomsNotifier.dispose();
+    _bookingModeNotifier.dispose();
+    _isFullApartmentNotifier.dispose();
+    _totalBedsController.dispose();
+    _bedPriceController.dispose();
+    _apartmentRoomsCountController.dispose();
+    _roomTypeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImages() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showSnackBar('يجب تسجيل الدخول أولاً', isError: true);
+      return;
+    }
+
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        final bytes = await File(image.path).readAsBytes();
-        final String base64String = base64Encode(bytes);
-        setState(() {
-          _base64Images.add(base64String);
-        });
+      final List<XFile> pickedImages = await _picker.pickMultiImage();
+      if (pickedImages.isNotEmpty) {
+        final files = pickedImages.map((e) => File(e.path)).toList();
+        await _processUploads(files);
       }
     } catch (e) {
-      CustomSnackBar.show(
-        context: context,
-        message: 'فشل اختيار الصورة: $e',
-        isError: true,
-      );
+      _showSnackBar('حدث خطأ أثناء اختيار الصور: $e', isError: true);
     }
   }
 
+  Future<void> _pickVideo() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showSnackBar('يجب تسجيل الدخول أولاً', isError: true);
+      return;
+    }
+
+    try {
+      final XFile? pickedVideo = await _picker.pickVideo(
+        source: ImageSource.gallery,
+      );
+      if (pickedVideo != null) {
+        final file = File(pickedVideo.path);
+        await _processVideoUpload(file);
+      }
+    } catch (e) {
+      _showSnackBar('حدث خطأ أثناء اختيار الفيديو: $e', isError: true);
+    }
+  }
+
+  Future<void> _processUploads(List<File> files) async {
+    for (final file in files) {
+      if (!mounted) return;
+      setState(() {
+        _uploadProgress[file.path] = 0.1;
+      });
+      try {
+        final url = await _uploadService.uploadFile(
+          file,
+          ownerId: _ownerId,
+          propertyUuid: _tempDocId,
+          onProgress: (sent, total) {
+            if (mounted)
+              setState(() {
+                _uploadProgress[file.path] = sent / total;
+              });
+          },
+        );
+        if (mounted) {
+          final currentImages = List<String>.from(_imagesNotifier.value);
+          currentImages.add(url);
+          _imagesNotifier.value = currentImages;
+          setState(() {
+            _uploadProgress.remove(file.path);
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _uploadProgress.remove(file.path);
+          });
+          _showSnackBar('فشل رفع الصورة: $e', isError: true);
+        }
+      }
+    }
+  }
+
+  Future<void> _processVideoUpload(File file) async {
+    if (!mounted) return;
+    setState(() {
+      _uploadProgress[file.path] = 0.1;
+    });
+    try {
+      final url = await _uploadService.uploadFile(
+        file,
+        ownerId: _ownerId,
+        propertyUuid: _tempDocId,
+        onProgress: (sent, total) {
+          if (mounted)
+            setState(() {
+              _uploadProgress[file.path] = sent / total;
+            });
+        },
+      );
+      if (mounted) {
+        _videoNotifier.value = url;
+        setState(() {
+          _uploadProgress.remove(file.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _uploadProgress.remove(file.path);
+        });
+        _showSnackBar('فشل رفع الفيديو: $e', isError: true);
+      }
+    }
+  }
+
+  Future<void> _deleteImage(String url) async {
+    final currentImages = List<String>.from(_imagesNotifier.value);
+    currentImages.remove(url);
+    _imagesNotifier.value = currentImages;
+  }
+
   Future<void> _submitProperty() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_base64Images.isEmpty) {
-      CustomSnackBar.show(
-        context: context,
-        message: 'يجب إضافة صورة واحدة على الأقل',
+    // Validation
+    if (_titleController.text.trim().isEmpty ||
+        _priceController.text.trim().isEmpty ||
+        _imagesNotifier.value.isEmpty) {
+      _showSnackBar(
+        'الرجاء ملء جميع الحقول الأساسية وإضافة صور',
         isError: true,
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (_uploadProgress.isNotEmpty) {
+      _showSnackBar('الرجاء الانتظار حتى انتهاء رفع الصور', isError: true);
+      return;
+    }
+
+    _isLoadingNotifier.value = true;
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('المستخدم غير مسجل الدخول');
+      if (user == null) return;
 
-      final selectedAmenities = _amenities.entries
-          .where((e) => e.value)
-          .map((e) => e.key)
-          .toList();
+      // Logic to determine counts based on Booking Mode
+      int roomsCount = 0;
+      int bedsCount = 0;
+      int singleRooms = 0;
+      int doubleRooms = 0;
+      bool isBedForBooking = false;
+      bool isRoomForBooking = false;
 
-      final selectedRules = _rules.entries
-          .where((e) => e.value)
-          .map((e) => e.key)
-          .toList();
+      if (_bookingModeNotifier.value == 'bed') {
+        isBedForBooking = true;
+        isRoomForBooking = false;
+        bedsCount = int.tryParse(_totalBedsController.text.trim()) ?? 0;
+        roomsCount =
+            int.tryParse(_apartmentRoomsCountController.text.trim()) ?? 0;
+      } else {
+        // Unit System
+        isRoomForBooking = true;
+        isBedForBooking = false;
+        final rooms = _roomsNotifier.value;
+        roomsCount = rooms.length;
+
+        for (var r in rooms) {
+          final type = r['type'] as String;
+          final beds = (r['beds'] as int?) ?? 0;
+          bedsCount += beds;
+          if (type == 'Single') singleRooms += 1;
+          if (type == 'Double') doubleRooms += 1;
+        }
+      }
 
       final propertyData = {
+        'id': _tempDocId,
+        'propertyId': _tempDocId,
         'ownerId': user.uid,
         'title': _titleController.text.trim(),
-        'price': double.parse(_priceController.text.trim()),
+        'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
         'location': _locationController.text.trim(),
-        'governorate': _selectedGovernorate,
         'description': _descriptionController.text.trim(),
-        'images': _base64Images, // Storing Base64 directly as requested
-        'amenities': selectedAmenities,
-        'rules': selectedRules,
-        'isBed': _selectedUnitType == 'bed',
-        'isRoom': _selectedUnitType == 'room',
-        'isStudio': _selectedUnitType == 'studio',
+        'governorate': _selectedGovernorateNotifier.value,
+        'gender': _selectedGenderNotifier.value,
+        'bathroomsCount': int.tryParse(_bathroomsController.text.trim()) ?? 1,
+        'area': double.tryParse(_areaController.text.trim()) ?? 0.0,
+        'images': _imagesNotifier.value,
+        'videoUrl': _videoNotifier.value,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
+        'isVerified': false,
         'rating': 0.0,
-        'ratingCount': 0,
-        'agentName': user.displayName ?? 'Owner',
-        // New Fields
-        'gender': _selectedGender,
-        'paymentMethods': _paymentMethods,
+        'amenities': [],
+        'rules': [],
 
-        'universities': _selectedUniversities,
-        'bedsCount': int.tryParse(_bedsController.text.trim()) ?? 0,
-        'roomsCount': int.tryParse(_roomsController.text.trim()) ?? 0,
+        // Detailed Configuration
+        'bookingMode': _bookingModeNotifier.value,
+        'isFullApartmentBooking': _isFullApartmentNotifier.value,
+        'roomsCount': roomsCount,
+        'bedsCount': bedsCount,
+        'singleRoomsCount': singleRooms,
+        'doubleRoomsCount': doubleRooms,
+        'isBed': isBedForBooking,
+        'isRoom':
+            isRoomForBooking, // Can be room or full apartment under 'unit' mode
+        'unitTypes': _bookingModeNotifier.value == 'bed'
+            ? _roomTypeController.text
+            : _roomsNotifier.value.map((e) => e['type']).join(', '),
+        'rooms': _roomsNotifier.value, // Save the full structure if needed
+        // Empty English fields for Admin to fill
+        'titleEn': '',
+        'locationEn': '',
+        'descriptionEn': '',
+        'adminNumber': null,
       };
 
       await FirebaseFirestore.instance
-          .collection('properties')
-          .add(propertyData);
+          .collection('pending_properties')
+          .doc(_tempDocId)
+          .set(propertyData);
 
       if (mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'تم إرسال عقارك للمراجعة بنجاح! ⏳',
+        _showSnackBar(
+          'تم إرسال العقار للمراجعة بنجاح! سيقوم المشرف بمراجعته قريباً ✅',
           isError: false,
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'حدث خطأ: $e',
-          isError: true,
-        );
+        _showSnackBar('حدث خطأ: $e', isError: true);
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) _isLoadingNotifier.value = false;
     }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.cairo(color: Colors.white)),
+        backgroundColor: isError ? AppTheme.errorRed : AppTheme.brandPrimary,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'إضافة عقار جديد',
           style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
+        child: FadeInUp(
+          duration: const Duration(milliseconds: 600),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Photos Section
-              Text(
-                'صور العقار',
-                style: GoogleFonts.cairo(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
+              _buildSectionTitle('الوسائط (صور وفيديو)'),
               const SizedBox(height: 10),
-              SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _base64Images.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return GestureDetector(
-                        onTap: _pickImage,
-                        child: Container(
-                          width: 100,
-                          margin: const EdgeInsets.only(left: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey),
-                          ),
-                          child: const Icon(
-                            Icons.add_a_photo,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      );
-                    }
-                    final base64Image = _base64Images[index - 1];
-                    return Container(
-                      width: 100,
-                      margin: const EdgeInsets.only(left: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        image: DecorationImage(
-                          image: MemoryImage(base64Decode(base64Image)),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () {
-                          setState(() {
-                            _base64Images.removeAt(index - 1);
-                          });
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
+              _buildImagePicker(),
+              const SizedBox(height: 15),
+              _buildVideoPicker(),
+              const SizedBox(height: 25),
 
+              _buildSectionTitle('المعلومات الأساسية'),
+              const SizedBox(height: 15),
               _buildTextField(
-                label: 'عنوان الإعلان',
-                controller: _titleController,
+                _titleController,
+                'عنوان الإعلان',
+                Icons.title_rounded,
               ),
               const SizedBox(height: 15),
               _buildTextField(
-                label: 'الإيجار الشهري (ج.م)',
-                controller: _priceController,
+                _priceController,
+                'السعر الكلي (ج.م)',
+                Icons.payments_rounded,
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 15),
-
-              // Governorate Dropdown
-              DropdownButtonFormField<String>(
-                initialValue: _selectedGovernorate,
-                decoration: InputDecoration(
-                  labelText: 'المحافظة',
-                  labelStyle: GoogleFonts.cairo(color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Color(0xFF39BB5E)),
-                  ),
-                ),
-                items: _governorates.map((String gov) {
-                  return DropdownMenuItem<String>(
-                    value: gov,
-                    child: Text(gov, style: GoogleFonts.cairo()),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedGovernorate = newValue!;
-                  });
-                },
+              _buildTextField(
+                _locationController,
+                'الموقع بالتفصيل',
+                Icons.location_on_rounded,
               ),
               const SizedBox(height: 15),
-
-              _buildTextField(
-                label: 'الموقع / الحي',
-                controller: _locationController,
+              Text(
+                'سيقوم المشرف بترجمة البيانات للغة الإنجليزية وإضافة رقم العقار.',
+                style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey),
               ),
+              const SizedBox(height: 25),
+
+              _buildSectionTitle('نظام الغرف والتأجير'),
+              const SizedBox(height: 15),
+              AvailableUnitsCard(
+                roomsNotifier: _roomsNotifier,
+                bathroomsController: _bathroomsController,
+                priceController: _priceController,
+                discountPriceController: _discountPriceController,
+                bookingModeNotifier: _bookingModeNotifier,
+                isFullApartmentNotifier: _isFullApartmentNotifier,
+                totalBedsController: _totalBedsController,
+                bedPriceController: _bedPriceController,
+                apartmentRoomsCountController: _apartmentRoomsCountController,
+                roomTypeController: _roomTypeController,
+              ),
+              const SizedBox(height: 25),
+
+              _buildSectionTitle('التفاصيل الإضافية'),
               const SizedBox(height: 15),
               _buildTextField(
-                label: 'وصف تفصيلي',
-                controller: _descriptionController,
+                _descriptionController,
+                'وصف العقار والمميزات',
+                Icons.description_rounded,
                 maxLines: 4,
               ),
-
-              const SizedBox(height: 25),
-
-              // Unit Type
-              Text(
-                'نوع الوحدة',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  _buildRadioType('سرير', 'bed'),
-                  _buildRadioType('غرفة', 'room'),
-                  _buildRadioType('شقة / ستوديو', 'studio'),
-                ],
+              const SizedBox(height: 15),
+              _buildTextField(
+                _areaController,
+                'المساحة (متر مربع)',
+                Icons.square_foot_rounded,
+                keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 25),
 
-              // Gender / Housing Type
-              Text(
-                'نوع السكن',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-              ),
-              Row(
-                children: [
-                  _buildGenderRadio('شباب', 'male'),
-                  const SizedBox(width: 20),
-                  _buildGenderRadio('بنات', 'female'),
-                ],
-              ),
-              const SizedBox(height: 25),
+              _buildSectionTitle('التصنيف'),
+              const SizedBox(height: 15),
+              _buildDropdownSection(),
+              const SizedBox(height: 40),
 
-              // Payment Methods
-              Text(
-                'نظام الدفع',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                spacing: 10,
-                children: [
-                  FilterChip(
-                    label: Text('شهري', style: GoogleFonts.cairo()),
-                    selected: _paymentMethods.contains('monthly'),
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _paymentMethods.add('monthly');
-                        } else {
-                          _paymentMethods.remove('monthly');
-                        }
-                      });
-                    },
-                    selectedColor: const Color(0xFF39BB5E).withOpacity(0.2),
-                    checkmarkColor: const Color(0xFF39BB5E),
-                  ),
-                  FilterChip(
-                    label: Text('بالترم', style: GoogleFonts.cairo()),
-                    selected: _paymentMethods.contains('term'),
-                    onSelected: (bool selected) {
-                      setState(() {
-                        if (selected) {
-                          _paymentMethods.add('term');
-                        } else {
-                          _paymentMethods.remove('term');
-                        }
-                      });
-                    },
-                    selectedColor: const Color(0xFF39BB5E).withOpacity(0.2),
-                    checkmarkColor: const Color(0xFF39BB5E),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 25),
-
-              // Universities
-              Text(
-                'الجامعات القريبة',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                spacing: 10,
-                children: [
-                  ..._availableUniversities.map((uni) {
-                    return FilterChip(
-                      label: Text(uni, style: GoogleFonts.cairo()),
-                      selected: _selectedUniversities.contains(uni),
-                      onSelected: (bool selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedUniversities.add(uni);
-                          } else {
-                            _selectedUniversities.remove(uni);
-                          }
-                        });
-                      },
-                      selectedColor: const Color(0xFF008695).withOpacity(0.2),
-                      checkmarkColor: const Color(0xFF008695),
-                    );
-                  }),
-                  ActionChip(
-                    avatar: Icon(
-                      _isAddingUniversity ? Icons.close : Icons.add,
-                      size: 16,
-                    ),
-                    label: Text(
-                      _isAddingUniversity ? 'إلغاء' : 'أخرى',
-                      style: GoogleFonts.cairo(),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isAddingUniversity = !_isAddingUniversity;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              if (_isAddingUniversity)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildTextField(
-                          label: 'اسم الجامعة / الكلية',
-                          controller: _customUniversityController,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        onPressed: () {
-                          if (_customUniversityController.text.isNotEmpty) {
-                            setState(() {
-                              final newUni = _customUniversityController.text
-                                  .trim();
-                              _availableUniversities.add(newUni);
-                              _selectedUniversities.add(newUni);
-                              _customUniversityController.clear();
-                              _isAddingUniversity = false;
-                            });
-                          }
-                        },
-                        icon: const CircleAvatar(
-                          backgroundColor: Color(0xFF008695),
-                          child: Icon(Icons.check, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              const SizedBox(height: 25),
-
-              // Amenities
-              Text(
-                'المميزات',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                spacing: 10,
-                children: _amenities.keys.map((key) {
-                  return FilterChip(
-                    label: Text(
-                      _getAmenityLabel(key),
-                      style: GoogleFonts.cairo(),
-                    ),
-                    selected: _amenities[key]!,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        _amenities[key] = selected;
-                      });
-                    },
-                    selectedColor: const Color(0xFF39BB5E).withOpacity(0.2),
-                    checkmarkColor: const Color(0xFF39BB5E),
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 25),
-
-              // Rules
-              Text(
-                'القواعد',
-                style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-              ),
-              Wrap(
-                spacing: 10,
-                children: _rules.keys.map((key) {
-                  return FilterChip(
-                    label: Text(_getRuleLabel(key), style: GoogleFonts.cairo()),
-                    selected: _rules[key]!,
-                    onSelected: (bool selected) {
-                      setState(() {
-                        _rules[key] = selected;
-                      });
-                    },
-                    selectedColor: Colors.orange.withOpacity(0.2),
-                    checkmarkColor: Colors.orange,
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitProperty,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF39BB5E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(
-                          'إرسال طلب',
-                          style: GoogleFonts.cairo(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+              ValueListenableBuilder<bool>(
+                valueListenable: _isLoadingNotifier,
+                builder: (context, isLoading, _) {
+                  return GestureDetector(
+                    onTap: isLoading ? null : _submitProperty,
+                    child: Container(
+                      width: double.infinity,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.brandPrimary.withOpacity(0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
                           ),
-                        ),
-                ),
+                        ],
+                      ),
+                      child: Center(
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 3,
+                                ),
+                              )
+                            : Text(
+                                'إرسال للمراجعة',
+                                style: GoogleFonts.cairo(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                      ),
+                    ),
+                  );
+                },
               ),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -545,92 +475,346 @@ class _AddPropertyScreenState extends State<AddPropertyScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    TextInputType keyboardType = TextInputType.text,
+  Widget _buildSectionTitle(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: AppTheme.brandPrimary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: GoogleFonts.cairo(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType? keyboardType,
     int maxLines = 1,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: (value) =>
-          value == null || value.isEmpty ? 'هذا الحقل مطلوب' : null,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: GoogleFonts.cairo(color: Colors.grey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Color(0xFF39BB5E)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        style: GoogleFonts.cairo(),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, color: AppTheme.brandPrimary.withOpacity(0.7)),
+          alignLabelWithHint: true,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+              color: AppTheme.brandPrimary,
+              width: 1.5,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRadioType(String label, String value) {
-    return Row(
+  Widget _buildDropdownSection() {
+    return Column(
       children: [
-        Radio<String>(
-          value: value,
-          groupValue: _selectedUnitType,
-          activeColor: const Color(0xFF39BB5E),
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedUnitType = newValue!;
-            });
+        ValueListenableBuilder<String>(
+          valueListenable: _selectedGovernorateNotifier,
+          builder: (context, value, _) {
+            return _buildDropdownWrapper(
+              label: 'المحافظة',
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: value,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  items: ['بني سويف', 'القاهرة', 'الجيزة'].map((String val) {
+                    return DropdownMenuItem<String>(
+                      value: val,
+                      child: Text(val, style: GoogleFonts.cairo()),
+                    );
+                  }).toList(),
+                  onChanged: (val) => _selectedGovernorateNotifier.value = val!,
+                ),
+              ),
+            );
           },
         ),
-        Text(label, style: GoogleFonts.cairo()),
-        const SizedBox(width: 10),
+        const SizedBox(height: 15),
+        ValueListenableBuilder<String>(
+          valueListenable: _selectedGenderNotifier,
+          builder: (context, value, _) {
+            return _buildDropdownWrapper(
+              label: 'الفئة المستهدفة',
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: value,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  items:
+                      [
+                        {'value': 'male', 'label': 'شباب فقط'},
+                        {'value': 'female', 'label': 'بنات فقط'},
+                      ].map((Map<String, String> item) {
+                        return DropdownMenuItem<String>(
+                          value: item['value'],
+                          child: Text(
+                            item['label']!,
+                            style: GoogleFonts.cairo(),
+                          ),
+                        );
+                      }).toList(),
+                  onChanged: (val) => _selectedGenderNotifier.value = val!,
+                ),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildGenderRadio(String label, String value) {
-    return Row(
-      children: [
-        Radio<String>(
-          value: value,
-          groupValue: _selectedGender,
-          activeColor: const Color(0xFF39BB5E),
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedGender = newValue!;
-            });
-          },
-        ),
-        Text(label, style: GoogleFonts.cairo()),
-      ],
+  Widget _buildDropdownWrapper({required String label, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.darkBorder.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: AppTheme.brandPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          child,
+        ],
+      ),
     );
   }
 
-  String _getAmenityLabel(String key) {
-    switch (key) {
-      case 'wifi':
-        return 'واى فاى';
-      case 'furnished':
-        return 'مؤثثة';
-      case 'kitchen':
-        return 'مطبخ';
-      case 'ac':
-        return 'تكييف';
-      default:
-        return key;
-    }
+  Widget _buildImagePicker() {
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: _imagesNotifier,
+      builder: (context, images, _) {
+        final isUploading = _uploadProgress.isNotEmpty;
+
+        return SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: images.length + 1 + (isUploading ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return GestureDetector(
+                  onTap: isUploading ? null : _pickImages,
+                  child: Container(
+                    width: 120,
+                    margin: const EdgeInsets.only(left: 4),
+                    decoration: BoxDecoration(
+                      color: isUploading
+                          ? Colors.grey.shade200
+                          : Theme.of(context).cardTheme.color,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppTheme.brandPrimary.withOpacity(0.3),
+                        width: 2,
+                        style: BorderStyle.solid,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (isUploading)
+                          const CircularProgressIndicator(strokeWidth: 2)
+                        else ...[
+                          const Icon(
+                            Icons.add_a_photo_rounded,
+                            color: AppTheme.brandPrimary,
+                            size: 32,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'إضافة صور',
+                            style: GoogleFonts.cairo(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.brandPrimary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              if (isUploading && index == 1) {
+                return Container(
+                  width: 120,
+                  margin: const EdgeInsets.only(left: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Center(child: Text('جاري الرفع...')),
+                );
+              }
+
+              final urlIndex = index - 1 - (isUploading ? 1 : 0);
+              if (urlIndex < 0 || urlIndex >= images.length)
+                return const SizedBox();
+
+              final url = images[urlIndex];
+
+              return Container(
+                width: 120,
+                margin: const EdgeInsets.only(left: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  image: DecorationImage(
+                    image: NetworkImage(url),
+                    fit: BoxFit.cover,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () => _deleteImage(url),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
-  String _getRuleLabel(String key) {
-    switch (key) {
-      case 'no_smoking':
-        return 'ممنوع التدخين';
-      case 'quiet_hours':
-        return 'ساعات هدوء';
-      case 'visitors_allowed':
-        return 'مسموح بالزيارات';
-      default:
-        return key;
-    }
+  Widget _buildVideoPicker() {
+    return ValueListenableBuilder<String?>(
+      valueListenable: _videoNotifier,
+      builder: (context, videoUrl, _) {
+        final isUploading = _uploadProgress.keys.any(
+          (k) =>
+              k.toLowerCase().endsWith('.mp4') ||
+              k.toLowerCase().endsWith('.mov'),
+        );
+
+        return GestureDetector(
+          onTap: isUploading ? null : (videoUrl == null ? _pickVideo : null),
+          child: Container(
+            width: double.infinity,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: videoUrl != null
+                    ? Colors.green
+                    : AppTheme.brandPrimary.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Icon(
+                  videoUrl != null
+                      ? Icons.check_circle
+                      : Icons.videocam_rounded,
+                  color: videoUrl != null
+                      ? Colors.green
+                      : AppTheme.brandPrimary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    videoUrl != null
+                        ? 'تم رفع الفيديو بنجاح ✅'
+                        : 'إضافة فيديو (اختياري)',
+                    style: GoogleFonts.cairo(
+                      color: videoUrl != null ? Colors.green : Colors.grey[600],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (videoUrl != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _videoNotifier.value = null,
+                  )
+                else if (isUploading)
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

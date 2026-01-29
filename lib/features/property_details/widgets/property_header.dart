@@ -27,7 +27,7 @@ class PropertyHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  property.title,
+                  property.localizedTitle(context),
                   style: GoogleFonts.cairo(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -54,7 +54,7 @@ class PropertyHeader extends StatelessWidget {
                       ],
                     ),
                     child: Text(
-                      property.featuredLabel!,
+                      property.localizedFeaturedLabel(context),
                       style: GoogleFonts.cairo(
                         fontSize: 12,
                         color: Colors.white,
@@ -86,9 +86,7 @@ class PropertyHeader extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          property.governorate != null
-                              ? '${property.governorate} - ${property.location}'
-                              : property.location,
+                          property.localizedLocation(context),
                           style: GoogleFonts.cairo(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,

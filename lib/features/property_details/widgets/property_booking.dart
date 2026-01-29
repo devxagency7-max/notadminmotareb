@@ -86,9 +86,7 @@ class PropertyBooking extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              context.loc.roomType(
-                property.generalRoomType ?? context.loc.shared,
-              ),
+              context.loc.roomType(property.localizedType(context)),
               style: GoogleFonts.cairo(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 20),
@@ -194,7 +192,6 @@ class PropertyBooking extends StatelessWidget {
                         Text(
                           context.loc.remainingBeds(
                             property.totalBeds - selectedBedCount,
-                            property.totalBeds,
                           ),
                           style: GoogleFonts.cairo(
                             fontSize: 12,
@@ -748,47 +745,64 @@ class UnitSelectionWidget extends StatelessWidget {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        color: isSelected
-            ? const Color(0xFF008695).withValues(alpha: 0.15)
-            : Colors.transparent,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: EdgeInsets.all(isSmall ? 8 : 12),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF008695)
-                    : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF008695)
-                      : Colors.grey.shade400,
-                  width: 2,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background Color (Unselected)
+          Container(color: Colors.transparent),
+
+          // Selected Gradient Overlay (Animated Fade)
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 300),
+            opacity: isSelected ? 1.0 : 0.0,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
-              child: Icon(
-                Icons.check,
-                color: isSelected ? Colors.white : Colors.transparent,
-                size: isSmall ? 14 : 20,
-              ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: GoogleFonts.cairo(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? const Color(0xFF008695)
-                    : Theme.of(context).textTheme.bodyMedium?.color,
+          ),
+
+          // Content
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: EdgeInsets.all(isSmall ? 8 : 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.white : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: isSelected
+                      ? null
+                      : Border.all(color: Colors.grey.shade400, width: 2),
+                ),
+                child: Icon(
+                  Icons.check,
+                  color: isSelected
+                      ? const Color(0xFF008695)
+                      : Colors.transparent,
+                  size: isSmall ? 14 : 20,
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 8),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                style: GoogleFonts.cairo(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+                child: Text(label),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
