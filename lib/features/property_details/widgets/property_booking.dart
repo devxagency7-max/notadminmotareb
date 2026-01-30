@@ -28,6 +28,44 @@ class PropertyBooking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!property.bookingEnabled) {
+      return Center(
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 25),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.orange.withOpacity(0.2)),
+          ),
+          child: Column(
+            children: [
+              Icon(Icons.event_busy, color: Colors.orange.shade800, size: 40),
+              const SizedBox(height: 10),
+              Text(
+                'هذا العقار غير متاح للحجز المباشر حالياً',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange.shade900,
+                ),
+              ),
+              Text(
+                'يمكنك التواصل مع المشرف للاستفسار',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                  fontSize: 13,
+                  color: Colors.orange.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (property.bookingMode == 'bed') {
       return _buildBedMode(context);
     } else if (property.isFullApartmentBooking) {

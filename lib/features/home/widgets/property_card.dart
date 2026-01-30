@@ -177,7 +177,7 @@ class PropertyCard extends StatelessWidget {
                     property.localizedLocation(context),
                     style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -191,12 +191,39 @@ class PropertyCard extends StatelessWidget {
                           '${NumberFormat.decimalPattern().format(property.price)} ${context.loc.currency}',
                           style: GoogleFonts.cairo(
                             fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            color: Colors
-                                .white, // Text color must be white for ShaderMask
+                            fontSize: 16,
+                            color: Colors.white,
                           ),
                         ),
                       ),
+                      if (property.requiredDeposit != null &&
+                          property.requiredDeposit! > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(5),
+                            border: Border.all(
+                              color: Colors.orange.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${property.requiredDeposit!.toStringAsFixed(0)} ${context.loc.currency}',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 5),

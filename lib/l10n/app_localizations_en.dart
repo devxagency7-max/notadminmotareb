@@ -767,7 +767,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notesHint => 'Enter notes';
 
   @override
-  String get submitRequest => 'Submit Request';
+  String get submitRequest => 'Pay Deposit';
 
   @override
   String get pickPhotoHint => 'Tap to pick photo';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 import '../../../../core/models/property_model.dart';
@@ -106,6 +107,23 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
         },
       ),
     );
+  }
+
+  Future<void> startDepositPayment() async {
+    try {
+      print("Deposit button clicked");
+      final provider = context.read<BookingRequestProvider>();
+
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('createDepositBooking')
+          .call({"propertyId": provider.property.id});
+
+      print("Function response:");
+      print(result.data);
+    } catch (e) {
+      print("Function error:");
+      print(e);
+    }
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -606,7 +624,9 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                 child: ElevatedButton(
                   onPressed: provider.isSubmitting
                       ? null
-                      : () => _submit(context),
+                      : () async {
+                          await startDepositPayment();
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,

@@ -161,31 +161,67 @@ class LargePropertyCard extends StatelessWidget {
                         Positioned(
                           bottom: 15,
                           left: 15,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                                begin: Alignment.centerRight,
-                                end: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF39BB5E),
+                                      Color(0xFF008695),
+                                    ],
+                                    begin: Alignment.centerRight,
+                                    end: Alignment.centerLeft,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  property.isFullApartmentBooking
+                                      ? context.loc.fullApartment
+                                      : (property.bookingMode == 'bed'
+                                            ? context.loc.bed
+                                            : context.loc.divided),
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              property.isFullApartmentBooking
-                                  ? context.loc.fullApartment
-                                  : (property.bookingMode == 'bed'
-                                        ? context.loc.bed
-                                        : context.loc.divided),
-                              style: GoogleFonts.cairo(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                              if (property.requiredDeposit != null &&
+                                  property.requiredDeposit! > 0) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    '${property.requiredDeposit!.toStringAsFixed(0)} ${context.loc.currency}',
+                                    style: GoogleFonts.cairo(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],

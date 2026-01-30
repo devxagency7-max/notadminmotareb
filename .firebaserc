@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "khalek-oraeb"
-  }
+    "default": "mo8treb",
+    "y": "mo8treb"
+  },
+  "targets": {},
+  "etags": {}
 }

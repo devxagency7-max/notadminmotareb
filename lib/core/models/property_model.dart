@@ -42,6 +42,7 @@ class Property {
   final String? videoUrl;
   final List<Map<String, dynamic>> rooms;
   final double? requiredDeposit; // Added
+  final bool bookingEnabled; // Added
 
   // Helpers
   bool get hasAC => tags.contains('ac') || tags.contains('تكييف');
@@ -83,6 +84,7 @@ class Property {
     this.bedPrice = 0.0,
     this.generalRoomType,
     this.requiredDeposit,
+    this.bookingEnabled = true,
   });
 
   factory Property.fromMap(Map<String, dynamic> map, String documentId) {
@@ -155,6 +157,7 @@ class Property {
       bedPrice: (map['bedPrice'] as num?)?.toDouble() ?? 0.0,
       generalRoomType: map['generalRoomType'],
       requiredDeposit: (map['requiredDeposit'] as num?)?.toDouble(),
+      bookingEnabled: map['bookingEnabled'] ?? true,
     );
   }
 

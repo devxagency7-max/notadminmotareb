@@ -1595,7 +1595,7 @@ abstract class AppLocalizations {
   /// No description provided for @submitRequest.
   ///
   /// In en, this message translates to:
-  /// **'Submit Request'**
+  /// **'Pay Deposit'**
   String get submitRequest;
 
   /// No description provided for @pickPhotoHint.
