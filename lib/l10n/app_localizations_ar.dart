@@ -144,6 +144,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logout => 'تسجيل الخروج';
 
   @override
+  String get logoutConfirmation => 'هل أنت متأكد أنك تريد تسجيل الخروج؟';
+
+  @override
   String get account => 'الحساب';
 
   @override
@@ -501,6 +504,95 @@ class AppLocalizationsAr extends AppLocalizations {
   String get verificationDetail => 'تحقق من هويتك';
 
   @override
+  String get verificationRequired => 'يتطلب التوثيق';
+
+  @override
+  String get verificationRequiredDesc =>
+      'عذراً، يجب عليك توثيق حسابك أولاً لتتمكن من حجز هذا العقار.';
+
+  @override
+  String get verifyNow => 'توثيق الآن';
+
+  @override
+  String get verificationTopHint => 'تابع حالة توثيقك من خلال صفحة الاعدادات';
+
+  @override
+  String get imageSizeError => 'حجم الصورة يجب أن لا يتعدى 20 ميجابايت';
+
+  @override
+  String get fileTypeError =>
+      'نوع الملف غير مدعوم. يرجى اختيار صور بصيغة JPG أو PNG';
+
+  @override
+  String get imagePickError => 'حدث خطأ أثناء اختيار الصورة';
+
+  @override
+  String get completeDataError => 'يرجى إكمال جميع البيانات المطلوبة';
+
+  @override
+  String get savingData => 'جاري حفظ البيانات...';
+
+  @override
+  String get verificationSent => 'تم إرسال طلب التوثيق بنجاح';
+
+  @override
+  String get sendError => 'حدث خطأ أثناء الإرسال';
+
+  @override
+  String get verificationScreenTitle => 'توثيق الحساب';
+
+  @override
+  String get pendingTitle => 'طلبك قيد المراجعة';
+
+  @override
+  String get pendingMessage =>
+      'شكراً لك. نحن نقوم حالياً بمراجعة بياناتك بدقة. سيتم إخطارك بالنتيجة فور الانتهاء.';
+
+  @override
+  String get verifiedTitle => 'تم توثيق حسابك بنجاح';
+
+  @override
+  String get verifiedMessage =>
+      'تهانينا! حسابك الآن موثق بالكامل. يمكنك الاستمتاع بكافة الميزات والامتيازات.';
+
+  @override
+  String get rejectedTitle => 'تم رفض طلب التوثيق';
+
+  @override
+  String get rejectionReasonLabel => 'سبب الرفض:';
+
+  @override
+  String get noReasonProvided =>
+      'لم يتم تحديد سبب، يرجى التواصل مع الدعم الفني.';
+
+  @override
+  String get tryAgainAction => 'الماولة مرة أخرى';
+
+  @override
+  String get personalInfoStep => 'المعلومات الشخصية';
+
+  @override
+  String get personalInfoSubtitle => 'تأكد من مطابقة البيانات للهوية الرسمية';
+
+  @override
+  String get residenceLabel => 'مكان الإقامة (الحي / الشارع)';
+
+  @override
+  String get birthDateLabel => 'تاريخ الميلاد';
+
+  @override
+  String get documentsStep => 'الوثائق الثبوتية';
+
+  @override
+  String get documentsSubtitle => 'التقط صورة واضحة للهوية الوطنية (الأصل)';
+
+  @override
+  String get submitVerificationAction => 'إرسال طلب التوثيق';
+
+  @override
+  String get governorateLabel => 'المحافظة';
+
+  @override
   String get personalInfo => 'المعلومات الشخصية';
 
   @override
@@ -774,4 +866,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get techSupport => 'الدعم الفني';
+
+  @override
+  String get requiredDeposit => 'العربون المطلوب';
 }

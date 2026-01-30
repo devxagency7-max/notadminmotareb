@@ -352,17 +352,8 @@ class _ProfileContentState extends State<ProfileContent> {
                           Icons.logout,
                           isDestructive: true,
                           delay: 500,
-                          onTap: () async {
-                            await authProvider.signOut();
-                            if (mounted) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            }
-                          },
+                          onTap: () =>
+                              _showLogoutConfirmation(context, authProvider),
                         ),
                       ] else ...[
                         _buildProfileMenuItem(
@@ -758,6 +749,121 @@ class _ProfileContentState extends State<ProfileContent> {
               size: 16,
               color: Colors.grey,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showLogoutConfirmation(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Theme.of(dialogContext).scaffoldBackgroundColor,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.logout, size: 40, color: Colors.red),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                context.loc.logout,
+                style: GoogleFonts.cairo(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(dialogContext).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                context
+                    .loc
+                    .logoutConfirmation, // You might need to add this key or use a hardcoded string if localization is missing
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  color: Theme.of(dialogContext).textTheme.bodyMedium?.color,
+                ),
+              ),
+              const SizedBox(height: 25),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        // Close confirmation dialog
+                        Navigator.pop(dialogContext);
+
+                        // Show loading dialog using parent context
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF39BB5E),
+                              ),
+                            ),
+                          );
+                        }
+
+                        // Perform sign out
+                        await authProvider.signOut();
+
+                        if (context.mounted) {
+                          // removing loading dialog
+                          Navigator.of(context).pop();
+
+                          // Navigate to LoginScreen
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        context.loc.logout,
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: Text(
+                        context.loc.cancel,
+                        style: GoogleFonts.cairo(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

@@ -65,6 +65,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshUserData() async {
+    await _fetchUserRolesAndData();
+    notifyListeners();
+  }
+
   Future<void> signIn(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;

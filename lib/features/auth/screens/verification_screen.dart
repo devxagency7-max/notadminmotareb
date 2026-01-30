@@ -11,9 +11,11 @@ import 'package:mime/mime.dart';
 
 import '../providers/auth_provider.dart';
 import '../../../services/r2_upload_service.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 class VerificationScreen extends StatefulWidget {
-  const VerificationScreen({super.key});
+  final String? topHint;
+  const VerificationScreen({super.key, this.topHint});
 
   @override
   State<VerificationScreen> createState() => _VerificationScreenState();
@@ -23,6 +25,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _residenceController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   String? _selectedGovernorate;
   File? _idFrontImage;
@@ -75,6 +78,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
             authProvider.user!.displayName!.isNotEmpty) {
           _nameController.text = authProvider.user!.displayName!;
         }
+        // Also check if phone exists in userData
+        final userData = authProvider.userData;
+        if (userData != null && userData['phone'] != null) {
+          _phoneController.text = userData['phone'];
+        }
       }
     });
   }
@@ -84,6 +92,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     _nameController.dispose();
     _residenceController.dispose();
     _dateController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -133,13 +142,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
         final File file = File(image.path);
         final int sizeInBytes = await file.length();
         if (sizeInBytes / (1024 * 1024) > 20) {
-          _showError('حجم الصورة يجب أن لا يتعدى 20 ميجابايت');
+          _showError(context.loc.imageSizeError);
           return;
         }
         final String? mimeType = lookupMimeType(file.path);
         if (mimeType == null ||
             !['image/jpeg', 'image/png', 'image/jpg'].contains(mimeType)) {
-          _showError('نوع الملف غير مدعوم. يرجى اختيار صور بصيغة JPG أو PNG');
+          _showError(context.loc.fileTypeError);
           return;
         }
         setState(() {
@@ -151,7 +160,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         });
       }
     } catch (e) {
-      _showError('حدث خطأ أثناء اختيار الصورة');
+      _showError(context.loc.imagePickError);
     }
   }
 
@@ -172,15 +181,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
     if (_selectedGovernorate == null ||
         _residenceController.text.isEmpty ||
         _dateController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
         _idFrontImage == null ||
         _idBackImage == null) {
-      _showError('يرجى إكمال جميع البيانات المطلوبة');
+      _showError(context.loc.completeDataError);
       return;
     }
 
     setState(() {
       _isSubmitting = true;
-      _loadingMessage = 'جاري رفع الصور...';
+      _loadingMessage = context.loc.loading;
     });
 
     try {
@@ -194,13 +204,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
       );
 
       setState(() {
-        _loadingMessage = 'جاري حفظ البيانات...';
+        _loadingMessage = context.loc.savingData;
       });
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'verificationStatus': 'pending',
         'isVerified': false,
         'fullName': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(), // Added phone field
         'governorate': _selectedGovernorate,
         'residence': _residenceController.text.trim(),
         'birthDate': _dateController.text,
@@ -214,19 +225,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'تم إرسال طلب التوثيق بنجاح',
+            context.loc.verificationSent,
             style: GoogleFonts.cairo(),
           ),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context);
+
+      // Refresh user data instead of popping
+      await authProvider.refreshUserData();
     } catch (e) {
-      _showError('حدث خطأ أثناء الإرسال: $e');
+      _showError('${context.loc.sendError}: $e');
     } finally {
       if (mounted) {
         setState(() {
           _isSubmitting = false;
+          _isRetrying = false; // Reset retry flag on completion
         });
       }
     }
@@ -249,7 +263,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           title: Text(
-            'توثيق الحساب',
+            context.loc.verificationScreenTitle,
             style: GoogleFonts.cairo(
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -280,6 +294,32 @@ class _VerificationScreenState extends State<VerificationScreen> {
             padding: const EdgeInsets.fromLTRB(20, 120, 20, 40),
             child: Column(
               children: [
+                if (widget.topHint != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.blue),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            widget.topHint!,
+                            style: GoogleFonts.cairo(
+                              color: Colors.blue[800],
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_isSubmitting)
                   _buildLoadingState()
                 else if (showForm)
@@ -288,17 +328,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   _buildStatusCard(
                     icon: Icons.history_toggle_off_rounded,
                     color: Colors.orange,
-                    title: 'طلبك قيد المراجعة',
-                    message:
-                        'شكراً لك. نحن نقوم حالياً بمراجعة بياناتك بدقة. سيتم إخطارك بالنتيجة فور الانتهاء.',
+                    title: context.loc.pendingTitle,
+                    message: context.loc.pendingMessage,
                   )
                 else if (verificationStatus == 'verified')
                   _buildStatusCard(
                     icon: Icons.verified_rounded,
                     color: const Color(0xFF39BB5E),
-                    title: 'تم توثيق حسابك بنجاح',
-                    message:
-                        'تهانينا! حسابك الآن موثق بالكامل. يمكنك الاستمتاع بكافة الميزات والامتيازات.',
+                    title: context.loc.verifiedTitle,
+                    message: context.loc.verifiedMessage,
                   )
                 else if (verificationStatus == 'rejected')
                   _buildRejectionState(rejectionReason),
@@ -434,7 +472,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'تم رفض طلب التوثيق',
+                  context.loc.rejectedTitle,
                   style: GoogleFonts.cairo(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -445,7 +483,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 Divider(color: Theme.of(context).dividerColor),
                 const SizedBox(height: 20),
                 Text(
-                  'سبب الرفض:',
+                  context.loc.rejectionReasonLabel,
                   style: GoogleFonts.cairo(
                     fontSize: 14,
                     color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -468,7 +506,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     ),
                   ),
                   child: Text(
-                    reason ?? 'لم يتم تحديد سبب، يرجى التواصل مع الدعم الفني.',
+                    reason ?? context.loc.noReasonProvided,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.cairo(
                       fontSize: 16,
@@ -482,13 +520,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
           ),
           const SizedBox(height: 30),
-          _buildActionButton(' المحاولة مرةأخرى', Icons.refresh_rounded, () {
-            setState(() {
-              _isRetrying = true;
-              _idFrontImage = null;
-              _idBackImage = null;
-            });
-          }),
+          _buildActionButton(
+            context.loc.tryAgainAction,
+            Icons.refresh_rounded,
+            () {
+              setState(() {
+                _isRetrying = true;
+                _idFrontImage = null;
+                _idBackImage = null;
+              });
+            },
+          ),
         ],
       ),
     );
@@ -499,12 +541,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
       children: [
         _buildStepHeader(
           Icons.person_pin_rounded,
-          'المعلومات الشخصية',
-          'تأكد من مطابقة البيانات للهوية الرسمية',
+          context.loc.personalInfoStep,
+          context.loc.personalInfoSubtitle,
         ),
         const SizedBox(height: 20),
         _buildTextField(
-          label: 'الاسم الكامل',
+          label: context.loc.fullName,
           icon: Icons.person_outline,
           controller: _nameController,
         ),
@@ -512,13 +554,20 @@ class _VerificationScreenState extends State<VerificationScreen> {
         _buildGovernorateDropdown(),
         const SizedBox(height: 15),
         _buildTextField(
-          label: "مكان الاقامه (الحي / الشارع)",
+          label: context.loc.phone,
+          icon: Icons.phone_outlined,
+          controller: _phoneController,
+          keyboardType: TextInputType.phone,
+        ),
+        const SizedBox(height: 15),
+        _buildTextField(
+          label: context.loc.residenceLabel,
           icon: Icons.location_on_outlined,
           controller: _residenceController,
         ),
         const SizedBox(height: 15),
         _buildTextField(
-          label: 'تاريخ الميلاد',
+          label: context.loc.birthDateLabel,
           icon: Icons.calendar_month_outlined,
           controller: _dateController,
           readOnly: true,
@@ -527,14 +576,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
         const SizedBox(height: 40),
         _buildStepHeader(
           Icons.camera_alt_rounded,
-          'الوثائق الثبوتية',
-          'التقط صورة واضحة للهوية الوطنية (الأصل)',
+          context.loc.documentsStep,
+          context.loc.documentsSubtitle,
         ),
         const SizedBox(height: 20),
         _buildIDUploadSection(),
         const SizedBox(height: 50),
         _buildActionButton(
-          'إرسال طلب التوثيق',
+          context.loc.submitVerificationAction,
           Icons.send_rounded,
           _submitVerification,
         ),
@@ -607,7 +656,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         initialValue: _selectedGovernorate,
         dropdownColor: Theme.of(context).cardTheme.color,
         decoration: InputDecoration(
-          labelText: 'المحافظة',
+          labelText: context.loc.governorateLabel,
           labelStyle: GoogleFonts.cairo(color: Colors.grey, fontSize: 13),
           prefixIcon: const Icon(Icons.map_outlined, color: Color(0xFF008695)),
           border: OutlineInputBorder(
@@ -640,7 +689,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       children: [
         Expanded(
           child: _buildUploadBox(
-            'الوجه الأمامي',
+            context.loc.idFrontFace,
             image: _idFrontImage,
             onTap: () => _pickImage(true),
             onDelete: () => setState(() => _idFrontImage = null),
@@ -649,7 +698,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         const SizedBox(width: 15),
         Expanded(
           child: _buildUploadBox(
-            'الوجه الخلفي',
+            context.loc.idBackFace,
             image: _idBackImage,
             onTap: () => _pickImage(false),
             onDelete: () => setState(() => _idBackImage = null),
@@ -716,6 +765,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     TextEditingController? controller,
     bool readOnly = false,
     VoidCallback? onTap,
+    TextInputType? keyboardType,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -739,6 +789,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         controller: controller,
         readOnly: readOnly,
         onTap: onTap,
+        keyboardType: keyboardType,
         style: GoogleFonts.cairo(
           color: Theme.of(context).textTheme.bodyLarge?.color,
         ),

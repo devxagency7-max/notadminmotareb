@@ -17,6 +17,10 @@ import 'package:motareb/core/theme/app_theme.dart';
 // Screens
 import 'package:motareb/features/splash/screens/splash_screen.dart';
 
+// Route Observer for navigation awareness (e.g., pausing video)
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -66,6 +70,7 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: localeProvider.locale,
+      navigatorObservers: [routeObserver],
       home: const SplashScreen(),
     );
   }

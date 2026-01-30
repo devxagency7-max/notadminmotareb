@@ -738,8 +738,16 @@ class _RoomEditDialogState extends State<RoomEditDialog> {
             TextField(
               controller: _bedsController,
               keyboardType: TextInputType.number,
+              style: GoogleFonts.cairo(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
               decoration: InputDecoration(
                 labelText: "عدد الأسرة",
+                labelStyle: GoogleFonts.cairo(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[700],
+                ),
                 suffixIcon: const Icon(Icons.bed),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -750,8 +758,16 @@ class _RoomEditDialogState extends State<RoomEditDialog> {
             TextField(
               controller: _roomPriceController,
               keyboardType: TextInputType.number,
+              style: GoogleFonts.cairo(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
               decoration: InputDecoration(
                 labelText: "سعر الغرفة",
+                labelStyle: GoogleFonts.cairo(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[700],
+                ),
                 suffixText: "ج.م",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -764,6 +780,11 @@ class _RoomEditDialogState extends State<RoomEditDialog> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: "سعر السرير",
+                labelStyle: GoogleFonts.cairo(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey[400]
+                      : Colors.grey[700],
+                ),
                 suffixText: "ج.م",
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -841,6 +862,7 @@ class _AddRoomSheetState extends State<AddRoomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.only(
         left: 20,
@@ -848,9 +870,9 @@ class _AddRoomSheetState extends State<AddRoomSheet> {
         top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -861,7 +883,7 @@ class _AddRoomSheetState extends State<AddRoomSheet> {
               width: 50,
               height: 5,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: isDark ? Colors.grey[700] : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -869,7 +891,11 @@ class _AddRoomSheetState extends State<AddRoomSheet> {
           const SizedBox(height: 20),
           Text(
             "إضافة غرفة جديدة",
-            style: GoogleFonts.cairo(fontSize: 18, fontWeight: FontWeight.bold),
+            style: GoogleFonts.cairo(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -892,7 +918,9 @@ class _AddRoomSheetState extends State<AddRoomSheet> {
                 selected: isSelected,
                 selectedColor: const Color(0xFF39BB5E).withOpacity(0.2),
                 labelStyle: GoogleFonts.cairo(
-                  color: isSelected ? const Color(0xFF39BB5E) : Colors.black,
+                  color: isSelected
+                      ? const Color(0xFF39BB5E)
+                      : Theme.of(context).textTheme.bodyMedium?.color,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 onSelected: (val) {
@@ -915,10 +943,25 @@ class _AddRoomSheetState extends State<AddRoomSheet> {
           TextField(
             controller: _bedsController,
             keyboardType: TextInputType.number,
+            style: GoogleFonts.cairo(
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
             decoration: InputDecoration(
               hintText: "أدخل عدد الأسرة",
+              hintStyle: GoogleFonts.cairo(
+                color: isDark ? Colors.grey[600] : Colors.grey,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                  color: isDark ? Colors.grey[800]! : Colors.grey.shade300,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                  color: isDark ? Colors.grey[800]! : Colors.grey.shade300,
+                ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10,

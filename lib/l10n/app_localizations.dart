@@ -368,6 +368,12 @@ abstract class AppLocalizations {
   /// **'Logout'**
   String get logout;
 
+  /// No description provided for @logoutConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to logout?'**
+  String get logoutConfirmation;
+
   /// No description provided for @account.
   ///
   /// In en, this message translates to:
@@ -1082,6 +1088,174 @@ abstract class AppLocalizations {
   /// **'Verify your identity'**
   String get verificationDetail;
 
+  /// No description provided for @verificationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Required'**
+  String get verificationRequired;
+
+  /// No description provided for @verificationRequiredDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorry, you must verify your account first to book this property.'**
+  String get verificationRequiredDesc;
+
+  /// No description provided for @verifyNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Now'**
+  String get verifyNow;
+
+  /// No description provided for @verificationTopHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your verification status in settings'**
+  String get verificationTopHint;
+
+  /// No description provided for @imageSizeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Image size must not exceed 20 MB'**
+  String get imageSizeError;
+
+  /// No description provided for @fileTypeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported file type. Please select JPG or PNG'**
+  String get fileTypeError;
+
+  /// No description provided for @imagePickError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking image'**
+  String get imagePickError;
+
+  /// No description provided for @completeDataError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete all required fields'**
+  String get completeDataError;
+
+  /// No description provided for @savingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving data...'**
+  String get savingData;
+
+  /// No description provided for @verificationSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification request sent successfully'**
+  String get verificationSent;
+
+  /// No description provided for @sendError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error sending request'**
+  String get sendError;
+
+  /// No description provided for @verificationScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Verification'**
+  String get verificationScreenTitle;
+
+  /// No description provided for @pendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Request Under Review'**
+  String get pendingTitle;
+
+  /// No description provided for @pendingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you. We are currently reviewing your data carefully. You will be notified of the result shortly.'**
+  String get pendingMessage;
+
+  /// No description provided for @verifiedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Verified Successfully'**
+  String get verifiedTitle;
+
+  /// No description provided for @verifiedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Congratulations! Your account is now fully verified. You can enjoy all features and privileges.'**
+  String get verifiedMessage;
+
+  /// No description provided for @rejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification Request Rejected'**
+  String get rejectedTitle;
+
+  /// No description provided for @rejectionReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejection Reason:'**
+  String get rejectionReasonLabel;
+
+  /// No description provided for @noReasonProvided.
+  ///
+  /// In en, this message translates to:
+  /// **'No reason provided, please contact support.'**
+  String get noReasonProvided;
+
+  /// No description provided for @tryAgainAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get tryAgainAction;
+
+  /// No description provided for @personalInfoStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get personalInfoStep;
+
+  /// No description provided for @personalInfoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ensure data matches official ID'**
+  String get personalInfoSubtitle;
+
+  /// No description provided for @residenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Residence (District / Street)'**
+  String get residenceLabel;
+
+  /// No description provided for @birthDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get birthDateLabel;
+
+  /// No description provided for @documentsStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity Documents'**
+  String get documentsStep;
+
+  /// No description provided for @documentsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a clear photo of your National ID (Original)'**
+  String get documentsSubtitle;
+
+  /// No description provided for @submitVerificationAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Verification Request'**
+  String get submitVerificationAction;
+
+  /// No description provided for @governorateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Governorate'**
+  String get governorateLabel;
+
   /// No description provided for @personalInfo.
   ///
   /// In en, this message translates to:
@@ -1609,6 +1783,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tech Support'**
   String get techSupport;
+
+  /// No description provided for @requiredDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Deposit'**
+  String get requiredDeposit;
 }
 
 class _AppLocalizationsDelegate

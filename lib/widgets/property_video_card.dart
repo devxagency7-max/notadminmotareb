@@ -1,6 +1,7 @@
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import '../../main.dart'; // Import to access routeObserver
 
 class PropertyVideoCard extends StatefulWidget {
   final String videoUrl;
@@ -18,11 +19,21 @@ class PropertyVideoCard extends StatefulWidget {
   State<PropertyVideoCard> createState() => _PropertyVideoCardState();
 }
 
-class _PropertyVideoCardState extends State<PropertyVideoCard> {
+class _PropertyVideoCardState extends State<PropertyVideoCard> with RouteAware {
   late VideoPlayerController _videoPlayerController;
   ChewieController? _chewieController;
   bool _isLoading = true;
   String? _errorMessage;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to the RouteObserver
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute is PageRoute) {
+      routeObserver.subscribe(this, modalRoute);
+    }
+  }
 
   @override
   void initState() {
@@ -82,9 +93,23 @@ class _PropertyVideoCardState extends State<PropertyVideoCard> {
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _videoPlayerController.dispose();
     _chewieController?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didPushNext() {
+    // Called when a new route is pushed on top of this one (user leaves page)
+    _videoPlayerController.pause();
+  }
+
+  @override
+  void didPopNext() {
+    // Called when the top route has been popped off, and this route shows up
+    // Optional: we can choose to auto-play or stay paused.
+    // Keeping it paused is usually better UX unless autoPlay was true.
   }
 
   @override

@@ -41,21 +41,23 @@ class _BookingRequestContent extends StatefulWidget {
 
 class _BookingRequestContentState extends State<_BookingRequestContent> {
   final _formKey = GlobalKey<FormState>();
+  bool _showDateError = false;
 
   // Controllers
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   final TextEditingController _notesController = TextEditingController();
-  final TextEditingController _idNameController = TextEditingController();
-  final TextEditingController _idNumberController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final user = context.read<AuthProvider>().user;
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.user;
+    final userData = authProvider.userData;
+
     _nameController = TextEditingController(text: user?.displayName ?? '');
-    _phoneController = TextEditingController();
+    _phoneController = TextEditingController(text: userData?['phone'] ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
   }
 
@@ -65,8 +67,6 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
     _phoneController.dispose();
     _emailController.dispose();
     _notesController.dispose();
-    _idNameController.dispose();
-    _idNumberController.dispose();
     super.dispose();
   }
 
@@ -112,6 +112,16 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
     if (!_formKey.currentState!.validate()) return;
 
     final provider = context.read<BookingRequestProvider>();
+
+    if (provider.startDate == null || provider.endDate == null) {
+      setState(() => _showDateError = true);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.loc.selectDatesError)));
+      return;
+    }
+    setState(() => _showDateError = false);
+
     final user = context.read<AuthProvider>().user;
 
     if (user == null) return;
@@ -121,8 +131,8 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
       userEmail: _emailController.text,
       userName: _nameController.text,
       userPhone: _phoneController.text,
-      idName: _idNameController.text,
-      idNumber: _idNumberController.text,
+      idName: '',
+      idNumber: '',
       notes: _notesController.text,
     );
 
@@ -136,10 +146,6 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(provider.error!)));
-      } else if (provider.startDate == null || provider.endDate == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(context.loc.selectDatesError)));
       }
     }
   }
@@ -274,24 +280,29 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              provider.selectionDetails,
-                              style: GoogleFonts.cairo(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${provider.selectionDetails} - ${provider.property.title}',
+                                style: GoogleFonts.cairo(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.color,
+                                ),
                               ),
-                            ),
-                            Text(
-                              provider.property.location,
-                              style: GoogleFonts.cairo(
-                                fontSize: 11,
-                                color: Colors.grey,
+                              Text(
+                                provider.property.location,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const Icon(
                           Icons.location_on_outlined,
@@ -322,6 +333,30 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                         ),
                       ],
                     ),
+                    if (provider.property.requiredDeposit != null &&
+                        provider.property.requiredDeposit! > 0) ...[
+                      const Divider(height: 30),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            context.loc.requiredDeposit,
+                            style: GoogleFonts.cairo(
+                              fontSize: 14,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Text(
+                            '${provider.property.requiredDeposit} ${context.loc.currency}',
+                            style: GoogleFonts.cairo(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFD35400),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -449,6 +484,8 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                                       'en',
                                     ).format(provider.startDate!)
                                   : context.loc.selectStartMonth,
+                              isError:
+                                  _showDateError && provider.startDate == null,
                             ),
                           ),
                         ),
@@ -465,6 +502,8 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                                       'en',
                                     ).format(provider.endDate!)
                                   : context.loc.selectEndMonth,
+                              isError:
+                                  _showDateError && provider.endDate == null,
                             ),
                           ),
                         ),
@@ -492,180 +531,6 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Identity Verification
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardTheme.color,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: isDark
-                      ? []
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          context.loc.identityVerification,
-                          style: GoogleFonts.cairo(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).textTheme.bodyLarge?.color,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          child: Text(
-                            context.loc.required,
-                            style: GoogleFonts.cairo(
-                              color: Colors.red,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(
-                          0xFFE0F2F1,
-                        ).withOpacity(isDark ? 0.1 : 0.5),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: const Color(0xFF80CBC4).withOpacity(0.5),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.lock_outline,
-                            size: 18,
-                            color: isDark
-                                ? const Color(0xFF80CBC4)
-                                : const Color(0xFF008695),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              context.loc.dataProtectedNotice,
-                              style: GoogleFonts.cairo(
-                                color: isDark
-                                    ? const Color(0xFF80CBC4)
-                                    : const Color(0xFF00695C),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    Text(
-                      context.loc.fullNameInId,
-                      style: GoogleFonts.cairo(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    TextFormField(
-                      controller: _idNameController,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: context.loc.fullNameHint,
-                        hintStyle: GoogleFonts.cairo(
-                          fontSize: 12,
-                          color: Theme.of(context).hintColor,
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(
-                          context,
-                        ).inputDecorationTheme.fillColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).dividerColor,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 15),
-
-                    Text(
-                      context.loc.nationalIdNumber,
-                      style: GoogleFonts.cairo(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    TextFormField(
-                      controller: _idNumberController,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: context.loc.idNumberHint,
-                        hintStyle: GoogleFonts.cairo(
-                          fontSize: 12,
-                          color: Theme.of(context).hintColor,
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(
-                          context,
-                        ).inputDecorationTheme.fillColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).dividerColor,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-                    Text(
-                      context.loc.uploadIdPhoto,
-                      style: GoogleFonts.cairo(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildUploadBox(context, context.loc.idFrontFace),
-                    const SizedBox(height: 10),
-                    _buildUploadBox(context, context.loc.idBackFace),
                   ],
                 ),
               ),
@@ -768,7 +633,12 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
     );
   }
 
-  Widget _buildDateBox(BuildContext context, String label, String date) {
+  Widget _buildDateBox(
+    BuildContext context,
+    String label,
+    String date, {
+    bool isError = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -776,6 +646,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
             Theme.of(context).inputDecorationTheme.fillColor ??
             Colors.grey.shade50,
         borderRadius: BorderRadius.circular(15),
+        border: isError ? Border.all(color: Colors.red, width: 1) : null,
       ),
       child: Column(
         children: [
@@ -795,75 +666,6 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
               fontWeight: FontWeight.bold,
               fontSize: 13,
               color: Theme.of(context).textTheme.bodyLarge?.color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUploadBox(BuildContext context, String label) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color:
-            Theme.of(context).inputDecorationTheme.fillColor ??
-            Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.cairo(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
-                ),
-              ),
-              const Icon(
-                Icons.camera_alt_outlined,
-                color: Color(0xFF008695),
-                size: 20,
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withOpacity(0.5),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.file_upload_outlined,
-                  size: 18,
-                  color: Theme.of(context).iconTheme.color,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  context.loc.pickPhotoHint,
-                  style: GoogleFonts.cairo(
-                    fontSize: 12,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
             ),
           ),
         ],

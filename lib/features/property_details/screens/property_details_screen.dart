@@ -5,6 +5,8 @@ import 'package:motareb/core/extensions/loc_extension.dart';
 import '../../../core/models/property_model.dart';
 import '../../favorites/providers/favorites_provider.dart';
 import 'booking_request_screen.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../auth/screens/verification_screen.dart';
 
 import '../widgets/property_gallery.dart';
 import '../widgets/property_header.dart';
@@ -82,6 +84,15 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
   void _onBookNow(BuildContext context, PropertyDetailsProvider provider) {
     if (!GuestChecker.check(context)) return;
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isVerified =
+        authProvider.userData?['verificationStatus'] == 'verified';
+
+    if (!isVerified) {
+      _showVerificationDialog(context);
+      return;
+    }
+
     if (!provider.validateBooking()) {
       setState(() {
         _showSelectionError = true;
@@ -142,6 +153,116 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
           property: provider.property,
           selectionDetails: selectionDetails,
           price: provider.selectedPrice,
+        ),
+      ),
+    );
+  }
+
+  void _showVerificationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_user_outlined,
+                  size: 40,
+                  color: Colors.red,
+                ),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                context.loc.verificationRequired,
+                style: GoogleFonts.cairo(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                context.loc.verificationRequiredDesc,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+              const SizedBox(height: 25),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF008695).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VerificationScreen(
+                                topHint: context.loc.verificationTopHint,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          context.loc.verifyNow,
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        context.loc.cancel,
+                        style: GoogleFonts.cairo(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -241,6 +362,9 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
             selectedPrice: detailsProvider.selectedPrice,
             selectionLabel: detailsProvider.selectionLabel,
             onBook: () => _onBookNow(context, detailsProvider),
+            isVerified:
+                context.watch<AuthProvider>().userData?['verificationStatus'] ==
+                'verified',
           ),
         ],
       ),

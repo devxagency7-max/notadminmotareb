@@ -144,6 +144,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logout => 'Logout';
 
   @override
+  String get logoutConfirmation => 'Are you sure you want to logout?';
+
+  @override
   String get account => 'Account';
 
   @override
@@ -501,6 +504,95 @@ class AppLocalizationsEn extends AppLocalizations {
   String get verificationDetail => 'Verify your identity';
 
   @override
+  String get verificationRequired => 'Verification Required';
+
+  @override
+  String get verificationRequiredDesc =>
+      'Sorry, you must verify your account first to book this property.';
+
+  @override
+  String get verifyNow => 'Verify Now';
+
+  @override
+  String get verificationTopHint =>
+      'Track your verification status in settings';
+
+  @override
+  String get imageSizeError => 'Image size must not exceed 20 MB';
+
+  @override
+  String get fileTypeError => 'Unsupported file type. Please select JPG or PNG';
+
+  @override
+  String get imagePickError => 'Error picking image';
+
+  @override
+  String get completeDataError => 'Please complete all required fields';
+
+  @override
+  String get savingData => 'Saving data...';
+
+  @override
+  String get verificationSent => 'Verification request sent successfully';
+
+  @override
+  String get sendError => 'Error sending request';
+
+  @override
+  String get verificationScreenTitle => 'Account Verification';
+
+  @override
+  String get pendingTitle => 'Request Under Review';
+
+  @override
+  String get pendingMessage =>
+      'Thank you. We are currently reviewing your data carefully. You will be notified of the result shortly.';
+
+  @override
+  String get verifiedTitle => 'Account Verified Successfully';
+
+  @override
+  String get verifiedMessage =>
+      'Congratulations! Your account is now fully verified. You can enjoy all features and privileges.';
+
+  @override
+  String get rejectedTitle => 'Verification Request Rejected';
+
+  @override
+  String get rejectionReasonLabel => 'Rejection Reason:';
+
+  @override
+  String get noReasonProvided => 'No reason provided, please contact support.';
+
+  @override
+  String get tryAgainAction => 'Try Again';
+
+  @override
+  String get personalInfoStep => 'Personal Information';
+
+  @override
+  String get personalInfoSubtitle => 'Ensure data matches official ID';
+
+  @override
+  String get residenceLabel => 'Residence (District / Street)';
+
+  @override
+  String get birthDateLabel => 'Date of Birth';
+
+  @override
+  String get documentsStep => 'Identity Documents';
+
+  @override
+  String get documentsSubtitle =>
+      'Take a clear photo of your National ID (Original)';
+
+  @override
+  String get submitVerificationAction => 'Submit Verification Request';
+
+  @override
+  String get governorateLabel => 'Governorate';
+
+  @override
   String get personalInfo => 'Personal Info';
 
   @override
@@ -776,4 +868,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get techSupport => 'Tech Support';
+
+  @override
+  String get requiredDeposit => 'Required Deposit';
 }
