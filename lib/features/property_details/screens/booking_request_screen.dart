@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/models/property_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/booking_request_provider.dart';
+import 'payment_webview_screen.dart';
 
 class BookingRequestScreen extends StatelessWidget {
   final Property property;
@@ -107,23 +109,6 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
         },
       ),
     );
-  }
-
-  Future<void> startDepositPayment() async {
-    try {
-      print("Deposit button clicked");
-      final provider = context.read<BookingRequestProvider>();
-
-      final result = await FirebaseFunctions.instance
-          .httpsCallable('createDepositBooking')
-          .call({"propertyId": provider.property.id});
-
-      print("Function response:");
-      print(result.data);
-    } catch (e) {
-      print("Function error:");
-      print(e);
-    }
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -625,7 +610,33 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                   onPressed: provider.isSubmitting
                       ? null
                       : () async {
-                          await startDepositPayment();
+                          // 1. Validate Form
+                          if (!_formKey.currentState!.validate()) return;
+
+                          // 2. Validate Dates with Provider
+                          if (provider.startDate == null ||
+                              provider.endDate == null) {
+                            setState(() => _showDateError = true);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(context.loc.selectDatesError),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // 3. User Info
+                          final user = context.read<AuthProvider>().user;
+                          if (user == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please login first'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          await _showPaymentSummary(context);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.transparent,
@@ -637,7 +648,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                   child: provider.isSubmitting
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
-                          context.loc.submitRequest,
+                          context.loc.submitRequest, // "دفع العربون وحجز"
                           style: GoogleFonts.cairo(
                             color: Colors.white,
                             fontSize: 18,
@@ -651,6 +662,84 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
         ),
       ),
     );
+  }
+
+  Future<void> startDepositPayment() async {
+    final provider = context.read<BookingRequestProvider>();
+    setState(() {
+      // Use helper or provider state later, for now local is fine or provider.isSubmitting
+    });
+
+    // We can use provider._isSubmitting but it's private.
+    // Let's assume we show loading via the button's state which checks provider.isSubmitting.
+    // Since provider methods handle notifies, we can wrap this in a provider method or just do manual set here if we exposed a setter.
+    // For simplicity, I'll assume we can trigger the loading state or just show a dialog.
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // Prepare User Info
+      final userInfo = {
+        'name': _nameController.text,
+        'phone': _phoneController.text,
+        'email': _emailController.text,
+        'notes': _notesController.text,
+      };
+
+      print("Calling cloud function...");
+      final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('createDepositBooking')
+          .call({"propertyId": provider.property.id, "userInfo": userInfo});
+
+      Navigator.pop(context); // Close loading dialog
+
+      final data = result.data as Map<String, dynamic>;
+      final paymentToken = data['paymentToken'];
+      final iframeId = data['iframeId'];
+      final paymentId = data['paymentId'];
+      final bookingId = data['bookingId'];
+
+      if (paymentToken != null && iframeId != null) {
+        if (!mounted) return;
+
+        // Navigate to the new Secure WebView Screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentWebViewScreen(
+              paymentToken: paymentToken.toString(),
+              iframeId: iframeId.toString(),
+              paymentId: paymentId.toString(),
+              bookingId: bookingId.toString(),
+            ),
+          ),
+        );
+      } else {
+        throw 'Missing payment data from server';
+      }
+    } catch (e) {
+      if (Navigator.canPop(context))
+        Navigator.pop(context); // Close loading if active
+      print("Payment Error: $e");
+      print("Payment Error: $e");
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Payment Error"),
+          content: Text(e.toString()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildDateBox(
@@ -690,6 +779,179 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showPaymentSummary(BuildContext context) async {
+    final provider = context.read<BookingRequestProvider>();
+
+    final deposit = provider.property.requiredDeposit ?? 0.0;
+    final remaining = (provider.price / 2) - deposit;
+
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        padding: const EdgeInsets.all(25),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 25),
+            Text(
+              "ملخص الحجز",
+              style: GoogleFonts.cairo(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildSummaryRow(
+              context,
+              "العقار",
+              provider.property.title,
+              isBold: true,
+            ),
+            const Divider(height: 30),
+            _buildSummaryRow(
+              context,
+              "المبلغ المطلوب الآن (العربون)",
+              "$deposit ${context.loc.currency}",
+              valueColor: const Color(0xFFD35400),
+              isBold: true,
+            ),
+            const SizedBox(height: 10),
+            _buildSummaryRow(
+              context,
+              "المبلغ المتبقي للإدارة لاحقاً",
+              "$remaining ${context.loc.currency}",
+              valueColor: Colors.grey,
+            ),
+            const SizedBox(height: 30),
+            Container(
+              padding: const EdgeInsets.all(15),
+              decoration: BoxDecoration(
+                color: const Color(0xFF008695).withOpacity(0.05),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                  color: const Color(0xFF008695).withOpacity(0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: Color(0xFF008695),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "بالضغط على تأكيد، سيتم توجيهك لصفحة الدفع الآمن.",
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: const Color(0xFF008695),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    child: Text(context.loc.cancel, style: GoogleFonts.cairo()),
+                  ),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                      ),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        startDepositPayment();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: Text(
+                        "تأكيد ودفع",
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(
+    BuildContext context,
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isBold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: GoogleFonts.cairo(color: Colors.grey, fontSize: 13)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: GoogleFonts.cairo(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+              color: valueColor ?? Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

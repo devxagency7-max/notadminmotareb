@@ -871,4 +871,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get requiredDeposit => 'Required Deposit';
+
+  @override
+  String get noBookings => 'No bookings found';
+
+  @override
+  String get booked => 'Booked';
 }

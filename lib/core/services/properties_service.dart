@@ -7,7 +7,10 @@ class PropertiesService {
   Stream<List<Property>> getPropertiesStream({int limit = 10}) {
     return _firestore
         .collection('properties')
-        .where('status', isEqualTo: 'approved')
+        .where(
+          'status',
+          whereIn: ['approved', 'reserved', 'sold', 'paying_remaining'],
+        )
         .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
@@ -23,7 +26,10 @@ class PropertiesService {
     // For now, returning top rated
     final snapshot = await _firestore
         .collection('properties')
-        .where('status', isEqualTo: 'approved')
+        .where(
+          'status',
+          whereIn: ['approved', 'reserved', 'sold', 'paying_remaining'],
+        )
         .orderBy('rating', descending: true)
         .limit(5)
         .get();

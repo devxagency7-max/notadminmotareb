@@ -869,4 +869,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get requiredDeposit => 'العربون المطلوب';
+
+  @override
+  String get noBookings => 'لا يوجد حجوزات';
+
+  @override
+  String get booked => 'تم الحجز';
 }

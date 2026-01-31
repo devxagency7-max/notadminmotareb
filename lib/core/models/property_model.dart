@@ -43,6 +43,7 @@ class Property {
   final List<Map<String, dynamic>> rooms;
   final double? requiredDeposit; // Added
   final bool bookingEnabled; // Added
+  final String status; // Added
 
   // Helpers
   bool get hasAC => tags.contains('ac') || tags.contains('تكييف');
@@ -85,6 +86,7 @@ class Property {
     this.generalRoomType,
     this.requiredDeposit,
     this.bookingEnabled = true,
+    this.status = 'approved',
   });
 
   factory Property.fromMap(Map<String, dynamic> map, String documentId) {
@@ -158,6 +160,7 @@ class Property {
       generalRoomType: map['generalRoomType'],
       requiredDeposit: (map['requiredDeposit'] as num?)?.toDouble(),
       bookingEnabled: map['bookingEnabled'] ?? true,
+      status: map['status'] ?? 'approved',
     );
   }
 

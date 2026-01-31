@@ -227,37 +227,6 @@ class PropertyCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 5),
-                  // "Book Now" Button Style
-                  Container(
-                    width: double.infinity,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: isDark
-                          ? []
-                          : [
-                              BoxShadow(
-                                color: const Color(0xFF008695).withOpacity(0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        context.loc.bookNow,
-                        style: GoogleFonts.cairo(
-                          color: Colors.white,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             );

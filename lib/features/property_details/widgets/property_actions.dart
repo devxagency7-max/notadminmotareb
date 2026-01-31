@@ -104,36 +104,7 @@ class PropertyActions extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (property.bookingEnabled)
-                  Container(
-                    height: 50,
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF008695).withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: GestureDetector(
-                      onTap: onBook,
-                      child: Center(
-                        child: Text(
-                          context.loc.bookNow,
-                          style: GoogleFonts.cairo(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
+                if (!property.bookingEnabled)
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -162,6 +133,54 @@ class PropertyActions extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  )
+                else if (property.status != 'approved')
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Center(
+                      child: Text(
+                        context.loc.booked, // "Booked"
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF008695).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: GestureDetector(
+                      onTap: onBook,
+                      child: Center(
+                        child: Text(
+                          context.loc.bookNow,
+                          style: GoogleFonts.cairo(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
               ],

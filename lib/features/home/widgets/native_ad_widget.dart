@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:motareb/core/services/ad_service.dart';
+import 'package:motareb/core/services/ads_controller.dart';
 
 class NativeAdWidget extends StatefulWidget {
   final double height;
@@ -24,7 +25,12 @@ class _NativeAdWidgetState extends State<NativeAdWidget> {
   @override
   void initState() {
     super.initState();
-    _tryGetPooledAd();
+    // ⬇️ New Check: Don't even try to load if ads are disabled remotely
+    if (AdsController().adsEnabled) {
+      _tryGetPooledAd();
+    } else {
+      debugPrint('🚫 NativeAdWidget: Ads are disabled via Remote Config.');
+    }
   }
 
   void _tryGetPooledAd() {

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../chat/providers/chat_provider.dart';
@@ -280,6 +281,16 @@ class _ChatContentState extends State<ChatContent> {
                                 if (showDate) _buildDateHeader(msg.timestamp),
                                 if (msg.type == MessageType.system)
                                   _buildSystemMessage(msg)
+                                else if (isMe)
+                                  GestureDetector(
+                                    onLongPress: () =>
+                                        _showMessageOptions(context, msg),
+                                    child: _buildMessageBubble(
+                                      context,
+                                      msg,
+                                      isMe,
+                                    ),
+                                  )
                                 else
                                   _buildMessageBubble(context, msg, isMe),
                               ],
@@ -609,6 +620,142 @@ class _ChatContentState extends State<ChatContent> {
                       size: 20,
                     ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showMessageOptions(BuildContext context, Message msg) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ListTile(
+                leading: const Icon(Icons.copy, color: Colors.blue),
+                title: Text('نسخ الرسالة', style: GoogleFonts.cairo()),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: msg.text));
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('تم نسخ النص')));
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  msg.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                  color: Colors.orange,
+                ),
+                title: Text(
+                  msg.isPinned ? 'إلغاء التثبيت' : 'تثبيت الرسالة',
+                  style: GoogleFonts.cairo(),
+                ),
+                onTap: () {
+                  context.read<ChatProvider>().pinMessage(
+                    msg.id,
+                    !msg.isPinned,
+                  );
+                  Navigator.pop(context);
+                },
+              ),
+              if (msg.type == MessageType.text)
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.green),
+                  title: Text('تعديل الرسالة', style: GoogleFonts.cairo()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showEditDialog(msg);
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: Text(
+                  'حذف الرسالة',
+                  style: GoogleFonts.cairo(color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(msg);
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditDialog(Message msg) {
+    final controller = TextEditingController(text: msg.text);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('تعديل الرسالة', style: GoogleFonts.cairo()),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: 'اكتب التعديل هنا...',
+            hintStyle: GoogleFonts.cairo(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              final newText = controller.text.trim();
+              if (newText.isNotEmpty && newText != msg.text) {
+                context.read<ChatProvider>().editMessage(msg.id, newText);
+              }
+              Navigator.pop(context);
+            },
+            child: Text('حفظ', style: GoogleFonts.cairo()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(Message msg) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('حذف الرسالة', style: GoogleFonts.cairo()),
+        content: Text(
+          'هل أنت متأكد من حذف هذه الرسالة؟',
+          style: GoogleFonts.cairo(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<ChatProvider>().deleteMessage(msg.id);
+              Navigator.pop(context);
+            },
+            child: Text('حذف', style: GoogleFonts.cairo(color: Colors.red)),
           ),
         ],
       ),

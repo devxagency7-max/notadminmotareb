@@ -20,6 +20,7 @@ import '../../../utils/guest_checker.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../providers/property_details_provider.dart';
+import '../../../core/services/ad_service.dart';
 
 class PropertyDetailsScreen extends StatelessWidget {
   final Property? property;
@@ -315,10 +316,16 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
                                 }
                               },
                             ),
-                            const SizedBox(height: 20),
                             PropertyFeatures(tags: property.tags),
                             PropertyVideo(videoUrl: property.videoUrl),
                             const PropertyOwner(), // Internal logic via Provider
+                            // ⬇️ Ad Space (Custom or Google Native)
+                            AdService().getAdWidget(
+                              factoryId: 'listTileSmall',
+                              height: 100, // Compact height for detail page
+                            ),
+                            const SizedBox(height: 20),
+
                             PropertyBooking(
                               unitSelectionKey: _unitSelectionKey,
                               property: property,

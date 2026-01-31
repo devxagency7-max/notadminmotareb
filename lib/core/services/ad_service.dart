@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:motareb/features/home/widgets/custom_ad_widget.dart';
 import 'package:motareb/features/home/widgets/native_ad_widget.dart';
 import 'custom_ad_service.dart';
+import 'ads_controller.dart';
 
 class AdService {
   static final AdService _instance = AdService._internal();
@@ -23,22 +23,31 @@ class AdService {
   bool _isSmallLoading = false;
   bool _isMediumLoading = false;
 
-  // Test IDs
-  final String _interstitialAdUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/1033173712'
-      : 'ca-app-pub-3940256099942544/4411468910';
-
-  final String _nativeAdUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
+  final AdsController _adsController = AdsController();
 
   void init() {
+    final isAdsEnabled = _adsController.adsEnabled;
+    debugPrint('📢 AdService Init: ads_enabled is $isAdsEnabled');
+
+    // Only proceed if ads are enabled via Remote Config
+    if (!isAdsEnabled) {
+      debugPrint(
+        '🚫 Ads are disabled via Remote Config. Stopping AdService flows.',
+      );
+      return;
+    }
+
+    debugPrint('✅ Ads are enabled. Starting AdService flows...');
     _loadInterstitial();
     _startTimer();
     _fillSmallPool();
     _fillMediumPool();
     CustomAdService().fetchActiveAds();
   }
+
+  // Use the same IDs as AdsController for consistency
+  String get _interstitialAdUnitId => AdsController.interstitialAdUnitId;
+  String get _nativeAdUnitId => AdsController.nativeAdUnitId;
 
   Widget getAdWidget({required String factoryId, double? height}) {
     final activeCustomAds = CustomAdService().activeAds;
@@ -114,7 +123,10 @@ class AdService {
 
   // --- Native Ads Caching ---
   void _fillSmallPool() {
-    if (_smallAdsPool.length >= _maxPoolSize || _isSmallLoading) return;
+    if (!_adsController.adsEnabled ||
+        _smallAdsPool.length >= _maxPoolSize ||
+        _isSmallLoading)
+      return;
     _isSmallLoading = true;
     NativeAd(
       adUnitId: _nativeAdUnitId,
@@ -140,7 +152,10 @@ class AdService {
   }
 
   void _fillMediumPool() {
-    if (_mediumAdsPool.length >= _maxPoolSize || _isMediumLoading) return;
+    if (!_adsController.adsEnabled ||
+        _mediumAdsPool.length >= _maxPoolSize ||
+        _isMediumLoading)
+      return;
     _isMediumLoading = true;
     NativeAd(
       adUnitId: _nativeAdUnitId,

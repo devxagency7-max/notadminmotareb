@@ -6,9 +6,6 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 
 class R2UploadService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'us-central1',
-  );
   final Dio _dio = Dio();
 
   /// Uploads a file to R2 and returns the public URL.
@@ -29,7 +26,7 @@ class R2UploadService {
 
       // 1) Get Presigned URL from Cloud Function
       // print('⏳ Requesting upload URL...');
-      final result = await _functions
+      final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
           .httpsCallable('getR2UploadUrl')
           .call({
             'fileName': fileName,
@@ -84,9 +81,9 @@ class R2UploadService {
       // ✅ Force refresh token
       await FirebaseAuth.instance.currentUser?.getIdToken(true);
 
-      await _functions.httpsCallable('deleteR2File').call({
-        'publicUrl': publicUrl,
-      });
+      await FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('deleteR2File').call({'publicUrl': publicUrl});
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'permission-denied') {
         throw Exception('غير مصرح لك بالحذف (Permission Denied)');

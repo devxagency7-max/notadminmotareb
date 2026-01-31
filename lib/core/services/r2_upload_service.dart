@@ -6,9 +6,6 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 
 class R2UploadService {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'us-central1',
-  );
   final Dio _dio = Dio();
 
   /// Uploads a file to R2 and returns the public URL.
@@ -38,21 +35,24 @@ class R2UploadService {
 
       // 1) Get Presigned URL from Cloud Function
       print('⏳ Requesting upload URL...');
-      final result = await _functions.httpsCallable('getR2UploadUrl').call({
-        'fileName': fileName,
-        'contentType': contentType,
-        'customPath': customPath, // Pass custom path to function if supported
-        // If the function doesn't support customPath yet, we might need to rely on the function's default behavior
-        // or update the function. For now, assuming standard behavior or that we can pass metadata.
-        // Based on user request "pending/{ownerId}/{propertyId}/{uuid}.jpg", we really want the backend to handle this structure.
-        // However, usually the client requests a signed URL for a specific key.
-        // Let's assume the cloud function accepts a 'path' or 'folder' argument, or we just pass the full desired key as fileName if allowed.
-        // SAFEST BET: The existing admin code passed 'propertyId'.
-        // We will pass 'folder' concept if we can, or just rely on 'fileName' being the full path if the backend allows it.
-        // Let's try passing 'path' if the backend supports it, otherwise we'll just send the fileName and hope for the best or rely on the backend to put it in a temp folder.
-        // BUT, the user explicitly said "When uploading from owner: pending/{ownerId}/{propertyId}/{uuid}.jpg".
-        // I will try to pass 'fullPath' if I can.
-      });
+      final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('getR2UploadUrl')
+          .call({
+            'fileName': fileName,
+            'contentType': contentType,
+            'customPath':
+                customPath, // Pass custom path to function if supported
+            // If the function doesn't support customPath yet, we might need to rely on the function's default behavior
+            // or update the function. For now, assuming standard behavior or that we can pass metadata.
+            // Based on user request "pending/{ownerId}/{propertyId}/{uuid}.jpg", we really want the backend to handle this structure.
+            // However, usually the client requests a signed URL for a specific key.
+            // Let's assume the cloud function accepts a 'path' or 'folder' argument, or we just pass the full desired key as fileName if allowed.
+            // SAFEST BET: The existing admin code passed 'propertyId'.
+            // We will pass 'folder' concept if we can, or just rely on 'fileName' being the full path if the backend allows it.
+            // Let's try passing 'path' if the backend supports it, otherwise we'll just send the fileName and hope for the best or rely on the backend to put it in a temp folder.
+            // BUT, the user explicitly said "When uploading from owner: pending/{ownerId}/{propertyId}/{uuid}.jpg".
+            // I will try to pass 'fullPath' if I can.
+          });
 
       // NOTE: If the existing cloud function only takes 'fileName' and puts it in a root or specific folder,
       // we might need to accept that for now unless we can change the cloud function (which I cannot do).

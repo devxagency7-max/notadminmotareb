@@ -281,5 +281,7 @@
   "intro3Desc": "جميع العقارات موثقة لضمان أمانك وراحتك.",
   "getStarted": "ابدأ الآن",
   "techSupport": "الدعم الفني",
-  "requiredDeposit": "العربون المطلوب"
+  "requiredDeposit": "العربون المطلوب",
+  "noBookings": "لا يوجد حجوزات",
+  "booked": "تم الحجز"
 }

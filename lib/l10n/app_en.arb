@@ -316,5 +316,7 @@
   "intro3Desc": "All properties are verified for your safety and comfort.",
   "getStarted": "Get Started",
   "techSupport": "Tech Support",
-  "requiredDeposit": "Required Deposit"
+  "requiredDeposit": "Required Deposit",
+  "noBookings": "No bookings found",
+  "booked": "Booked"
 }

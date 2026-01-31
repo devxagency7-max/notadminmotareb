@@ -1789,6 +1789,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Required Deposit'**
   String get requiredDeposit;
+
+  /// No description provided for @noBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings found'**
+  String get noBookings;
+
+  /// No description provided for @booked.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get booked;
 }
 
 class _AppLocalizationsDelegate

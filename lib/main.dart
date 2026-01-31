@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:motareb/core/services/ads_controller.dart';
 import 'package:motareb/core/services/ad_service.dart';
 import 'package:motareb/l10n/app_localizations.dart';
 
@@ -23,10 +23,15 @@ final RouteObserver<ModalRoute<void>> routeObserver =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await MobileAds.instance.initialize();
 
-  // Initialize Ads (Interstitial & Native Pool)
+  // 1. Initialize Firebase
+  await Firebase.initializeApp();
+
+  // 2. Initialize Ads & Remote Config
+  // This will initialize AdMob, setup Remote Config defaults, and fetch values.
+  await AdsController().initialize();
+
+  // Initialize former AdService if still needed (for Native Ads Pools)
   AdService().init();
 
   final localeProvider = LocaleProvider();

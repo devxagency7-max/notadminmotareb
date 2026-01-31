@@ -19,6 +19,7 @@ import '../../favorites/screens/favorites_screen.dart';
 import '../../favorites/providers/favorites_provider.dart';
 import 'banner_ad_widget.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../bookings/screens/my_bookings_screen.dart';
 
 class ProfileContent extends StatefulWidget {
   const ProfileContent({super.key});
@@ -307,31 +308,40 @@ class _ProfileContentState extends State<ProfileContent> {
                           ),
                         ),
 
-                      // Theme Toggle Tile
-                      _buildThemeToggle(context, themeProvider),
-
-                      // Language Toggle Tile (Expansion Style)
-                      _buildLanguageToggle(context, localeProvider),
-
                       // 4. Menu Items
                       if (authProvider.isAuthenticated &&
                           !authProvider.isGuest) ...[
                         _buildProfileMenuItem(
-                          context.loc.personalInfo,
-                          Icons.person_outline,
-                          delay: 100,
-                          onTap: () {},
-                        ),
-                        _buildProfileMenuItem(
                           context.loc.myBookings,
                           Icons.calendar_today_outlined,
-                          delay: 200,
-                          onTap: () {},
+                          delay: 100,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MyBookingsScreen(),
+                              ),
+                            );
+                          },
                         ),
                         _buildProfileMenuItem(
                           context.loc.favorites,
                           Icons.favorite_border,
-                          delay: 300,
+                          delay: 200,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FavoritesScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ] else ...[
+                        _buildProfileMenuItem(
+                          context.loc.favorites,
+                          Icons.favorite_border,
+                          delay: 100,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -342,24 +352,9 @@ class _ProfileContentState extends State<ProfileContent> {
                           },
                         ),
                         _buildProfileMenuItem(
-                          context.loc.settings,
-                          Icons.settings_outlined,
-                          delay: 400,
-                          onTap: () {},
-                        ),
-                        _buildProfileMenuItem(
-                          context.loc.logout,
-                          Icons.logout,
-                          isDestructive: true,
-                          delay: 500,
-                          onTap: () =>
-                              _showLogoutConfirmation(context, authProvider),
-                        ),
-                      ] else ...[
-                        _buildProfileMenuItem(
                           context.loc.loginAction,
                           Icons.login,
-                          delay: 100,
+                          delay: 200,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -372,7 +367,7 @@ class _ProfileContentState extends State<ProfileContent> {
                         _buildProfileMenuItem(
                           context.loc.createAccount,
                           Icons.person_add_outlined,
-                          delay: 150,
+                          delay: 300,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -382,26 +377,25 @@ class _ProfileContentState extends State<ProfileContent> {
                             );
                           },
                         ),
-                        _buildProfileMenuItem(
-                          context.loc.favorites,
-                          Icons.favorite_border,
-                          delay: 200,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const FavoritesScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildProfileMenuItem(
-                          context.loc.settings,
-                          Icons.settings_outlined,
-                          delay: 300,
-                          onTap: () {},
-                        ),
                       ],
+
+                      const SizedBox(height: 10),
+
+                      // Theme Toggle Tile
+                      _buildThemeToggle(context, themeProvider),
+
+                      // Language Toggle Tile (Expansion Style)
+                      _buildLanguageToggle(context, localeProvider),
+
+                      if (authProvider.isAuthenticated && !authProvider.isGuest)
+                        _buildProfileMenuItem(
+                          context.loc.logout,
+                          Icons.logout,
+                          isDestructive: true,
+                          delay: 100,
+                          onTap: () =>
+                              _showLogoutConfirmation(context, authProvider),
+                        ),
 
                       const SizedBox(height: 40),
 
