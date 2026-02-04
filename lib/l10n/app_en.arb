@@ -318,5 +318,38 @@
   "techSupport": "Tech Support",
   "requiredDeposit": "Required Deposit",
   "noBookings": "No bookings found",
-  "booked": "Booked"
+  "booked": "Booked",
+  "idVerificationTitle": "Identity Confirmation (Required)",
+  "idVerificationDesc": "Please upload a clear photo of the front and back of your National ID to proceed.",
+  "idFront": "Front Side",
+  "idBack": "Back Side",
+  "tapToUpload": "Tap to Upload",
+  "uploadingImages": "Uploading images...",
+  "uploadIdError": "Please upload ID photos (front and back) to continue",
+  "uploadFailed": "Failed to upload images: {error}",
+  "@uploadFailed": {
+    "placeholders": {
+        "error": {
+            "type": "String"
+        }
+    }
+  },
+  "confirmAndPay": "Confirm and Pay",
+  "bookingSummary": "Booking Summary",
+  "propertyLabel": "Property",
+  "depositAmount": "Required Amount Now (Deposit)",
+  "remainingAmount": "Remaining Amount for Later",
+  "paymentRedirectNotice": "By confirming, you will be redirected to the secure payment page.",
+  "nearbyPlaces": "Nearby Places",
+  "nearbyUniversities": "Nearby Universities",
+  "paymentErrorPropertyReserved": "This property is currently being booked by someone else. Please try again in 5 minutes.",
+  "paymentErrorGeneric": "Payment could not be initialized: {error}",
+  "@paymentErrorGeneric": {
+    "placeholders": {
+        "error": {
+            "type": "String"
+        }
+    }
+  },
+  "paymentErrorUnavailable": "Selected property is no longer available."
 }

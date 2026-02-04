@@ -3,7 +3,7 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const crypto = require("crypto");
 const admin = require("firebase-admin");
-const axios = require("axios");
+const axios = require("axios"); // Added axios
 const {
     S3Client,
     PutObjectCommand,
@@ -16,11 +16,6 @@ admin.initializeApp();
 // ---------------------------------------------------------
 // Secrets
 // ---------------------------------------------------------
-const PAYMOB_API_KEY = defineSecret("PAYMOB_API_KEY");
-const PAYMOB_SECRET_KEY = defineSecret("PAYMOB_SECRET_KEY");
-const PAYMOB_HMAC = defineSecret("PAYMOB_HMAC");
-const PAYMOB_CARD_INTEGRATION_ID = defineSecret("PAYMOB_CARD_INTEGRATION_ID");
-const PAYMOB_IFRAME_ID = defineSecret("PAYMOB_IFRAME_ID");
 
 // ✅ R2 Secrets
 const R2_ACCESS_KEY_ID = defineSecret("R2_ACCESS_KEY_ID");
@@ -29,17 +24,64 @@ const R2_ENDPOINT = defineSecret("R2_ENDPOINT");
 const R2_BUCKET = defineSecret("R2_BUCKET");
 const R2_PUBLIC_BASE_URL = defineSecret("R2_PUBLIC_BASE_URL");
 
+// ✅ Paymob Secrets
+const PAYMOB_API_KEY = defineSecret("PAYMOB_API_KEY");
+const PAYMOB_HMAC = defineSecret("PAYMOB_HMAC");
+const PAYMOB_CARD_INTEGRATION_ID = defineSecret("PAYMOB_CARD_INTEGRATION_ID");
+const PAYMOB_IFRAME_ID = defineSecret("PAYMOB_IFRAME_ID");
+
 function requireAuth(request) {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "You must be logged in.");
     }
 }
 
-function normalizePhone(p) {
-    if (!p) return "+20100000000";
-    if (!p.startsWith("+")) return "+2" + p;
-    return p;
+// ---------------------------------------------------------
+// Paymob Helpers
+// ---------------------------------------------------------
+
+async function getPaymobAuthToken(apiKey) {
+    const res = await axios.post("https://accept.paymob.com/api/auth/tokens", {
+        api_key: apiKey
+    });
+    return res.data.token;
 }
+
+async function createPaymobOrder(authToken, amountCents, currency, merchantOrderId, items) {
+    try {
+        const res = await axios.post("https://accept.paymob.com/api/ecommerce/orders", {
+            auth_token: authToken,
+            delivery_needed: false,
+            amount_cents: amountCents.toString(),
+            currency,
+            merchant_order_id: merchantOrderId,
+            items
+        });
+        return res.data.id;
+    } catch (e) {
+        console.error("🔥 PAYMOB ORDER ERROR:", e.response?.data);
+        throw new HttpsError("internal", JSON.stringify(e.response?.data));
+    }
+}
+
+async function getPaymentKey(authToken, orderId, amountCents, currency, integrationId, billingData) {
+    try {
+        const res = await axios.post("https://accept.paymob.com/api/acceptance/payment_keys", {
+            auth_token: authToken,
+            amount_cents: amountCents.toString(),
+            expiration: 3600,
+            order_id: orderId,
+            billing_data: billingData,
+            currency,
+            integration_id: Number(integrationId)
+        });
+        return res.data.token;
+    } catch (e) {
+        console.error("🔥 PAYMOB KEY ERROR:", e.response?.data);
+        throw new HttpsError("internal", JSON.stringify(e.response?.data));
+    }
+}
+
 
 // ---------------------------------------------------------
 // Existing R2 Functions
@@ -151,473 +193,417 @@ exports.getR2UploadUrl = onCall(
     }
 );
 
-// ---------------------------------------------------------
-// 🛠 Paymob Helpers (Private)
-// ---------------------------------------------------------
+// ================= CREATE DEPOSIT =================
 
-async function getPaymobAuthToken(apiKey) {
-    try {
-        const response = await axios.post("https://accept.paymob.com/api/auth/tokens", {
-            api_key: apiKey
-        });
-        return response.data.token;
-    } catch (error) {
-        console.error("Paymob Auth Error", error.response?.data || error.message);
-        throw new HttpsError("internal", "Payment provider authentication failed.");
-    }
-}
-
-async function createPaymobOrder(authToken, amountCents, currency, merchantOrderId, items) {
-    try {
-        const response = await axios.post("https://accept.paymob.com/api/ecommerce/orders", {
-            auth_token: authToken,
-            delivery_needed: "false",
-            amount_cents: amountCents,
-            currency: currency,
-            merchant_order_id: merchantOrderId,
-            items: items || []
-        });
-        return response.data.id; // Paymob Order ID
-    } catch (error) {
-        console.error("Paymob Order Error", error.response?.data || error.message);
-        throw new HttpsError("internal", "Failed to create payment order.");
-    }
-}
-
-async function getPaymentKey(authToken, paymobOrderId, amountCents, currency, integrationId, billingData) {
-    try {
-        const response = await axios.post("https://accept.paymob.com/api/acceptance/payment_keys", {
-            auth_token: authToken,
-            amount_cents: amountCents,
-            expiration: 3600,
-            order_id: paymobOrderId,
-            billing_data: billingData,
-            currency: currency,
-            integration_id: integrationId,
-            lock_order_when_paid: "false"
-        });
-        return response.data.token;
-    } catch (error) {
-        console.error("Paymob Key Error", error.response?.data || error.message);
-        throw new HttpsError("internal", "Failed to generate payment key.");
-    }
-}
-
-// ---------------------------------------------------------
-// 🏠 Real Estate Booking System
-// ---------------------------------------------------------
-
-/**
- * Function 1: createDepositBooking
- * Creates a booking and deposit payment intent + Paymob Key.
- */
 exports.createDepositBooking = onCall(
     {
         region: "us-central1",
-        secrets: [
-            PAYMOB_API_KEY,
-            PAYMOB_HMAC,
-            PAYMOB_CARD_INTEGRATION_ID,
-            PAYMOB_IFRAME_ID
-        ],
+        secrets: [PAYMOB_API_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_IFRAME_ID]
     },
     async (request) => {
+
         requireAuth(request);
 
+        // ✅ DEBUG LOGS FOR DYNAMIC SELECTIONS
+        console.log("DEBUG: createDepositBooking called");
+        console.log("DEBUG: propertyId:", request.data.propertyId);
+        console.log("DEBUG: selections:", request.data.selections);
+        console.log("DEBUG: isWhole:", request.data.isWhole);
+
         const { propertyId, userInfo } = request.data;
-        if (!propertyId || !userInfo) {
-            throw new HttpsError("invalid-argument", "propertyId and userInfo are required.");
+        if (!userInfo || !userInfo.email) {
+            throw new HttpsError("invalid-argument", "Invalid user info");
         }
+        console.log("Billing name:", userInfo.name);
 
         const db = admin.firestore();
-        const propertyRef = db.collection("properties").doc(propertyId);
+        const propSnap = await db.collection("properties").doc(propertyId).get();
+        if (!propSnap.exists) throw new HttpsError("not-found", "Property not found");
 
-        // 1. Validate Property
-        const propertySnap = await propertyRef.get();
-        if (!propertySnap.exists) {
-            throw new HttpsError("not-found", "Property not found.");
+        const data = propSnap.data();
+
+        // --- Dynamic Pricing Recalculation ---
+        let totalPrice = 0;
+        const selections = request.data.selections || [];
+        const isWhole = request.data.isWhole || false;
+
+        if (isWhole) {
+            totalPrice = (data.discountPrice && data.discountPrice > 0) ? data.discountPrice : data.price;
+        } else {
+            if (!data.rooms || !Array.isArray(data.rooms)) {
+                throw new HttpsError("failed-precondition", "Property has no rooms defined for unit/bed booking.");
+            }
+            selections.forEach(key => {
+                // key format: "r0" or "r0_b1"
+                const roomPart = key.split("_")[0]; // "r0"
+                const roomIndex = parseInt(roomPart.replace("r", ""));
+                const room = data.rooms[roomIndex];
+
+                if (!room) {
+                    console.error(`Room at index ${roomIndex} not found for key ${key}`);
+                    return;
+                }
+
+                if (key.includes("_b")) {
+                    totalPrice += room.bedPrice || 0;
+                } else {
+                    totalPrice += room.price || 0;
+                }
+            });
         }
-        const property = propertySnap.data();
 
-        if (property.bookingEnabled !== true) {
-            throw new HttpsError("failed-precondition", "Booking is not enabled for this property.");
-        }
-
-        // Allow 'available' (typical flow) or 'approved' (newly added by admin)
-        // 2. Validate Property Progress (Commented out to allow booking regardless of status)
-        if (property.status !== "available") {
-            throw new HttpsError("failed-precondition", `Property is not available. Status: ${property.status}`);
-        }
-
-        // 2. Financials
-        const finalPrice = property.discountPrice && property.discountPrice > 0
-            ? Number(property.discountPrice)
-            : Number(property.price);
-
-        const deposit = Number(property.requiredDeposit) || Number(property.deposit) || 0;
-        const totalCommission = finalPrice * 0.5;
+        const deposit = data.requiredDeposit || data.deposit || 0;
+        // Calculation: Remaining = (Half of Total Price) - Deposit
+        const totalCommission = totalPrice * 0.5;
         const remainingAmount = totalCommission - deposit;
 
-        if (remainingAmount < 0) {
-            throw new HttpsError("internal", "Calculated remaining amount is negative.");
+        if (totalPrice <= 0) {
+            throw new HttpsError("invalid-argument", "Calculated total price is zero or invalid.");
         }
+        // -------------------------------------
 
         // Check for existing booking
-        const existingBooking = await db.collection("bookings")
+        const existingBookings = await db.collection("bookings")
             .where("userId", "==", request.auth.uid)
             .where("propertyId", "==", propertyId)
-            .where("status", "in", ["pending_deposit", "reserved"])
             .get();
 
-        if (!existingBooking.empty) {
-            throw new HttpsError("already-exists", "You already have a pending or reserved booking for this property.");
+        let existingPendingBooking = null;
+        for (const doc of existingBookings.docs) {
+            const bData = doc.data();
+            if (bData.status === "reserved" || bData.status === "completed") {
+                throw new HttpsError("already-exists", "You already have an active or completed booking for this property.");
+            }
+            if (bData.status === "pending_deposit") {
+                existingPendingBooking = doc;
+            }
         }
 
-        const userId = request.auth.uid;
-        const bookingRef = db.collection("bookings").doc();
+        const bookingId = existingPendingBooking ? existingPendingBooking.id : db.collection("bookings").doc().id;
+        const bookingRef = db.collection("bookings").doc(bookingId);
         const paymentRef = db.collection("payments").doc();
-
-        const bookingId = bookingRef.id;
-        const paymentId = paymentRef.id;
-
         const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
 
-        await db.runTransaction(async (transaction) => {
+        // Use Transaction for Soft Lock & Sync
+        await db.runTransaction(async (t) => {
             const propRef = db.collection("properties").doc(propertyId);
-            const propSnap = await transaction.get(propRef);
+            const propSnap = await t.get(propRef);
 
             if (!propSnap.exists) {
                 throw new HttpsError("not-found", "Property not found.");
             }
 
-            const propData = propSnap.data();
-            if (propData.status !== "available") { // Only allow if fully available
-                throw new HttpsError("failed-precondition", "Property is currently being booked by someone else.");
+            const property = propSnap.data();
+            // Property must be approved (available) to start a new payment process
+            if (property.status !== "approved") {
+                throw new HttpsError("failed-precondition", "Property is currently unavailable or already reserved by someone else.");
             }
 
-            // Lock the property
-            transaction.update(propRef, {
-                status: "locking",
-                lockedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Create Booking
-            transaction.set(bookingRef, {
-                userId,
+            // Create or Update Booking (Upsert)
+            t.set(bookingRef, {
+                userId: request.auth.uid,
                 propertyId,
-                depositPaid: 0,
+                totalPrice,
                 totalCommission,
+                depositAmount: deposit,
                 remainingAmount,
+                depositPaid: 0,
+                firstPaid: false,
+                secondPaid: false,
                 status: "pending_deposit",
                 userInfo,
+                selections,
+                isWhole,
                 expiresAt: expiresAt,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
 
             // Create Payment
-            transaction.set(paymentRef, {
-                bookingId,
+            t.set(paymentRef, {
+                bookingId: bookingRef.id,
                 type: "deposit",
                 amount: deposit,
                 status: "pending",
-                userId,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                userId: request.auth.uid,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
             });
         });
 
-        // 4. Paymob Integration
-        const currency = "EGP";
         const amountCents = Math.round(deposit * 100);
 
-        // Prepare Billing Data (Mandatory for Paymob)
-        // We try to fill from `userInfo` or defaults
+        let phone = userInfo.phone || "01000000000";
+        if (!phone.startsWith("+")) phone = "+2" + phone;
+
         const billingData = {
-            "apartment": "NA",
-            "email": userInfo.email || "customer@example.com",
-            "floor": "NA",
-            "first_name": userInfo.name?.split(" ")[0] || "Customer",
-            "street": "NA",
-            "building": "NA",
-            "phone_number": normalizePhone(userInfo.phone),
-            "shipping_method": "NA",
-            "postal_code": "NA",
-            "city": "NA",
-            "country": "EG",
-            "last_name": userInfo.name?.split(" ").slice(1).join(" ") || "User",
-            "state": "NA"
+            apartment: "NA",
+            email: userInfo.email,
+            floor: "NA",
+            first_name: userInfo.name ? userInfo.name.split(" ")[0] : "Customer",
+            street: "NA",
+            building: "NA",
+            phone_number: phone,
+            shipping_method: "NA",
+            postal_code: "NA",
+            city: "NA",
+            country: "EG",
+            last_name: "User",
+            state: "NA"
         };
 
-        const apiKey = PAYMOB_API_KEY.value();
-        const integrationId = PAYMOB_CARD_INTEGRATION_ID.value();
+        const authToken = await getPaymobAuthToken(PAYMOB_API_KEY.value());
 
-        // A. Auth
-        const authToken = await getPaymobAuthToken(apiKey);
+        const items = [{
+            name: "Booking Deposit",
+            amount_cents: amountCents.toString(),
+            description: "Property booking",
+            quantity: 1
+        }];
 
-        // B. Order
-        const paymobOrderId = await createPaymobOrder(
-            authToken,
-            amountCents,
-            currency,
-            paymentId, // merchant_order_id
-            [] // items
-        );
+        const orderId = await createPaymobOrder(authToken, amountCents, "EGP", paymentRef.id, items);
 
-        // C. Payment Key
         const paymentToken = await getPaymentKey(
             authToken,
-            paymobOrderId,
+            orderId,
             amountCents,
-            currency,
-            integrationId,
+            "EGP",
+            PAYMOB_CARD_INTEGRATION_ID.value(),
             billingData
         );
 
-        // D. Return Token & internal IDs
         return {
-            bookingId,
-            paymentId,
-            deposit,
-            remainingAmount,
-            paymentToken,
-            iframeId: PAYMOB_IFRAME_ID.value() // Default or secret
-        };
-    }
-);
-
-/**
- * Function 2: paymobWebhook
- */
-exports.paymobWebhook = onRequest(
-    {
-        region: "us-central1",
-        secrets: [PAYMOB_HMAC],
-    },
-    async (req, res) => {
-        const hmacSecret = PAYMOB_HMAC.value();
-        const receivedHmac = req.query.hmac;
-        const data = req.body.obj || req.body;
-
-        if (!data || !receivedHmac) {
-            return res.status(400).send("Missing data");
-        }
-
-        const fields = [
-            "amount_cents",
-            "created_at",
-            "currency",
-            "id",
-            "order.id",
-            "pending",
-            "source_data.pan",
-            "source_data.sub_type",
-            "success"
-        ];
-
-        const raw = fields.map(f => {
-            const value = f.split('.').reduce((o, i) => o?.[i], data);
-            return (value === undefined || value === null) ? "" : value.toString();
-        }).join("");
-
-        const calc = crypto.createHmac("sha512", hmacSecret).update(raw).digest("hex");
-
-        if (calc !== receivedHmac) {
-            return res.status(401).send("Invalid HMAC");
-        }
-
-        const paymentId = data.order?.merchant_order_id;
-        const success = data.success === true;
-
-        if (!paymentId) return res.status(200).send("No ID");
-
-        const db = admin.firestore();
-        const paymentRef = db.collection("payments").doc(paymentId);
-
-        try {
-            await db.runTransaction(async (t) => {
-                const paymentSnap = await t.get(paymentRef);
-                if (!paymentSnap.exists) {
-                    // Payment doc might not exist if creation failed or race condition. 
-                    // We throw to catch block.
-                    throw new Error("Payment Document Not Found");
-                }
-
-                const payment = paymentSnap.data();
-
-                // Idempotency Check
-                if (payment.status === "paid" || (payment.externalId && payment.externalId === data.id.toString())) {
-                    console.log("Duplicate Webhook/Transaction - Already Processed");
-                    return;
-                }
-
-                if (success) {
-                    // Update Payment
-                    t.update(paymentRef, {
-                        status: "paid",
-                        externalId: data.id.toString(),
-                        paymobOrderId: data.order?.id?.toString(),
-                        paidAt: admin.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // Booking Update
-                    const bookingRef = db.collection("bookings").doc(payment.bookingId);
-                    const bSnap = await t.get(bookingRef);
-                    if (bSnap.exists) {
-                        const booking = bSnap.data();
-                        const pRef = db.collection("properties").doc(booking.propertyId);
-
-                        if (payment.type === "deposit") {
-                            const exp = new Date();
-                            exp.setDate(exp.getDate() + 7);
-                            t.update(bookingRef, {
-                                status: "reserved",
-                                depositPaid: payment.amount,
-                                expiresAt: admin.firestore.Timestamp.fromDate(exp)
-                            });
-                            // Update from 'locking' to 'reserved'
-                            t.update(pRef, { status: "reserved" });
-                        } else {
-                            t.update(bookingRef, { status: "completed" });
-                            t.update(pRef, { status: "sold" });
-                        }
-                    }
-                } else {
-                    // Failed
-                    t.update(paymentRef, {
-                        status: "failed",
-                        externalId: data.id.toString()
-                    });
-                }
-            });
-
-            res.status(200).send("OK");
-        } catch (e) {
-            console.error("Webhook Error:", e);
-            res.status(500).send("Error");
-        }
-    }
-);
-
-/**
- * Function 3: createRemainingPayment
- */
-exports.createRemainingPayment = onCall(
-    {
-        region: "us-central1",
-        secrets: [
-            PAYMOB_API_KEY,
-            PAYMOB_CARD_INTEGRATION_ID,
-            PAYMOB_IFRAME_ID
-        ]
-    },
-    async (request) => {
-        requireAuth(request);
-
-        const { bookingId } = request.data;
-        const db = admin.firestore();
-        const bookingRef = db.collection("bookings").doc(bookingId);
-        const paymentRef = db.collection("payments").doc(); // Create ref early for transaction
-        const paymentId = paymentRef.id;
-
-        const { remainingAmount, userInfo } = await db.runTransaction(async (transaction) => {
-            const bookingSnap = await transaction.get(bookingRef);
-            if (!bookingSnap.exists) {
-                throw new HttpsError("not-found", "Booking not found");
-            }
-            const booking = bookingSnap.data();
-
-            if (booking.userId !== request.auth.uid) {
-                throw new HttpsError("permission-denied", "Not yours");
-            }
-            if (booking.status !== "reserved") {
-                throw new HttpsError("failed-precondition", "Not reserved or already processing");
-            }
-            // Check expiry just in case
-            if (booking.expiresAt && booking.expiresAt.toMillis() < Date.now()) {
-                throw new HttpsError("failed-precondition", "Booking expired");
-            }
-
-            // Lock booking status
-            transaction.update(bookingRef, { status: "paying_remaining" });
-
-            // Create Payment
-            transaction.set(paymentRef, {
-                bookingId,
-                type: "remaining",
-                amount: booking.remainingAmount,
-                status: "pending",
-                userId: request.auth.uid,
-                createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            return { remainingAmount: booking.remainingAmount, userInfo: booking.userInfo };
-        });
-
-        // Generate Paymob Token for Remaining (outside transaction)
-        const amountCents = Math.round(remainingAmount * 100);
-        const currency = "EGP";
-        const apiKey = PAYMOB_API_KEY.value();
-        const integrationId = PAYMOB_CARD_INTEGRATION_ID.value();
-
-        const billingData = {
-            "apartment": "NA",
-            "email": userInfo?.email || "customer@example.com",
-            "floor": "NA",
-            "first_name": userInfo?.name?.split(" ")[0] || "Customer",
-            "street": "NA",
-            "building": "NA",
-            "phone_number": normalizePhone(userInfo?.phone),
-            "shipping_method": "NA",
-            "postal_code": "NA",
-            "city": "NA",
-            "country": "EG",
-            "last_name": userInfo?.name?.split(" ").slice(1).join(" ") || "User",
-            "state": "NA"
-        };
-
-        const authToken = await getPaymobAuthToken(apiKey);
-        const orderId = await createPaymobOrder(authToken, amountCents, currency, paymentId);
-        const paymentToken = await getPaymentKey(authToken, orderId, amountCents, currency, integrationId, billingData);
-
-        return {
-            paymentId,
-            amount: remainingAmount,
+            bookingId: bookingRef.id,
+            paymentId: paymentRef.id,
             paymentToken,
             iframeId: PAYMOB_IFRAME_ID.value()
         };
     }
 );
 
-/**
- * Function 4: expireBookings
- */
+// ================= WEBHOOK =================
+exports.paymobWebhook = onRequest(
+    { region: "us-central1", secrets: [PAYMOB_HMAC] },
+    async (req, res) => {
+        try {
+            const data = req.body.obj || req.body;
+
+            console.log("WEBHOOK HIT");
+
+            const paymentId =
+                data.order?.merchant_order_id || data.merchant_order_id;
+
+            const success = data.success === true;
+
+            if (!paymentId) return res.status(200).send("No ID");
+
+            const db = admin.firestore();
+            const paymentRef = db.collection("payments").doc(paymentId);
+
+            await db.runTransaction(async (t) => {
+
+                // ✅ READ FIRST
+                const paymentSnap = await t.get(paymentRef);
+                if (!paymentSnap.exists) throw new Error("Payment not found");
+
+                const payment = paymentSnap.data();
+
+                const bookingRef = db.collection("bookings").doc(payment.bookingId);
+                const bookingSnap = await t.get(bookingRef);
+                if (!bookingSnap.exists) throw new Error("Booking not found");
+
+                const booking = bookingSnap.data();
+                const propRef = db.collection("properties").doc(booking.propertyId);
+
+                // ✅ NOW WRITE
+
+                if (payment.status === "paid") return;
+
+                t.update(paymentRef, {
+                    status: success ? "paid" : "failed",
+                    externalId: data.id.toString(),
+                    paidAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+                if (!success) return;
+
+                if (payment.type === "deposit") {
+
+                    const exp = new Date();
+                    exp.setDate(exp.getDate() + 7);
+
+                    t.update(bookingRef, {
+                        status: "reserved",
+                        firstPaid: true,
+                        secondPaid: false,
+                        depositPaid: payment.amount,
+                        expiresAt: admin.firestore.Timestamp.fromDate(exp)
+                    });
+
+                    t.update(propRef, { status: "reserved" });
+
+                } else {
+
+                    t.update(bookingRef, {
+                        status: "completed",
+                        secondPaid: true
+                    });
+
+                    t.update(propRef, { status: "sold" });
+                }
+
+            });
+
+            return res.status(200).send("OK");
+
+        } catch (e) {
+            console.error("Webhook Error:", e);
+            return res.status(500).send("Error");
+        }
+    }
+);
+
+// ================= EXPIRE BOOKINGS =================
+
 exports.expireBookings = onSchedule(
-    {
-        schedule: "every 1 hours",
-        timeZone: "Africa/Cairo",
-        region: "us-central1"
-    },
+    { schedule: "every 1 hours", timeZone: "Africa/Cairo" },
     async (event) => {
         const db = admin.firestore();
         const now = admin.firestore.Timestamp.now();
+
+        // 1. Get all reserved bookings that have passed their expiration date
         const snap = await db.collection("bookings")
-            .where("status", "in", ["reserved", "paying_remaining"])
+            .where("status", "==", "reserved")
+            .where("secondPaid", "==", false)
             .where("expiresAt", "<", now)
             .get();
 
-        if (snap.empty) return;
-
-        const batch = db.batch();
-        const propIds = new Set();
-
-        snap.docs.forEach((doc) => {
-            batch.update(doc.ref, { status: "expired" });
-            if (doc.data().propertyId) propIds.add(doc.data().propertyId);
-        });
-
-        for (const pid of propIds) {
-            batch.update(db.collection("properties").doc(pid), { status: "available" });
+        if (snap.empty) {
+            console.log("No expired bookings found.");
+            return;
         }
 
+        const batch = db.batch();
+
+        snap.docs.forEach((doc) => {
+            const booking = doc.data();
+
+            // 2. Set booking status to expired
+            batch.update(doc.ref, {
+                status: "expired",
+                expiredAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            // 3. Restore property status to approved (available)
+            if (booking.propertyId) {
+                const propRef = db.collection("properties").doc(booking.propertyId);
+                batch.update(propRef, { status: "approved" });
+            }
+        });
+
         await batch.commit();
+        console.log(`Successfully expired ${snap.size} bookings and restored their properties.`);
+    }
+);
+
+
+// ================= REMAINING PAYMENT =================
+
+exports.createRemainingPayment = onCall(
+    {
+        region: "us-central1",
+        secrets: [PAYMOB_API_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_IFRAME_ID]
+    },
+    async (request) => {
+        requireAuth(request);
+
+        const { bookingId } = request.data;
+        if (!bookingId) throw new HttpsError("invalid-argument", "Booking ID is required.");
+
+        const db = admin.firestore();
+        const bookingRef = db.collection("bookings").doc(bookingId);
+        const bookingSnap = await bookingRef.get();
+
+        if (!bookingSnap.exists) throw new HttpsError("not-found", "Booking not found.");
+
+        const booking = bookingSnap.data();
+        console.log("Billing name:", booking?.userInfo?.name);
+
+        // 1. Validation
+        if (booking.userId !== request.auth.uid) {
+            throw new HttpsError("permission-denied", "Unauthorized access to this booking.");
+        }
+        if (booking.status !== "reserved") {
+            throw new HttpsError("failed-precondition", `Payment allowed only for reserved bookings. Current status: ${booking.status}`);
+        }
+        if (booking.secondPaid === true) {
+            throw new HttpsError("failed-precondition", "Remaining amount has already been paid.");
+        }
+
+        const remainingAmount = booking.remainingAmount || 0;
+        if (remainingAmount <= 0) {
+            throw new HttpsError("failed-precondition", "No remaining amount to pay.");
+        }
+
+        const amountCents = Math.round(remainingAmount * 100);
+        const paymentRef = db.collection("payments").doc();
+
+
+
+        // Billing Data from existing booking userInfo
+        const userInfo = booking.userInfo || {};
+        let phone = userInfo.phone || "01000000000";
+        if (!phone.startsWith("+")) phone = "+2" + phone;
+
+        const billingData = {
+            apartment: "NA",
+            email: userInfo.email || "customer@example.com",
+            floor: "NA",
+            first_name: userInfo.name ? userInfo.name.split(" ")[0] : "Customer",
+            street: "NA",
+            building: "NA",
+            phone_number: phone,
+            shipping_method: "NA",
+            postal_code: "NA",
+            city: "NA",
+            country: "EG",
+            last_name: "User",
+            state: "NA"
+        };
+
+        const authToken = await getPaymobAuthToken(PAYMOB_API_KEY.value());
+
+        const items = [{
+            name: "Remaining Booking Payment",
+            amount_cents: amountCents.toString(),
+            description: `Remaining payment for booking ${bookingId}`,
+            quantity: 1
+        }];
+
+        const orderId = await createPaymobOrder(authToken, amountCents, "EGP", paymentRef.id, items);
+
+        const paymentToken = await getPaymentKey(
+            authToken,
+            orderId,
+            amountCents,
+            "EGP",
+            PAYMOB_CARD_INTEGRATION_ID.value(),
+            billingData
+        );
+
+        // Store payment intent
+        await paymentRef.set({
+            bookingId,
+            type: "remaining",
+            amount: remainingAmount,
+            status: "pending",
+            userId: request.auth.uid,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return {
+            bookingId,
+            paymentId: paymentRef.id,
+            paymentToken,
+            iframeId: PAYMOB_IFRAME_ID.value()
+        };
     }
 );

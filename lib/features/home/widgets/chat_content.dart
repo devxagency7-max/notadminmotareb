@@ -12,7 +12,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../../chat/providers/chat_provider.dart';
 import '../../chat/models/message_model.dart';
-import 'banner_ad_widget.dart';
+import '../../../core/widgets/ads/banner_ad_widget.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 class ChatContent extends StatefulWidget {
@@ -206,111 +206,92 @@ class _ChatContentState extends State<ChatContent> {
                 ],
               ),
             ),
+            const BannerAdWidget(),
 
             // Messages List
             Expanded(
-              child: Stack(
-                children: [
-                  chatProvider.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : (snapshot.hasError)
-                      ? Center(child: Text(context.loc.errorOccurred))
-                      : (messages.isEmpty)
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.chat_bubble_outline,
-                                size: 80,
-                                color: Colors.grey.withOpacity(0.3),
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                context.loc.chatWelcome,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.cairo(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
+              child: chatProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : (snapshot.hasError)
+                  ? Center(child: Text(context.loc.errorOccurred))
+                  : (messages.isEmpty)
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 80,
+                            color: Colors.grey.withOpacity(0.3),
                           ),
-                        )
-                      : ScrollablePositionedList.builder(
-                          itemScrollController: _itemScrollController,
-                          itemPositionsListener: _itemPositionsListener,
-                          padding: const EdgeInsets.only(
-                            top: 70, // Space for banner
-                            left: 15,
-                            right: 15,
-                            bottom: 20,
+                          const SizedBox(height: 10),
+                          Text(
+                            context.loc.chatWelcome,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.cairo(
+                              color: Colors.grey,
+                              fontSize: 16,
+                            ),
                           ),
-                          reverse: true,
-                          itemCount: messages.length,
-                          itemBuilder: (context, index) {
-                            final msg = messages[index];
-                            final currentUserId = context
-                                .read<ChatProvider>()
-                                .currentUserId;
-                            final isMe = msg.senderId == currentUserId;
+                        ],
+                      ),
+                    )
+                  : ScrollablePositionedList.builder(
+                      itemScrollController: _itemScrollController,
+                      itemPositionsListener: _itemPositionsListener,
+                      padding: const EdgeInsets.only(
+                        top: 10,
+                        left: 15,
+                        right: 15,
+                        bottom: 20,
+                      ),
+                      reverse: true,
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final msg = messages[index];
+                        final currentUserId = context
+                            .read<ChatProvider>()
+                            .currentUserId;
+                        final isMe = msg.senderId == currentUserId;
 
-                            // Check for date grouping
-                            bool showDate = false;
-                            if (index == messages.length - 1) {
-                              showDate = true;
-                            } else {
-                              final nextMsg = messages[index + 1];
-                              final currentDay = DateTime(
-                                msg.timestamp.year,
-                                msg.timestamp.month,
-                                msg.timestamp.day,
-                              );
-                              final nextDay = DateTime(
-                                nextMsg.timestamp.year,
-                                nextMsg.timestamp.month,
-                                nextMsg.timestamp.day,
-                              );
-                              if (currentDay != nextDay) {
-                                showDate = true;
-                              }
-                            }
+                        // Check for date grouping
+                        bool showDate = false;
+                        if (index == messages.length - 1) {
+                          showDate = true;
+                        } else {
+                          final nextMsg = messages[index + 1];
+                          final currentDay = DateTime(
+                            msg.timestamp.year,
+                            msg.timestamp.month,
+                            msg.timestamp.day,
+                          );
+                          final nextDay = DateTime(
+                            nextMsg.timestamp.year,
+                            nextMsg.timestamp.month,
+                            nextMsg.timestamp.day,
+                          );
+                          if (currentDay != nextDay) {
+                            showDate = true;
+                          }
+                        }
 
-                            return Column(
-                              children: [
-                                if (showDate) _buildDateHeader(msg.timestamp),
-                                if (msg.type == MessageType.system)
-                                  _buildSystemMessage(msg)
-                                else if (isMe)
-                                  GestureDetector(
-                                    onLongPress: () =>
-                                        _showMessageOptions(context, msg),
-                                    child: _buildMessageBubble(
-                                      context,
-                                      msg,
-                                      isMe,
-                                    ),
-                                  )
-                                else
-                                  _buildMessageBubble(context, msg, isMe),
-                              ],
-                            );
-                          },
-                        ),
-
-                  // Banner Ad Floating at the Top
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: SafeArea(
-                      top: true,
-                      bottom: false,
-                      child: const Center(child: BannerAdWidget()),
+                        return Column(
+                          children: [
+                            if (showDate) _buildDateHeader(msg.timestamp),
+                            if (msg.type == MessageType.system)
+                              _buildSystemMessage(msg)
+                            else if (isMe)
+                              GestureDetector(
+                                onLongPress: () =>
+                                    _showMessageOptions(context, msg),
+                                child: _buildMessageBubble(context, msg, isMe),
+                              )
+                            else
+                              _buildMessageBubble(context, msg, isMe),
+                          ],
+                        );
+                      },
                     ),
-                  ),
-                ],
-              ),
             ),
 
             // Input Area

@@ -10,15 +10,12 @@ class PropertyActions extends StatelessWidget {
   final double? selectedPrice;
   final String? selectionLabel;
   final VoidCallback onBook;
-  final bool isVerified;
-
   const PropertyActions({
     super.key,
     required this.property,
     required this.selectedPrice,
     required this.selectionLabel,
     required this.onBook,
-    this.isVerified = false,
   });
 
   @override
@@ -92,18 +89,6 @@ class PropertyActions extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!isVerified)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 5),
-                    child: Text(
-                      context.loc.verificationRequired,
-                      style: GoogleFonts.cairo(
-                        color: Colors.red,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
                 if (!property.bookingEnabled)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -135,7 +120,27 @@ class PropertyActions extends StatelessWidget {
                       ],
                     ),
                   )
-                else if (property.status != 'approved')
+                else if (property.status == 'pending')
+                  Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade400,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Center(
+                      child: Text(
+                        context.loc.underReview, // "Under Review"
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  )
+                else if (property.status != 'approved' &&
+                    property.status != 'available')
                   Container(
                     height: 50,
                     padding: const EdgeInsets.symmetric(horizontal: 30),

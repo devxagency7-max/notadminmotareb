@@ -1801,6 +1801,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Booked'**
   String get booked;
+
+  /// No description provided for @idVerificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity Confirmation (Required)'**
+  String get idVerificationTitle;
+
+  /// No description provided for @idVerificationDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload a clear photo of the front and back of your National ID to proceed.'**
+  String get idVerificationDesc;
+
+  /// No description provided for @idFront.
+  ///
+  /// In en, this message translates to:
+  /// **'Front Side'**
+  String get idFront;
+
+  /// No description provided for @idBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back Side'**
+  String get idBack;
+
+  /// No description provided for @tapToUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to Upload'**
+  String get tapToUpload;
+
+  /// No description provided for @uploadingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading images...'**
+  String get uploadingImages;
+
+  /// No description provided for @uploadIdError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload ID photos (front and back) to continue'**
+  String get uploadIdError;
+
+  /// No description provided for @uploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload images: {error}'**
+  String uploadFailed(String error);
+
+  /// No description provided for @confirmAndPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm and Pay'**
+  String get confirmAndPay;
+
+  /// No description provided for @bookingSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Summary'**
+  String get bookingSummary;
+
+  /// No description provided for @propertyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Property'**
+  String get propertyLabel;
+
+  /// No description provided for @depositAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Amount Now (Deposit)'**
+  String get depositAmount;
+
+  /// No description provided for @remainingAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Remaining Amount for Later'**
+  String get remainingAmount;
+
+  /// No description provided for @paymentRedirectNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'By confirming, you will be redirected to the secure payment page.'**
+  String get paymentRedirectNotice;
+
+  /// No description provided for @nearbyPlaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby Places'**
+  String get nearbyPlaces;
+
+  /// No description provided for @nearbyUniversities.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby Universities'**
+  String get nearbyUniversities;
+
+  /// No description provided for @paymentErrorPropertyReserved.
+  ///
+  /// In en, this message translates to:
+  /// **'This property is currently being booked by someone else. Please try again in 5 minutes.'**
+  String get paymentErrorPropertyReserved;
+
+  /// No description provided for @paymentErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment could not be initialized: {error}'**
+  String paymentErrorGeneric(String error);
+
+  /// No description provided for @paymentErrorUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected property is no longer available.'**
+  String get paymentErrorUnavailable;
 }
 
 class _AppLocalizationsDelegate

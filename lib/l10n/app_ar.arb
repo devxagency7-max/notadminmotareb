@@ -283,5 +283,31 @@
   "techSupport": "الدعم الفني",
   "requiredDeposit": "العربون المطلوب",
   "noBookings": "لا يوجد حجوزات",
-  "booked": "تم الحجز"
+  "booked": "تم الحجز",
+  "idVerificationTitle": "تأكيد الهوية (مطلوب)",
+  "idVerificationDesc": "يرجى رفع صورة واضحة لوجه وخلف البطاقة الشخصية لمتابعة الحجز",
+  "idFront": "وجه البطاقة",
+  "idBack": "خلف البطاقة",
+  "tapToUpload": "إضغط للرفع",
+  "uploadingImages": "جاري رفع الصور...",
+  "uploadIdError": "يرجى رفع صور البطاقة (الواجهة والخلفية) للمتابعة",
+  "uploadFailed": "فشل رفع الصور: {error}",
+  "@uploadFailed": {
+    "placeholders": {
+        "error": {
+            "type": "String"
+        }
+    }
+  },
+  "confirmAndPay": "تأكيد ودفع",
+  "bookingSummary": "ملخص الحجز",
+  "propertyLabel": "العقار",
+  "depositAmount": "المبلغ المطلوب الآن (العربون)",
+  "remainingAmount": "المبلغ المتبقي للإدارة لاحقاً",
+  "paymentRedirectNotice": "بالضغط على تأكيد، سيتم توجيهك لصفحة الدفع الآمن.",
+  "nearbyPlaces": "الأماكن المجاورة",
+  "nearbyUniversities": "الجامعات المجاورة",
+  "paymentErrorPropertyReserved": "هذا العقار يتم حجزه حالياً بواسطة شخص آخر. يرجى المحاولة مرة أخرى بعد 5 دقائق.",
+  "paymentErrorGeneric": "تعذر بدء عملية الدفع: {error}",
+  "paymentErrorUnavailable": "العقار المحدد لم يعد متاحاً."
 }

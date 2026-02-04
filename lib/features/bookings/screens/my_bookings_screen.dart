@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import '../../property_details/screens/payment_webview_screen.dart';
 
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -269,14 +271,54 @@ class _BookingTimelineCard extends StatelessWidget {
     );
   }
 
-  void _handleRemainingPayment(BuildContext context) {
-    // Logic to trigger remaining payment
-    // This usually needs to call the cloud function `createRemainingPayment`
-    // For now, we can show a SnackBar or navigate if there is a dedicated screen
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Proceeding to payment...")));
-    // Implementation depends on how payment flow is triggered from UI
+  Future<void> _handleRemainingPayment(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result = await FirebaseFunctions.instanceFor(
+        region: 'us-central1',
+      ).httpsCallable('createRemainingPayment').call({'bookingId': bookingId});
+
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading
+
+      final resData = result.data as Map<String, dynamic>;
+      final paymentToken = resData['paymentToken'];
+      final iframeId = resData['iframeId'];
+      final paymentId = resData['paymentId'];
+
+      debugPrint("📱 [CLIENT] Remaining Payment Initiated");
+      debugPrint("📱 [CLIENT] PaymentID: $paymentId");
+      debugPrint("📱 [CLIENT] IframeID: $iframeId");
+      debugPrint(
+        "📱 [CLIENT] Token: ${paymentToken?.toString().substring(0, 10)}...",
+      );
+
+      if (paymentToken != null && iframeId != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentWebViewScreen(
+              paymentToken: paymentToken.toString(),
+              iframeId: iframeId.toString(),
+              paymentId: paymentId.toString(),
+              bookingId: bookingId,
+              paymentType: 'remaining',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      if (Navigator.canPop(context)) Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Payment Error: ${e.toString()}")));
+    }
   }
 
   Widget _buildVerticalDashedLine() {

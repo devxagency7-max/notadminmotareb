@@ -12,12 +12,11 @@ import 'package:motareb/core/providers/locale_provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 
 import '../../auth/providers/auth_provider.dart';
-import '../../auth/screens/verification_screen.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../auth/screens/signup_screen.dart';
 import '../../favorites/screens/favorites_screen.dart';
 import '../../favorites/providers/favorites_provider.dart';
-import 'banner_ad_widget.dart';
+import '../../../core/widgets/ads/banner_ad_widget.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../bookings/screens/my_bookings_screen.dart';
 
@@ -107,34 +106,6 @@ class _ProfileContentState extends State<ProfileContent> {
                                     ),
                                   ),
                                 ),
-                                // Badge Logic
-                                if (authProvider
-                                        .userData?['verificationStatus'] !=
-                                    null)
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(
-                                              0.1,
-                                            ),
-                                            blurRadius: 5,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: _buildStatusBadge(
-                                        authProvider
-                                            .userData?['verificationStatus'],
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
                             const SizedBox(height: 15),
@@ -225,89 +196,6 @@ class _ProfileContentState extends State<ProfileContent> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: [
-                      // 3. Verification Alert
-                      if (!authProvider.isGuest)
-                        FadeInUp(
-                          duration: const Duration(milliseconds: 600),
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const VerificationScreen(),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 25),
-                              padding: const EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    const Color(
-                                      0xFFFFC107,
-                                    ).withValues(alpha: 0.1),
-                                    const Color(
-                                      0xFFFF9800,
-                                    ).withValues(alpha: 0.1),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: const Color(
-                                    0xFFFFC107,
-                                  ).withValues(alpha: 0.5),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFFF3CD),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Icon(
-                                      Icons.verified_user_outlined,
-                                      color: Color(0xFF856404),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          context.loc.verification,
-                                          style: GoogleFonts.cairo(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: const Color(0xFF856404),
-                                          ),
-                                        ),
-                                        Text(
-                                          context.loc.verificationDetail,
-                                          style: GoogleFonts.cairo(
-                                            fontSize: 12,
-                                            color: const Color(0xFF856404),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const Icon(
-                                    Icons.arrow_forward_ios,
-                                    size: 16,
-                                    color: Color(0xFF856404),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
                       // 4. Menu Items
                       if (authProvider.isAuthenticated &&
                           !authProvider.isGuest) ...[
@@ -862,20 +750,5 @@ class _ProfileContentState extends State<ProfileContent> {
         ),
       ),
     );
-  }
-
-  Widget _buildStatusBadge(String? status) {
-    if (status == 'verified') {
-      return const Icon(Icons.verified, color: Colors.blue, size: 24);
-    } else if (status == 'pending') {
-      return const Icon(
-        Icons.access_time_filled,
-        color: Colors.orange,
-        size: 24,
-      );
-    } else if (status == 'rejected') {
-      return const Icon(Icons.error, color: Colors.red, size: 24);
-    }
-    return const SizedBox();
   }
 }

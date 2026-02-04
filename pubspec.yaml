@@ -68,6 +68,7 @@ dependencies:
   custom_refresh_indicator: ^4.0.1
   webview_flutter: ^4.13.1
   firebase_remote_config: ^6.1.4
+  firebase_storage: ^13.0.6
 
 dev_dependencies:
   flutter_test:

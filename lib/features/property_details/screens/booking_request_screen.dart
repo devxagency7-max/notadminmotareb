@@ -4,22 +4,28 @@ import 'package:intl/intl.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:provider/provider.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/models/property_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/booking_request_provider.dart';
 import 'payment_webview_screen.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../../../core/services/r2_upload_service.dart';
 
 class BookingRequestScreen extends StatelessWidget {
   final Property property;
   final String selectionDetails;
   final double price;
+  final List<String> selections;
+  final bool isWhole;
 
   const BookingRequestScreen({
     super.key,
     required this.property,
     required this.selectionDetails,
     required this.price,
+    required this.selections,
+    required this.isWhole,
   });
 
   @override
@@ -29,6 +35,8 @@ class BookingRequestScreen extends StatelessWidget {
         property: property,
         selectionDetails: selectionDetails,
         price: price,
+        selections: selections,
+        isWhole: isWhole,
       ),
       child: const _BookingRequestContent(),
     );
@@ -52,6 +60,20 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
   late TextEditingController _emailController;
   final TextEditingController _notesController = TextEditingController();
 
+  // ID Images State
+  File? _idFrontImage;
+  File? _idBackImage;
+  String? _idFrontUrl;
+  String? _idBackUrl;
+  bool _isUploadingImages = false;
+
+  // Payment Selection
+  String _paymentMethod = 'card'; // 'card' or 'wallet'
+  final TextEditingController _walletNumberController = TextEditingController();
+
+  final ImagePicker _picker = ImagePicker();
+  final R2UploadService _uploadService = R2UploadService();
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +91,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _walletNumberController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -109,48 +132,6 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
         },
       ),
     );
-  }
-
-  Future<void> _submit(BuildContext context) async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final provider = context.read<BookingRequestProvider>();
-
-    if (provider.startDate == null || provider.endDate == null) {
-      setState(() => _showDateError = true);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.loc.selectDatesError)));
-      return;
-    }
-    setState(() => _showDateError = false);
-
-    final user = context.read<AuthProvider>().user;
-
-    if (user == null) return;
-
-    final success = await provider.submitOrder(
-      userId: user.uid,
-      userEmail: _emailController.text,
-      userName: _nameController.text,
-      userPhone: _phoneController.text,
-      idName: '',
-      idNumber: '',
-      notes: _notesController.text,
-    );
-
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(context.loc.requestSentSuccess)));
-        Navigator.popUntil(context, (route) => route.isFirst);
-      } else if (provider.error != null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(provider.error!)));
-      }
-    }
   }
 
   @override
@@ -288,7 +269,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${provider.selectionDetails} - ${provider.property.title}',
+                                '${provider.selectionDetails} - ${provider.property.localizedTitle(context)}',
                                 style: GoogleFonts.cairo(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
@@ -298,7 +279,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                                 ),
                               ),
                               Text(
-                                provider.property.location,
+                                provider.property.localizedLocation(context),
                                 style: GoogleFonts.cairo(
                                   fontSize: 11,
                                   color: Colors.grey,
@@ -540,6 +521,169 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
 
               const SizedBox(height: 20),
 
+              // Payment Method Selection
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: isDark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "طريقة الدفع", // context.loc.paymentMethod
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _paymentMethod = 'card'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _paymentMethod == 'card'
+                                    ? const Color(0xFF008695).withOpacity(0.1)
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: _paymentMethod == 'card'
+                                      ? const Color(0xFF008695)
+                                      : Theme.of(
+                                          context,
+                                        ).dividerColor.withOpacity(0.5),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.credit_card,
+                                    color: _paymentMethod == 'card'
+                                        ? const Color(0xFF008695)
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "بطاقة بنكية", // context.loc.payWithCard
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 12,
+                                      fontWeight: _paymentMethod == 'card'
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: _paymentMethod == 'card'
+                                          ? const Color(0xFF008695)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _paymentMethod = 'wallet'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 15,
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _paymentMethod == 'wallet'
+                                    ? const Color(0xFF39BB5E).withOpacity(0.1)
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: _paymentMethod == 'wallet'
+                                      ? const Color(0xFF39BB5E)
+                                      : Theme.of(
+                                          context,
+                                        ).dividerColor.withOpacity(0.5),
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.account_balance_wallet,
+                                    color: _paymentMethod == 'wallet'
+                                        ? const Color(0xFF39BB5E)
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "محفظة إلكترونية", // context.loc.payWithWallet
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 12,
+                                      fontWeight: _paymentMethod == 'wallet'
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: _paymentMethod == 'wallet'
+                                          ? const Color(0xFF39BB5E)
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_paymentMethod == 'wallet') ...[
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _walletNumberController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: "رقم المحفظة", // context.loc.walletNumber
+                          hintText: "01xxxxxxxxx",
+                          prefixIcon: const Icon(Icons.phone_android),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (_paymentMethod == 'wallet') {
+                            if (value == null || value.isEmpty) {
+                              return context.loc.required;
+                            }
+                            if (!RegExp(
+                              r'^01[0-2,5]{1}[0-9]{8}$',
+                            ).hasMatch(value)) {
+                              return "رقم هاتف غير صحيح"; // context.loc.invalidPhoneNumber
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
               // Additional Notes
               Container(
                 padding: const EdgeInsets.all(20),
@@ -592,6 +736,91 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                 ),
               ),
 
+              const SizedBox(height: 20),
+
+              // ID Upload Section
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: isDark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.loc.idVerificationTitle,
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      context.loc.idVerificationDesc,
+                      style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildIdImagePicker(
+                            title: context.loc.idFront,
+                            image: _idFrontImage,
+                            onTap: () => _pickIdImage(true),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: _buildIdImagePicker(
+                            title: context.loc.idBack,
+                            image: _idBackImage,
+                            onTap: () => _pickIdImage(false),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_isUploadingImages)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 15),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 15,
+                              height: 15,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF008695),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              context.loc.uploadingImages,
+                              style: GoogleFonts.cairo(
+                                fontSize: 12,
+                                color: const Color(0xFF008695),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 30),
 
               // Submit
@@ -629,11 +858,30 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                           final user = context.read<AuthProvider>().user;
                           if (user == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please login first'),
+                              SnackBar(
+                                content: Text(
+                                  context.loc.guestActionRestrictedDesc,
+                                ),
                               ),
                             );
                             return;
+                          }
+
+                          // 4. Validate ID Images
+                          if (_idFrontImage == null || _idBackImage == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(context.loc.uploadIdError),
+                              ),
+                            );
+                            return;
+                          }
+
+                          // 5. Upload Images if not already uploaded
+                          if (_idFrontUrl == null || _idBackUrl == null) {
+                            await _uploadIdImages();
+                            if (_idFrontUrl == null || _idBackUrl == null)
+                              return; // Error occurred and handled in _uploadIdImages
                           }
 
                           await _showPaymentSummary(context);
@@ -684,20 +932,60 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
     try {
       // Prepare User Info
       final userInfo = {
-        'name': _nameController.text,
+        'name': _nameController.text.trim(),
         'phone': _phoneController.text,
         'email': _emailController.text,
         'notes': _notesController.text,
+        'idFrontUrl': _idFrontUrl,
+        'idBackUrl': _idBackUrl,
       };
 
       print("Calling cloud function...");
+      print("DEBUG user name: ${_nameController.text}");
+      print("DEBUG: Sending selections: ${provider.selections}");
+      print("DEBUG: Sending isWhole: ${provider.isWhole}");
+
       final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
           .httpsCallable('createDepositBooking')
-          .call({"propertyId": provider.property.id, "userInfo": userInfo});
+          .call({
+            "propertyId": provider.property.id,
+            "userInfo": userInfo,
+            "paymentMethod": _paymentMethod,
+            "selections": provider.selections,
+            "isWhole": provider.isWhole,
+            "walletNumber": _paymentMethod == 'wallet'
+                ? _walletNumberController.text
+                : null,
+          });
 
       Navigator.pop(context); // Close loading dialog
 
       final data = result.data as Map<String, dynamic>;
+
+      // Handle Wallet Redirection
+      if (_paymentMethod == 'wallet' && data['redirectUrl'] != null) {
+        // You might want to open this in a webview or external browser
+        // optimizing for same-screen experience if possible,
+        // but wallets usually require external app or specific OTP pages.
+        // Using the same Webview screen for now but it might need 'redirection' handling logic.
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentWebViewScreen(
+              url:
+                  data['redirectUrl'], // Need to update PaymentWebViewScreen to accept direct URL
+              paymentToken: '', // Not used for direct URL
+              iframeId: '',
+              paymentId: data['paymentId'].toString(),
+              bookingId: data['bookingId'].toString(),
+              paymentType: 'deposit',
+            ),
+          ),
+        );
+        return;
+      }
+
       final paymentToken = data['paymentToken'];
       final iframeId = data['iframeId'];
       final paymentId = data['paymentId'];
@@ -715,31 +1003,155 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
               iframeId: iframeId.toString(),
               paymentId: paymentId.toString(),
               bookingId: bookingId.toString(),
+              paymentType: 'deposit',
             ),
           ),
         );
       } else {
         throw 'Missing payment data from server';
       }
-    } catch (e) {
-      if (Navigator.canPop(context))
-        Navigator.pop(context); // Close loading if active
-      print("Payment Error: $e");
-      print("Payment Error: $e");
+    } on FirebaseFunctionsException catch (e) {
+      if (Navigator.canPop(context)) Navigator.pop(context); // Close loading
+
+      String errorMessage;
+
+      // Parse known error codes
+      if (e.code == 'failed-precondition' &&
+          e.message?.contains('being booked') == true) {
+        errorMessage = context.loc.paymentErrorPropertyReserved;
+      } else if (e.code == 'not-found') {
+        errorMessage = context.loc.paymentErrorUnavailable;
+      } else {
+        errorMessage = context.loc.paymentErrorGeneric(e.message ?? e.code);
+      }
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("Payment Error"),
-          content: Text(e.toString()),
+          title: Text(context.loc.error),
+          content: Text(errorMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
+              child: Text(context.loc.confirm),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (Navigator.canPop(context)) Navigator.pop(context); // Close loading
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(context.loc.error),
+          content: Text(context.loc.paymentErrorGeneric(e.toString())),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.loc.confirm),
             ),
           ],
         ),
       );
     }
+  }
+
+  Future<void> _pickIdImage(bool isFront) async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+
+    if (pickedFile != null) {
+      if (!mounted) return;
+      setState(() {
+        if (isFront) {
+          _idFrontImage = File(pickedFile.path);
+          _idFrontUrl = null; // Reset URL to force re-upload
+        } else {
+          _idBackImage = File(pickedFile.path);
+          _idBackUrl = null;
+        }
+      });
+    }
+  }
+
+  Future<void> _uploadIdImages() async {
+    setState(() => _isUploadingImages = true);
+
+    try {
+      if (_idFrontImage != null && _idFrontUrl == null) {
+        _idFrontUrl = await _uploadService.uploadFile(_idFrontImage!);
+      }
+      if (_idBackImage != null && _idBackUrl == null) {
+        _idBackUrl = await _uploadService.uploadFile(_idBackImage!);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.uploadFailed(e.toString()))),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingImages = false);
+    }
+  }
+
+  Widget _buildIdImagePicker({
+    required String title,
+    required File? image,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            height: 120,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).inputDecorationTheme.fillColor,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(
+                color: Theme.of(context).dividerColor.withOpacity(0.1),
+              ),
+              image: image != null
+                  ? DecorationImage(image: FileImage(image), fit: BoxFit.cover)
+                  : null,
+            ),
+            child: image == null
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.add_a_photo_outlined,
+                        color: Color(0xFF008695),
+                        size: 30,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        context.loc.tapToUpload,
+                        style: GoogleFonts.cairo(
+                          fontSize: 10,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDateBox(
@@ -814,7 +1226,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
             ),
             const SizedBox(height: 25),
             Text(
-              "ملخص الحجز",
+              context.loc.bookingSummary,
               style: GoogleFonts.cairo(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -823,14 +1235,14 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
             const SizedBox(height: 20),
             _buildSummaryRow(
               context,
-              "العقار",
-              provider.property.title,
+              context.loc.propertyLabel,
+              provider.property.localizedTitle(context),
               isBold: true,
             ),
             const Divider(height: 30),
             _buildSummaryRow(
               context,
-              "المبلغ المطلوب الآن (العربون)",
+              context.loc.depositAmount,
               "$deposit ${context.loc.currency}",
               valueColor: const Color(0xFFD35400),
               isBold: true,
@@ -838,11 +1250,41 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
             const SizedBox(height: 10),
             _buildSummaryRow(
               context,
-              "المبلغ المتبقي للإدارة لاحقاً",
+              context.loc.remainingAmount,
               "$remaining ${context.loc.currency}",
               valueColor: Colors.grey,
             ),
             const SizedBox(height: 30),
+            // Wallet Specific Notice
+            if (_paymentMethod == 'wallet')
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "سيتم تحويلك للدفع عبر المحفظة. تأكد من وجود رصيد كافٍ.",
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: Colors.orange[800],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Container(
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
@@ -862,7 +1304,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "بالضغط على تأكيد، سيتم توجيهك لصفحة الدفع الآمن.",
+                      "سيتم تحويلك لصفحة الدفع الآمنة", // context.loc.paymentRedirectNotice
                       style: GoogleFonts.cairo(
                         fontSize: 12,
                         color: const Color(0xFF008695),
@@ -910,7 +1352,7 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
                         ),
                       ),
                       child: Text(
-                        "تأكيد ودفع",
+                        context.loc.confirmAndPay,
                         style: GoogleFonts.cairo(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -987,9 +1429,9 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: 500,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       child: Column(
         children: [
@@ -997,7 +1439,11 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor.withOpacity(0.1),
+                ),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1009,7 +1455,7 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF003D4D),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
                 IconButton(
@@ -1045,17 +1491,24 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? const Color(0xFF008695)
-                          : Colors.grey.shade100,
+                          : Theme.of(context).inputDecorationTheme.fillColor ??
+                                Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(20),
                       border: isSelected
                           ? null
-                          : Border.all(color: Colors.grey.shade300),
+                          : Border.all(
+                              color: Theme.of(
+                                context,
+                              ).dividerColor.withOpacity(0.1),
+                            ),
                     ),
                     child: Center(
                       child: Text(
                         year.toString(),
                         style: GoogleFonts.cairo(
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected
+                              ? Colors.white
+                              : Theme.of(context).textTheme.bodyLarge?.color,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1106,28 +1559,37 @@ class _MonthYearPickerSheetState extends State<_MonthYearPickerSheet> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isActuallySelected
-                          ? const Color(0xFF39BB5E).withValues(alpha: 0.1)
+                          ? const Color(0xFF39BB5E).withOpacity(0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isActuallySelected
                             ? const Color(0xFF39BB5E)
                             : (isPast
-                                  ? Colors.grey.shade200
-                                  : Colors.grey.shade300),
+                                  ? Theme.of(
+                                      context,
+                                    ).disabledColor.withOpacity(0.1)
+                                  : Theme.of(
+                                      context,
+                                    ).dividerColor.withOpacity(0.1)),
                       ),
                     ),
                     child: Center(
                       child: Text(
-                        DateFormat('MMM', 'ar').format(
+                        DateFormat(
+                          'MMM',
+                          Localizations.localeOf(context).languageCode,
+                        ).format(
                           DateTime(2024, month),
-                        ), // Use 'ar' locale for month names
+                        ), // Use current locale for month names
                         style: GoogleFonts.cairo(
                           color: isPast
-                              ? Colors.grey
+                              ? Theme.of(context).disabledColor
                               : (isActuallySelected
                                     ? const Color(0xFF39BB5E)
-                                    : Colors.black87),
+                                    : Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.color),
                           fontWeight: isActuallySelected
                               ? FontWeight.bold
                               : FontWeight.normal,

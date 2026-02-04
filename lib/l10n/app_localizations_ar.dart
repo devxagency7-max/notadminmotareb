@@ -875,4 +875,69 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get booked => 'تم الحجز';
+
+  @override
+  String get idVerificationTitle => 'تأكيد الهوية (مطلوب)';
+
+  @override
+  String get idVerificationDesc =>
+      'يرجى رفع صورة واضحة لوجه وخلف البطاقة الشخصية لمتابعة الحجز';
+
+  @override
+  String get idFront => 'وجه البطاقة';
+
+  @override
+  String get idBack => 'خلف البطاقة';
+
+  @override
+  String get tapToUpload => 'إضغط للرفع';
+
+  @override
+  String get uploadingImages => 'جاري رفع الصور...';
+
+  @override
+  String get uploadIdError =>
+      'يرجى رفع صور البطاقة (الواجهة والخلفية) للمتابعة';
+
+  @override
+  String uploadFailed(String error) {
+    return 'فشل رفع الصور: $error';
+  }
+
+  @override
+  String get confirmAndPay => 'تأكيد ودفع';
+
+  @override
+  String get bookingSummary => 'ملخص الحجز';
+
+  @override
+  String get propertyLabel => 'العقار';
+
+  @override
+  String get depositAmount => 'المبلغ المطلوب الآن (العربون)';
+
+  @override
+  String get remainingAmount => 'المبلغ المتبقي للإدارة لاحقاً';
+
+  @override
+  String get paymentRedirectNotice =>
+      'بالضغط على تأكيد، سيتم توجيهك لصفحة الدفع الآمن.';
+
+  @override
+  String get nearbyPlaces => 'الأماكن المجاورة';
+
+  @override
+  String get nearbyUniversities => 'الجامعات المجاورة';
+
+  @override
+  String get paymentErrorPropertyReserved =>
+      'هذا العقار يتم حجزه حالياً بواسطة شخص آخر. يرجى المحاولة مرة أخرى بعد 5 دقائق.';
+
+  @override
+  String paymentErrorGeneric(String error) {
+    return 'تعذر بدء عملية الدفع: $error';
+  }
+
+  @override
+  String get paymentErrorUnavailable => 'العقار المحدد لم يعد متاحاً.';
 }

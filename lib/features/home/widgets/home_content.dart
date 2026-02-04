@@ -610,7 +610,7 @@ class HomeContent extends StatelessWidget {
                                 textAlign: TextAlign.right,
                               ),
                               Text(
-                                '${property.localizedLocation(context)} ${property.tags.isNotEmpty ? "• ${property.tags.first}" : ""}',
+                                property.localizedLocation(context),
                                 style: GoogleFonts.cairo(
                                   fontSize: 10,
                                   color: Colors.grey,

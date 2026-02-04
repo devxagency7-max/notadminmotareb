@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/models/property_model.dart';
 
@@ -6,11 +5,15 @@ class BookingRequestProvider extends ChangeNotifier {
   final Property property;
   final String selectionDetails;
   final double price;
+  final List<String> selections;
+  final bool isWhole;
 
   BookingRequestProvider({
     required this.property,
     required this.selectionDetails,
     required this.price,
+    required this.selections,
+    required this.isWhole,
   });
 
   // State
@@ -59,59 +62,5 @@ class BookingRequestProvider extends ChangeNotifier {
       _totalMonths = 0;
     }
     // No notifyListener needed here as it's called by setters which notify
-  }
-
-  Future<bool> submitOrder({
-    required String userId,
-    required String userEmail,
-    required String userName,
-    required String userPhone,
-    required String idName,
-    required String idNumber,
-    required String notes,
-  }) async {
-    if (_startDate == null || _endDate == null) {
-      _error = 'Select dates';
-      return false;
-    }
-
-    _isSubmitting = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final orderData = {
-        'userId': userId,
-        'userEmail': userEmail,
-        'userName': userName,
-        'userPhone': userPhone,
-        'idName': idName,
-        'idNumber': idNumber,
-        'propertyId': property.id,
-        'propertyTitle': property.title,
-        'propertyLocation': property.location,
-        'ownerId': 'TODO_OWNER_ID',
-        'selectionDetails': selectionDetails,
-        'unitPrice': price,
-        'totalPrice': price * _totalMonths,
-        'startDate': Timestamp.fromDate(_startDate!),
-        'endDate': Timestamp.fromDate(_endDate!),
-        'durationMonths': _totalMonths,
-        'notes': notes,
-        'status': 'pending',
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      await FirebaseFirestore.instance.collection('orders').add(orderData);
-
-      _isSubmitting = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = e.toString();
-      _isSubmitting = false;
-      notifyListeners();
-      return false;
-    }
   }
 }

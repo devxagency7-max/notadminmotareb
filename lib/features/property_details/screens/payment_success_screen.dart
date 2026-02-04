@@ -5,8 +5,13 @@ import 'package:intl/intl.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   final String bookingId;
+  final String paymentType; // 'deposit' or 'remaining'
 
-  const PaymentSuccessScreen({super.key, required this.bookingId});
+  const PaymentSuccessScreen({
+    super.key,
+    required this.bookingId,
+    required this.paymentType,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +54,9 @@ class PaymentSuccessScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   Text(
-                    'تهانينا! تم الحجز',
+                    paymentType == 'remaining'
+                        ? 'تهانينا! تم الدفع بالكامل'
+                        : 'تهانينا! تم الحجز',
                     style: GoogleFonts.cairo(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -61,6 +68,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                   // The Ticket
                   _BookingTicket(
                     bookingId: bookingId,
+                    paymentType: paymentType,
                     bookingData: bookingData,
                   ),
 
@@ -100,15 +108,30 @@ class PaymentSuccessScreen extends StatelessWidget {
 
 class _BookingTicket extends StatelessWidget {
   final String bookingId;
+  final String paymentType;
   final Map<String, dynamic>? bookingData;
 
-  const _BookingTicket({required this.bookingId, this.bookingData});
+  const _BookingTicket({
+    required this.bookingId,
+    required this.paymentType,
+    this.bookingData,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final createdAt =
         (bookingData?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+    final isDeposit = paymentType == 'deposit';
+    final amount = isDeposit
+        ? (bookingData?['depositPaid'] ??
+              bookingData?['depositAmount'] ??
+              '---')
+        : (bookingData?['remainingAmount'] ?? '---');
+    final desc = isDeposit
+        ? "هذا المبلغ كعربون لضمان الحجز لمدة 7 أيام"
+        : "تم سداد كامل المبلغ. العقار أصبح ملكك الآن!";
 
     return Container(
       width: double.infinity,
@@ -147,6 +170,14 @@ class _BookingTicket extends StatelessWidget {
                   context,
                   "الاسم",
                   bookingData?['userInfo']?['name'] ?? "---",
+                ),
+                const SizedBox(height: 15),
+                _buildInfoRow(
+                  context,
+                  "نوع العملية",
+                  isDeposit ? "دفع العربون" : "سداد المتبقي",
+                  isBold: true,
+                  valueColor: const Color(0xFF008695),
                 ),
               ],
             ),
@@ -193,13 +224,14 @@ class _BookingTicket extends StatelessWidget {
                 _buildInfoRow(
                   context,
                   "المبلغ المدفوع",
-                  "${bookingData?['depositPaid'] ?? '---'} EGP",
+                  "$amount EGP",
                   valueColor: Colors.green,
                   isBold: true,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "هذا المبلغ كعربون لضمان الحجز لمدة 7 أيام",
+                  desc,
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey),
                 ),
               ],

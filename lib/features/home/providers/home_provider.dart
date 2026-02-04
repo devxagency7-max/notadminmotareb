@@ -153,10 +153,26 @@ class HomeProvider extends ChangeNotifier {
 
     final query = _searchQuery.toLowerCase();
     return properties.where((p) {
+      final universityMatches = p.universities.any((u) {
+        if (u is Map) {
+          return (u['ar']?.toString().toLowerCase().contains(query) ?? false) ||
+              (u['en']?.toString().toLowerCase().contains(query) ?? false);
+        }
+        return u.toString().toLowerCase().contains(query);
+      });
+
+      final tagMatches = p.amenities.any((t) {
+        if (t is Map) {
+          return (t['ar']?.toString().toLowerCase().contains(query) ?? false) ||
+              (t['en']?.toString().toLowerCase().contains(query) ?? false);
+        }
+        return t.toString().toLowerCase().contains(query);
+      });
+
       return p.title.toLowerCase().contains(query) ||
           p.location.toLowerCase().contains(query) ||
-          p.universities.any((u) => u.toLowerCase().contains(query)) ||
-          p.tags.any((t) => t.toLowerCase().contains(query));
+          universityMatches ||
+          tagMatches;
     }).toList();
   }
 
@@ -246,15 +262,24 @@ class HomeProvider extends ChangeNotifier {
   List<String> get uniqueUniversities {
     final Set<String> allUniversities = {};
     for (var p in _applySearchOnly(_allProperties)) {
-      allUniversities.addAll(p.universities);
+      for (var u in p.universities) {
+        if (u is Map) {
+          allUniversities.add(u['ar']?.toString() ?? '');
+        } else {
+          allUniversities.add(u.toString());
+        }
+      }
     }
-    return allUniversities.toList()..sort();
+    return allUniversities.where((s) => s.isNotEmpty).toList()..sort();
   }
 
   List<Property> getPropertiesForUniversity(String universityName) {
-    return _applySearchOnly(
-      _allProperties,
-    ).where((p) => p.universities.contains(universityName)).toList();
+    return _applySearchOnly(_allProperties).where((p) {
+      return p.universities.any((u) {
+        if (u is Map) return u['ar'] == universityName;
+        return u.toString() == universityName;
+      });
+    }).toList();
   }
 
   // Deprecated usage of category index filter, consider removing if moving fully to new filter system

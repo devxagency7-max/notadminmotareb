@@ -14,8 +14,8 @@ class Property {
   final bool isVerified;
   final bool isNew;
   final double rating;
-  final List<String> tags; // e.g., ['1 شخص', 'ممنوع التدخين']
-  final List<String> rules;
+  final List<dynamic> amenities;
+  final List<dynamic> rules;
   final String? featuredLabel;
   final String? featuredLabelEn; // Added
   final double? discountPrice;
@@ -33,7 +33,8 @@ class Property {
   final String? governorate;
   final String? gender;
   final List<String> paymentMethods;
-  final List<String> universities;
+  final List<dynamic> universities;
+  final List<dynamic> nearbyPlaces; // New
   final int bedsCount;
   final int roomsCount;
   final int bathroomsCount;
@@ -46,7 +47,7 @@ class Property {
   final String status; // Added
 
   // Helpers
-  bool get hasAC => tags.contains('ac') || tags.contains('تكييف');
+  List<String> get tags => amenities.map((e) => e.toString()).toList();
 
   Property({
     required this.id,
@@ -60,8 +61,10 @@ class Property {
     this.isVerified = false,
     this.isNew = false,
     this.rating = 0.0,
-    this.tags = const [],
+    this.amenities = const [],
     this.rules = const [],
+    this.universities = const [],
+    this.nearbyPlaces = const [],
     this.featuredLabel,
     this.featuredLabelEn,
     this.discountPrice,
@@ -71,7 +74,6 @@ class Property {
     this.governorate,
     this.gender,
     this.paymentMethods = const [],
-    this.universities = const [],
     this.bedsCount = 0,
     this.roomsCount = 0,
     this.bathroomsCount = 1,
@@ -113,14 +115,13 @@ class Property {
             )
           : false,
       rating: (map['rating'] as num?)?.toDouble() ?? 0.0,
-      tags:
-          (map['amenities'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
+      amenities:
+          map['amenities'] as List<dynamic>? ??
+          map['tags'] as List<dynamic>? ??
           [],
-      rules:
-          (map['rules'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
-          [],
+      rules: map['rules'] as List<dynamic>? ?? [],
+      universities: map['universities'] as List<dynamic>? ?? [],
+      nearbyPlaces: map['nearbyPlaces'] as List<dynamic>? ?? [],
       featuredLabel: map['featuredLabel'],
       featuredLabelEn: map['featuredLabelEn'],
       agentName: map['agentName'],
@@ -130,11 +131,6 @@ class Property {
       gender: map['gender'],
       paymentMethods:
           (map['paymentMethods'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      universities:
-          (map['universities'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -199,5 +195,41 @@ class Property {
     if (type == 'غرفة') return 'Room';
     if (type == 'شقة') return 'Apartment';
     return type;
+  }
+
+  // Localized List Helper
+  List<String> localizedList(BuildContext context, List<dynamic> list) {
+    return list
+        .map((e) {
+          if (e is Map) {
+            return context.isAr
+                ? (e['ar']?.toString() ?? '')
+                : (e['en']?.toString() ?? e['ar']?.toString() ?? '');
+          }
+          return e.toString();
+        })
+        .where((s) => s.isNotEmpty)
+        .toList();
+  }
+
+  // Alias for tags to keep compatibility
+  List<String> localizedAmenities(BuildContext context) =>
+      localizedList(context, amenities);
+  List<String> localizedRules(BuildContext context) =>
+      localizedList(context, rules);
+  List<String> localizedUniversities(BuildContext context) =>
+      localizedList(context, universities);
+  List<String> localizedNearbyPlaces(BuildContext context) =>
+      localizedList(context, nearbyPlaces);
+
+  bool get hasAC {
+    return amenities.any((a) {
+      if (a is String) return a.toLowerCase() == 'ac' || a == 'تكييف';
+      if (a is Map) {
+        return a['ar'] == 'تكييف' ||
+            a['en']?.toString().toLowerCase() == 'air conditioning';
+      }
+      return false;
+    });
   }
 }

@@ -877,4 +877,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get booked => 'Booked';
+
+  @override
+  String get idVerificationTitle => 'Identity Confirmation (Required)';
+
+  @override
+  String get idVerificationDesc =>
+      'Please upload a clear photo of the front and back of your National ID to proceed.';
+
+  @override
+  String get idFront => 'Front Side';
+
+  @override
+  String get idBack => 'Back Side';
+
+  @override
+  String get tapToUpload => 'Tap to Upload';
+
+  @override
+  String get uploadingImages => 'Uploading images...';
+
+  @override
+  String get uploadIdError =>
+      'Please upload ID photos (front and back) to continue';
+
+  @override
+  String uploadFailed(String error) {
+    return 'Failed to upload images: $error';
+  }
+
+  @override
+  String get confirmAndPay => 'Confirm and Pay';
+
+  @override
+  String get bookingSummary => 'Booking Summary';
+
+  @override
+  String get propertyLabel => 'Property';
+
+  @override
+  String get depositAmount => 'Required Amount Now (Deposit)';
+
+  @override
+  String get remainingAmount => 'Remaining Amount for Later';
+
+  @override
+  String get paymentRedirectNotice =>
+      'By confirming, you will be redirected to the secure payment page.';
+
+  @override
+  String get nearbyPlaces => 'Nearby Places';
+
+  @override
+  String get nearbyUniversities => 'Nearby Universities';
+
+  @override
+  String get paymentErrorPropertyReserved =>
+      'This property is currently being booked by someone else. Please try again in 5 minutes.';
+
+  @override
+  String paymentErrorGeneric(String error) {
+    return 'Payment could not be initialized: $error';
+  }
+
+  @override
+  String get paymentErrorUnavailable =>
+      'Selected property is no longer available.';
 }

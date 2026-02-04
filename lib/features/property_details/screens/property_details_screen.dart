@@ -5,8 +5,6 @@ import 'package:motareb/core/extensions/loc_extension.dart';
 import '../../../core/models/property_model.dart';
 import '../../favorites/providers/favorites_provider.dart';
 import 'booking_request_screen.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../auth/screens/verification_screen.dart';
 
 import '../widgets/property_gallery.dart';
 import '../widgets/property_header.dart';
@@ -49,7 +47,7 @@ class PropertyDetailsScreen extends StatelessWidget {
       description: 'شقة فندقية مميزة بتصميم مودرن في قلب المعادي...',
       rating: 4.8,
       isVerified: true,
-      tags: ['سكن طالبات', 'فايبر سريع', 'مؤثثة', 'مطبخ'],
+      amenities: ['سكن طالبات', 'فايبر سريع', 'مؤثثة', 'مطبخ'],
       gender: 'female',
       paymentMethods: ['monthly', 'term'],
       universities: ['الجامعة الأمريكية'],
@@ -84,15 +82,6 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
 
   void _onBookNow(BuildContext context, PropertyDetailsProvider provider) {
     if (!GuestChecker.check(context)) return;
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isVerified =
-        authProvider.userData?['verificationStatus'] == 'verified';
-
-    if (!isVerified) {
-      _showVerificationDialog(context);
-      return;
-    }
 
     if (!provider.validateBooking()) {
       setState(() {
@@ -154,118 +143,69 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
           property: provider.property,
           selectionDetails: selectionDetails,
           price: provider.selectedPrice,
+          selections: provider.selectedUnitKeys.toList(),
+          isWhole: provider.isWholeApartment,
         ),
       ),
     );
   }
 
-  void _showVerificationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(15),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.verified_user_outlined,
-                  size: 40,
-                  color: Colors.red,
-                ),
+  Widget _buildNearbySection(
+    BuildContext context,
+    String title,
+    List<String> items,
+    IconData icon,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: const Color(0xFF008695), size: 22),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
-              const SizedBox(height: 15),
-              Text(
-                context.loc.verificationRequired,
-                style: GoogleFonts.cairo(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: items.map((item) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                context.loc.verificationRequiredDesc,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.cairo(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
-                ),
-              ),
-              const SizedBox(height: 25),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF008695).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => VerificationScreen(
-                                topHint: context.loc.verificationTopHint,
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Text(
-                          context.loc.verifyNow,
-                          style: GoogleFonts.cairo(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        context.loc.cancel,
-                        style: GoogleFonts.cairo(color: Colors.grey),
-                      ),
-                    ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            ],
-          ),
+              child: Text(
+                item,
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
+              ),
+            );
+          }).toList(),
         ),
-      ),
+      ],
     );
   }
 
@@ -316,7 +256,9 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
                                 }
                               },
                             ),
-                            PropertyFeatures(tags: property.tags),
+                            PropertyFeatures(
+                              tags: property.localizedAmenities(context),
+                            ),
                             PropertyVideo(videoUrl: property.videoUrl),
                             const PropertyOwner(), // Internal logic via Provider
                             // ⬇️ Ad Space (Custom or Google Native)
@@ -355,6 +297,28 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
                                 context,
                               ), // Use localized
                             ),
+                            const SizedBox(height: 20),
+
+                            // Nearby Universities Section
+                            if (property.universities.isNotEmpty) ...[
+                              _buildNearbySection(
+                                context,
+                                context.loc.nearbyUniversities,
+                                property.localizedUniversities(context),
+                                Icons.school_outlined,
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+
+                            // Nearby Places Section
+                            if (property.nearbyPlaces.isNotEmpty) ...[
+                              _buildNearbySection(
+                                context,
+                                context.loc.nearbyPlaces,
+                                property.localizedNearbyPlaces(context),
+                                Icons.place_outlined,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -369,9 +333,6 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
             selectedPrice: detailsProvider.selectedPrice,
             selectionLabel: detailsProvider.selectionLabel,
             onBook: () => _onBookNow(context, detailsProvider),
-            isVerified:
-                context.watch<AuthProvider>().userData?['verificationStatus'] ==
-                'verified',
           ),
         ],
       ),

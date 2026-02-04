@@ -12,17 +12,21 @@ import 'payment_failed_bottom_sheet.dart';
 /// 1. Intercepts Success URL -> Shows "Verifying..." overlay.
 /// 2. Listens to Firestore -> Only closes and shows Success Screen when 'status' is 'paid'.
 class PaymentWebViewScreen extends StatefulWidget {
+  final String? url;
   final String paymentToken;
   final String iframeId;
   final String paymentId;
   final String bookingId;
+  final String paymentType; // 'deposit' or 'remaining'
 
   const PaymentWebViewScreen({
     super.key,
+    this.url,
     required this.paymentToken,
     required this.iframeId,
     required this.paymentId,
     required this.bookingId,
+    required this.paymentType,
   });
 
   @override
@@ -34,6 +38,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   bool _isLoading = true;
   bool _isVerifying = false; // New state for Dual Confirmation
   StreamSubscription? _paymentSubscription;
+  StreamSubscription? _bookingSubscription;
 
   @override
   void initState() {
@@ -44,6 +49,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
   void _initWebView() {
     final String paymentUrl =
+        widget.url ??
         'https://accept.paymob.com/api/acceptance/iframes/${widget.iframeId}?payment_token=${widget.paymentToken}';
 
     _controller = WebViewController()
@@ -68,9 +74,36 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ..loadRequest(Uri.parse(paymentUrl));
   }
 
-  /// Listens to the 'payments' collection for real-time updates from our Webhook
-  /// This is the SOURCE OF TRUTH for closing the screen.
   void _startPaymentListener() {
+    // 1. Listen to Booking (Success Condition depends on Payment Type)
+    _bookingSubscription = FirebaseFirestore.instance
+        .collection('bookings')
+        .doc(widget.bookingId)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.exists) {
+            final data = snapshot.data();
+            final status = data?['status'];
+
+            // Logic Adjustment:
+            // If Deposit -> Success is 'reserved' OR 'completed'
+            // If Remaining -> Success is ONLY 'completed'
+
+            bool isSuccess = false;
+
+            if (widget.paymentType == 'deposit') {
+              isSuccess = (status == 'reserved' || status == 'completed');
+            } else if (widget.paymentType == 'remaining') {
+              isSuccess = (status == 'completed');
+            }
+
+            if (isSuccess) {
+              _onPaymentConfirmed();
+            }
+          }
+        });
+
+    // 2. Listen to Payment (Failure Condition)
     _paymentSubscription = FirebaseFirestore.instance
         .collection('payments')
         .doc(widget.paymentId)
@@ -80,9 +113,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             final data = snapshot.data();
             final status = data?['status'];
 
-            if (status == 'paid') {
-              _onPaymentConfirmed();
-            } else if (status == 'failed') {
+            if (status == 'failed') {
               _onPaymentFailed();
             }
           }
@@ -122,13 +153,17 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
 
   void _onPaymentConfirmed() {
     _paymentSubscription?.cancel();
+    _bookingSubscription?.cancel();
     if (!mounted) return;
 
     // Close WebView and Navigate to Success Screen
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => PaymentSuccessScreen(bookingId: widget.bookingId),
+        builder: (context) => PaymentSuccessScreen(
+          bookingId: widget.bookingId,
+          paymentType: widget.paymentType,
+        ),
       ),
     );
   }
@@ -164,6 +199,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   @override
   void dispose() {
     _paymentSubscription?.cancel();
+    _bookingSubscription?.cancel();
     super.dispose();
   }
 
