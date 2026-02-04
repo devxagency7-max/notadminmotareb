@@ -27,6 +27,7 @@ const R2_PUBLIC_BASE_URL = defineSecret("R2_PUBLIC_BASE_URL");
 // ✅ Paymob Secrets
 const PAYMOB_API_KEY = defineSecret("PAYMOB_API_KEY");
 const PAYMOB_HMAC = defineSecret("PAYMOB_HMAC");
+const PAYMOB_WALLET_INTEGRATION_ID = defineSecret("PAYMOB_WALLET_INTEGRATION_ID");
 const PAYMOB_CARD_INTEGRATION_ID = defineSecret("PAYMOB_CARD_INTEGRATION_ID");
 const PAYMOB_IFRAME_ID = defineSecret("PAYMOB_IFRAME_ID");
 
@@ -198,7 +199,7 @@ exports.getR2UploadUrl = onCall(
 exports.createDepositBooking = onCall(
     {
         region: "us-central1",
-        secrets: [PAYMOB_API_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_IFRAME_ID]
+        secrets: [PAYMOB_API_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_IFRAME_ID, PAYMOB_WALLET_INTEGRATION_ID]
     },
     async (request) => {
 
@@ -210,7 +211,7 @@ exports.createDepositBooking = onCall(
         console.log("DEBUG: selections:", request.data.selections);
         console.log("DEBUG: isWhole:", request.data.isWhole);
 
-        const { propertyId, userInfo } = request.data;
+        const { propertyId, userInfo, paymentMethod, walletNumber } = request.data;
         if (!userInfo || !userInfo.email) {
             throw new HttpsError("invalid-argument", "Invalid user info");
         }
@@ -361,14 +362,51 @@ exports.createDepositBooking = onCall(
 
         const orderId = await createPaymobOrder(authToken, amountCents, "EGP", paymentRef.id, items);
 
+        let integrationId = PAYMOB_CARD_INTEGRATION_ID.value();
+        if (paymentMethod === 'wallet') {
+            integrationId = PAYMOB_WALLET_INTEGRATION_ID.value();
+        }
+
         const paymentToken = await getPaymentKey(
             authToken,
             orderId,
             amountCents,
             "EGP",
-            PAYMOB_CARD_INTEGRATION_ID.value(),
+            integrationId,
             billingData
         );
+
+        if (paymentMethod === 'wallet') {
+            if (!walletNumber) {
+                throw new HttpsError("invalid-argument", "Wallet number is required for wallet payments.");
+            }
+
+            try {
+                // Direct Pay request for wallet
+                // Note: axios is required, ensure it is imported or available in scope. 
+                // Context check: axios is imported at top of file (I viewed it earlier).
+                const payResponse = await axios.post("https://accept.paymob.com/api/acceptance/payments/pay", {
+                    source: {
+                        identifier: walletNumber,
+                        subtype: "WALLET"
+                    },
+                    payment_token: paymentToken
+                });
+
+                console.log("Paymob Wallet Response:", JSON.stringify(payResponse.data));
+
+                return {
+                    bookingId: bookingRef.id,
+                    paymentId: paymentRef.id,
+                    redirectUrl: payResponse.data.redirect_url, // Direct redirection URL
+                    iframeId: null,
+                    paymentToken: null
+                };
+            } catch (error) {
+                console.error("Paymob Wallet Error:", error.response ? error.response.data : error.message);
+                throw new HttpsError("internal", "Failed to initiate wallet payment.");
+            }
+        }
 
         return {
             bookingId: bookingRef.id,
@@ -510,12 +548,12 @@ exports.expireBookings = onSchedule(
 exports.createRemainingPayment = onCall(
     {
         region: "us-central1",
-        secrets: [PAYMOB_API_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_IFRAME_ID]
+        secrets: [PAYMOB_API_KEY, PAYMOB_CARD_INTEGRATION_ID, PAYMOB_IFRAME_ID, PAYMOB_WALLET_INTEGRATION_ID]
     },
     async (request) => {
         requireAuth(request);
 
-        const { bookingId } = request.data;
+        const { bookingId, paymentMethod, walletNumber } = request.data;
         if (!bookingId) throw new HttpsError("invalid-argument", "Booking ID is required.");
 
         const db = admin.firestore();
@@ -545,8 +583,6 @@ exports.createRemainingPayment = onCall(
 
         const amountCents = Math.round(remainingAmount * 100);
         const paymentRef = db.collection("payments").doc();
-
-
 
         // Billing Data from existing booking userInfo
         const userInfo = booking.userInfo || {};
@@ -580,12 +616,17 @@ exports.createRemainingPayment = onCall(
 
         const orderId = await createPaymobOrder(authToken, amountCents, "EGP", paymentRef.id, items);
 
+        let integrationId = PAYMOB_CARD_INTEGRATION_ID.value();
+        if (paymentMethod === 'wallet') {
+            integrationId = PAYMOB_WALLET_INTEGRATION_ID.value();
+        }
+
         const paymentToken = await getPaymentKey(
             authToken,
             orderId,
             amountCents,
             "EGP",
-            PAYMOB_CARD_INTEGRATION_ID.value(),
+            integrationId,
             billingData
         );
 
@@ -598,6 +639,33 @@ exports.createRemainingPayment = onCall(
             userId: request.auth.uid,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
+
+        if (paymentMethod === 'wallet') {
+            if (!walletNumber) {
+                throw new HttpsError("invalid-argument", "Wallet number is required for wallet payments.");
+            }
+
+            try {
+                const payResponse = await axios.post("https://accept.paymob.com/api/acceptance/payments/pay", {
+                    source: {
+                        identifier: walletNumber,
+                        subtype: "WALLET"
+                    },
+                    payment_token: paymentToken
+                });
+
+                return {
+                    bookingId,
+                    paymentId: paymentRef.id,
+                    redirectUrl: payResponse.data.redirect_url, // Direct redirection URL
+                    iframeId: null,
+                    paymentToken: null
+                };
+            } catch (error) {
+                console.error("Paymob Wallet Error:", error.response ? error.response.data : error.message);
+                throw new HttpsError("internal", "Failed to initiate wallet payment.");
+            }
+        }
 
         return {
             bookingId,

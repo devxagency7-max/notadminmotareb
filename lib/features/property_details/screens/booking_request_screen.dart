@@ -963,27 +963,33 @@ class _BookingRequestContentState extends State<_BookingRequestContent> {
       final data = result.data as Map<String, dynamic>;
 
       // Handle Wallet Redirection
-      if (_paymentMethod == 'wallet' && data['redirectUrl'] != null) {
-        // You might want to open this in a webview or external browser
-        // optimizing for same-screen experience if possible,
-        // but wallets usually require external app or specific OTP pages.
-        // Using the same Webview screen for now but it might need 'redirection' handling logic.
+      // Handle Wallet Redirection
+      if (_paymentMethod == 'wallet') {
+        final redirectUrl = data['redirectUrl'] as String?;
+        print("DEBUG: Wallet Redirect URL: '$redirectUrl'");
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PaymentWebViewScreen(
-              url:
-                  data['redirectUrl'], // Need to update PaymentWebViewScreen to accept direct URL
-              paymentToken: '', // Not used for direct URL
-              iframeId: '',
-              paymentId: data['paymentId'].toString(),
-              bookingId: data['bookingId'].toString(),
-              paymentType: 'deposit',
+        if (redirectUrl != null &&
+            redirectUrl.isNotEmpty &&
+            redirectUrl.startsWith('http')) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentWebViewScreen(
+                url: redirectUrl,
+                paymentToken: '', // Not used for direct URL
+                iframeId: '',
+                paymentId: data['paymentId'].toString(),
+                bookingId: data['bookingId'].toString(),
+                paymentType: 'deposit',
+              ),
             ),
-          ),
-        );
-        return;
+          );
+          return;
+        } else {
+          print("DEBUG: Invalid Redirect URL caught. Url: $redirectUrl");
+          // Fall through to error or handle explicitly
+          throw 'Invalid wallet redirection URL received';
+        }
       }
 
       final paymentToken = data['paymentToken'];

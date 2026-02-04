@@ -272,6 +272,143 @@ class _BookingTimelineCard extends StatelessWidget {
   }
 
   Future<void> _handleRemainingPayment(BuildContext context) async {
+    // 1. Select Payment Method
+    String? selectedMethod;
+    String? walletNumber;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                top: 20,
+                left: 20,
+                right: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Choose Payment Method",
+                    style: GoogleFonts.cairo(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Card Option
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: selectedMethod == 'card'
+                            ? AppTheme.brandPrimary
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    leading: const Icon(Icons.credit_card, color: Colors.blue),
+                    title: Text(
+                      "Credit/Debit Card",
+                      style: GoogleFonts.cairo(),
+                    ),
+                    trailing: selectedMethod == 'card'
+                        ? const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.brandPrimary,
+                          )
+                        : null,
+                    onTap: () => setState(() {
+                      selectedMethod = 'card';
+                      walletNumber = null;
+                    }),
+                  ),
+                  const SizedBox(height: 10),
+                  // Wallet Option
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: selectedMethod == 'wallet'
+                            ? AppTheme.brandPrimary
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    leading: const Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.orange,
+                    ),
+                    title: Text("Mobile Wallet", style: GoogleFonts.cairo()),
+                    trailing: selectedMethod == 'wallet'
+                        ? const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.brandPrimary,
+                          )
+                        : null,
+                    onTap: () => setState(() => selectedMethod = 'wallet'),
+                  ),
+                  if (selectedMethod == 'wallet') ...[
+                    const SizedBox(height: 15),
+                    TextField(
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: "Wallet Number",
+                        hintText: "01xxxxxxxxx",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.phone_android),
+                      ),
+                      keyboardType: TextInputType.phone,
+                      onChanged: (val) => walletNumber = val,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.brandPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "Continue",
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (selectedMethod == null) return; // Cancelled
+    if (selectedMethod == 'wallet' &&
+        (walletNumber == null || walletNumber!.length < 11)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Invalid Wallet Number")));
+      }
+      return;
+    }
+
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -279,9 +416,13 @@ class _BookingTimelineCard extends StatelessWidget {
     );
 
     try {
-      final result = await FirebaseFunctions.instanceFor(
-        region: 'us-central1',
-      ).httpsCallable('createRemainingPayment').call({'bookingId': bookingId});
+      final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('createRemainingPayment')
+          .call({
+            'bookingId': bookingId,
+            'paymentMethod': selectedMethod,
+            'walletNumber': walletNumber,
+          });
 
       if (!context.mounted) return;
       Navigator.pop(context); // Close loading
@@ -290,22 +431,35 @@ class _BookingTimelineCard extends StatelessWidget {
       final paymentToken = resData['paymentToken'];
       final iframeId = resData['iframeId'];
       final paymentId = resData['paymentId'];
+      final redirectUrl = resData['redirectUrl'];
 
       debugPrint("📱 [CLIENT] Remaining Payment Initiated");
-      debugPrint("📱 [CLIENT] PaymentID: $paymentId");
-      debugPrint("📱 [CLIENT] IframeID: $iframeId");
-      debugPrint(
-        "📱 [CLIENT] Token: ${paymentToken?.toString().substring(0, 10)}...",
-      );
 
-      if (paymentToken != null && iframeId != null) {
+      if (selectedMethod == 'wallet' && redirectUrl != null) {
+        // Handle Wallet Redirect
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentWebViewScreen(
+              paymentToken:
+                  "WALLET_TOKEN", // Placeholder, not needed for direct URL
+              iframeId: "WALLET_ID", // Placeholder
+              paymentId: paymentId?.toString() ?? "",
+              bookingId: bookingId,
+              paymentType: 'remaining',
+              url: redirectUrl,
+            ),
+          ),
+        );
+      } else if (paymentToken != null && iframeId != null) {
+        // Handle Card Iframe
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => PaymentWebViewScreen(
               paymentToken: paymentToken.toString(),
               iframeId: iframeId.toString(),
-              paymentId: paymentId.toString(),
+              paymentId: paymentId?.toString() ?? "",
               bookingId: bookingId,
               paymentType: 'remaining',
             ),
