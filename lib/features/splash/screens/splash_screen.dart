@@ -120,13 +120,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final size = MediaQuery.of(context).size;
+    final double logoHeight = size.height * 0.35; // 35% of screen height
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -135,15 +138,18 @@ class _SplashScreenState extends State<SplashScreen> {
                     Localizations.localeOf(context).languageCode == 'en'
                         ? 'assets/images/logo_en.jpg'
                         : 'assets/images/logo.png',
-                    height: 350, // Increased height
+                    height: logoHeight,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 50),
+                  SizedBox(height: size.height * 0.05),
                   // Linear Loading Indicator
-                  const SizedBox(
-                    width: 150,
+                  SizedBox(
+                    width: size.width * 0.4, // 40% of screen width
                     child: LinearProgressIndicator(
                       color: Colors.teal, // Primary Color
-                      backgroundColor: Color(0xFF69F0AE), // Mint Green Accent
+                      backgroundColor: isDark
+                          ? Colors.teal.withOpacity(0.1)
+                          : const Color(0xFF69F0AE),
                     ),
                   ),
                 ],
@@ -151,59 +157,67 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
           ),
           Positioned(
-            bottom: 35,
+            bottom: size.height * 0.05, // 5% from bottom
             left: 0,
             right: 0,
             child: FadeInUp(
               duration: const Duration(milliseconds: 800),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 15),
-                  GestureDetector(
-                    onTap: () async {
-                      const url = 'https://dev-x-one.vercel.app/';
-                      final uri = Uri.parse(url);
-                      if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Theme.of(context).cardTheme.color,
-                        boxShadow: isDark
-                            ? []
-                            : [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF008695,
-                                  ).withValues(alpha: 0.15),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
+              child:
+                  // textDirection: TextDirection.ltr,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          const url = 'https://dev-x-one.vercel.app/';
+                          final uri = Uri.parse(url);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Theme.of(context).cardTheme.color,
+                            boxShadow: isDark
+                                ? []
+                                : [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF008695,
+                                      ).withValues(alpha: 0.15),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                          ),
+                          child: CircleAvatar(
+                            radius: size.width * 0.07 < 30
+                                ? 30
+                                : size.width * 0.07,
+                            backgroundColor: Colors.transparent,
+                            backgroundImage: const AssetImage(
+                              'assets/images/devx.png',
+                            ),
+                          ),
+                        ),
                       ),
-                      child: const CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.transparent,
-                        backgroundImage: AssetImage('assets/images/devx.png'),
+                      const SizedBox(width: 15),
+                      Text(
+                        'Powered By',
+                        style: GoogleFonts.cairo(
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          fontSize: size.width * 0.045 < 18
+                              ? 18
+                              : size.width * 0.045,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 15),
-                  Text(
-                    'Powered By',
-                    style: GoogleFonts.cairo(
-                      color: Colors.grey.shade600,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ],

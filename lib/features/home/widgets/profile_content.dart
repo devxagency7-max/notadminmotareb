@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -181,7 +182,27 @@ class _ProfileContentState extends State<ProfileContent> {
                                     ? const Color(0xFF2A3038)
                                     : Colors.grey.shade200,
                               ),
-                              _buildStatItem(context.loc.myBookings, '0'),
+                              if (authProvider.isAuthenticated &&
+                                  !authProvider.isGuest)
+                                StreamBuilder<QuerySnapshot>(
+                                  stream: FirebaseFirestore.instance
+                                      .collection('bookings')
+                                      .where(
+                                        'userId',
+                                        isEqualTo: authProvider.user?.uid,
+                                      )
+                                      .snapshots(),
+                                  builder: (context, snapshot) {
+                                    final count =
+                                        snapshot.data?.docs.length ?? 0;
+                                    return _buildStatItem(
+                                      context.loc.myBookings,
+                                      count.toString(),
+                                    );
+                                  },
+                                )
+                              else
+                                _buildStatItem(context.loc.myBookings, '0'),
                             ],
                           ),
                         ),

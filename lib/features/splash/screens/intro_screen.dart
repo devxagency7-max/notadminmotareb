@@ -37,8 +37,10 @@ class _IntroScreenState extends State<IntroScreen> {
       ),
     ];
 
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Background: Light Green Semi-Circle Top-Right
@@ -50,9 +52,9 @@ class _IntroScreenState extends State<IntroScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(
-                  0xFFE0F2F1,
-                ).withOpacity(0.8), // Very Light Teal
+                color: isDark
+                    ? Colors.teal.withOpacity(0.1)
+                    : const Color(0xFFE0F2F1).withOpacity(0.8),
               ),
             ),
           ),
@@ -65,9 +67,9 @@ class _IntroScreenState extends State<IntroScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(
-                  0xFFE0F2F1,
-                ).withOpacity(0.8), // Very Light Teal
+                color: isDark
+                    ? Colors.teal.withOpacity(0.1)
+                    : const Color(0xFFE0F2F1).withOpacity(0.8),
               ),
             ),
           ),
@@ -75,7 +77,7 @@ class _IntroScreenState extends State<IntroScreen> {
           // Blur Effect (Optional, kept light to smooth edges)
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(color: Colors.white.withOpacity(0.0)),
+            child: Container(color: Colors.transparent),
           ),
 
           // Content
@@ -94,7 +96,9 @@ class _IntroScreenState extends State<IntroScreen> {
                       TextButton(
                         onPressed: _navigateToHome,
                         style: TextButton.styleFrom(
-                          backgroundColor: Colors.grey[100],
+                          backgroundColor: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.grey[100],
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -102,7 +106,7 @@ class _IntroScreenState extends State<IntroScreen> {
                         child: Text(
                           context.loc.skip,
                           style: GoogleFonts.cairo(
-                            color: Colors.teal[800],
+                            color: isDark ? Colors.teal[300] : Colors.teal[800],
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -139,12 +143,14 @@ class _IntroScreenState extends State<IntroScreen> {
                     SmoothPageIndicator(
                       controller: _controller,
                       count: contents.length,
-                      effect: const WormEffect(
+                      effect: WormEffect(
                         dotHeight: 12,
                         dotWidth: 12,
                         spacing: 16,
                         activeDotColor: Colors.teal,
-                        dotColor: Color(0xFFB2DFDB),
+                        dotColor: isDark
+                            ? Colors.teal.withOpacity(0.2)
+                            : const Color(0xFFB2DFDB),
                         type: WormType.thin,
                       ),
                     ),
@@ -272,7 +278,7 @@ class IntroContentWidget extends StatelessWidget {
                   style: GoogleFonts.cairo(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black87,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     height: 1.2,
                   ),
                 ),
@@ -282,7 +288,9 @@ class IntroContentWidget extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: GoogleFonts.cairo(
                     fontSize: 16,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[400]
+                        : Colors.grey[600],
                     height: 1.6,
                     fontWeight: FontWeight.w500,
                   ),

@@ -480,7 +480,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewAll => 'عرض الكل';
 
   @override
-  String get featuredForYou => 'مميز لك';
+  String get featuredForYou => 'مميز لك ✨';
 
   @override
   String get recentlyAdded => 'أضيف مؤخراً';
@@ -940,4 +940,40 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paymentErrorUnavailable => 'العقار المحدد لم يعد متاحاً.';
+
+  @override
+  String get createNewAccount => 'إنشاء حساب جديد';
+
+  @override
+  String get signupSubtitle => 'أدخل بياناتك للبدء في البحث عن سكنك المثالي';
+
+  @override
+  String get seeker => 'باحث عن سكن';
+
+  @override
+  String get seekerRole => 'عايز سكن';
+
+  @override
+  String get owner => 'صاحب عقار';
+
+  @override
+  String get ownerRole => 'صاحب شقة';
+
+  @override
+  String get alreadyHaveAccount => 'لديك حساب بالفعل؟';
+
+  @override
+  String get agreeTo => 'أوافق على ';
+
+  @override
+  String get and => ' و ';
+
+  @override
+  String get accountCreatedSuccess => 'تم إنشاء الحساب بنجاح! مرحباً بك';
+
+  @override
+  String get agreeTermsError => 'يرجى الموافقة على الشروط والأحكام للمتابعة';
+
+  @override
+  String get passwordsNotMatch => 'كلمات المرور غير متطابقة';
 }

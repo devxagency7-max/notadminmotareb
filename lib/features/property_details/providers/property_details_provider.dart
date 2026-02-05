@@ -38,7 +38,9 @@ class PropertyDetailsProvider extends ChangeNotifier {
 
   void _init() {
     // Initialize defaults based on property mode
-    if (property.bookingMode == 'unit' && property.isFullApartmentBooking) {
+    if (property.bookingMode == 'unit' &&
+        property.isFullApartmentBooking &&
+        property.bookedUnits.isEmpty) {
       _isWholeApartment = true;
     }
 
@@ -208,6 +210,9 @@ class PropertyDetailsProvider extends ChangeNotifier {
 
   void toggleUnitSelection(bool isWhole, String? key, BuildContext context) {
     if (isWhole) {
+      // If units are booked, we cannot select whole apartment
+      if (property.bookedUnits.isNotEmpty) return;
+
       if (_isWholeApartment) {
         _isWholeApartment = false;
       } else {
@@ -222,7 +227,8 @@ class PropertyDetailsProvider extends ChangeNotifier {
 
       if (_selectedUnitKeys.contains(key)) {
         _selectedUnitKeys.remove(key);
-        if (_selectedUnitKeys.isEmpty) {
+        // Do not default to whole apartment if units are already booked
+        if (_selectedUnitKeys.isEmpty && property.bookedUnits.isEmpty) {
           _isWholeApartment = true;
         }
       } else {

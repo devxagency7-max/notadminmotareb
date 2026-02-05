@@ -9,7 +9,13 @@ class PropertiesService {
         .collection('properties')
         .where(
           'status',
-          whereIn: ['approved', 'reserved', 'sold', 'paying_remaining'],
+          whereIn: [
+            'approved',
+            'available',
+            'reserved',
+            'sold',
+            'paying_remaining',
+          ],
         )
         .orderBy('createdAt', descending: true)
         .limit(limit)

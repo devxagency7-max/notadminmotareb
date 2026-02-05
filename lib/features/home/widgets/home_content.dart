@@ -57,7 +57,7 @@ class HomeContent extends StatelessWidget {
               top: MediaQuery.of(context).padding.top + 20,
               left: 20,
               right: 20,
-              bottom: 20,
+              bottom: 10,
             ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
@@ -66,7 +66,7 @@ class HomeContent extends StatelessWidget {
                 _buildSearchBar(context),
                 const SizedBox(height: 20),
                 _buildCategories(context, categoriesList),
-                const SizedBox(height: 20),
+                const SizedBox(height: 5),
               ]),
             ),
           ),
@@ -337,23 +337,19 @@ class HomeContent extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Theme.of(context).cardTheme.color,
-                shape: BoxShape.circle,
-                boxShadow: Theme.of(context).brightness == Brightness.dark
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                // color: Theme.of(context).cardTheme.color,
+                // shape: BoxShape.circle,
+                // boxShadow: Theme.of(context).brightness == Brightness.dark
+                    // ? []
+                    // : [
+                        // BoxShadow(
+                        //   color: Colors.black12,
+                        //   blurRadius: 10,
+                        //   offset: const Offset(0, 5),
+                        // ),
+                      // ],
               ),
-              child: Icon(
-                Icons.notifications_outlined,
-                size: 22,
-                color: Theme.of(context).iconTheme.color,
-              ),
+              child: const Text('🍃', style: TextStyle(fontSize: 24)),
             ),
           ],
         ),

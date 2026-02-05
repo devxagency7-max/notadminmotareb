@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../utils/custom_snackbar.dart';
 import '../../../utils/error_handler.dart';
+import '../widgets/user_type_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,8 +70,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    // Show Selection Dialog first
+    final bool? isOwner = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const UserTypeDialog(),
+    );
+
+    if (isOwner == null) return; // User cancelled
+
     try {
-      await context.read<AuthProvider>().signInWithGoogle();
+      await context.read<AuthProvider>().signInWithGoogle(isOwner: isOwner);
       if (mounted && context.read<AuthProvider>().isAuthenticated) {
         CustomSnackBar.show(
           context: context,
@@ -115,17 +125,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // Background UI
-          _buildBackgroundDecorations(),
+          _buildBackgroundDecorations(isDark),
 
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(color: Colors.white.withValues(alpha: 0.0)),
+            child: Container(color: Colors.transparent),
           ),
 
           SafeArea(
@@ -178,7 +190,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       context.loc.loginToContinue,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
                     ),
                   ),
 
@@ -191,9 +206,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          _buildEmailField(),
+                          _buildEmailField(isDark),
                           const SizedBox(height: 20),
-                          _buildPasswordField(),
+                          _buildPasswordField(isDark),
                         ],
                       ),
                     ),
@@ -210,17 +225,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 30),
 
                   // Google Button
-                  _buildGoogleButton(),
+                  _buildGoogleButton(isDark),
 
                   const SizedBox(height: 15),
 
                   // Guest Button
-                  _buildGuestButton(),
+                  _buildGuestButton(isDark),
 
                   const Spacer(flex: 2),
 
                   // Signup Link
-                  _buildSignupLink(),
+                  _buildSignupLink(isDark),
 
                   const Spacer(flex: 1),
                 ],
@@ -232,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildBackgroundDecorations() {
+  Widget _buildBackgroundDecorations(bool isDark) {
     return Stack(
       children: [
         Positioned(
@@ -243,7 +258,9 @@ class _LoginScreenState extends State<LoginScreen> {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
+              color: isDark
+                  ? Colors.teal.withOpacity(0.1)
+                  : const Color(0xFFE0F2F1).withOpacity(0.8),
             ),
           ),
         ),
@@ -255,7 +272,9 @@ class _LoginScreenState extends State<LoginScreen> {
             height: 300,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
+              color: isDark
+                  ? Colors.teal.withOpacity(0.1)
+                  : const Color(0xFFE0F2F1).withOpacity(0.8),
             ),
           ),
         ),
@@ -263,24 +282,32 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildEmailField() {
+  Widget _buildEmailField(bool isDark) {
     return TextFormField(
       controller: _emailController,
+      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
       keyboardType: TextInputType.emailAddress,
       validator: (value) =>
           (value == null || value.isEmpty) ? context.loc.enterEmail : null,
       decoration: InputDecoration(
         hintText: 'example@mail.com',
+        hintStyle: TextStyle(
+          color: isDark ? Colors.grey[500] : Colors.grey[400],
+        ),
         prefixIcon: const Icon(Icons.email_outlined, color: Colors.teal),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.shade200,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
@@ -295,14 +322,18 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildPasswordField() {
+  Widget _buildPasswordField(bool isDark) {
     return TextFormField(
       controller: _passwordController,
+      style: TextStyle(color: isDark ? Colors.white : Colors.black87),
       obscureText: !_isPasswordVisible,
       validator: (value) =>
           (value == null || value.isEmpty) ? context.loc.enterPassword : null,
       decoration: InputDecoration(
         hintText: '........',
+        hintStyle: TextStyle(
+          color: isDark ? Colors.grey[500] : Colors.grey[400],
+        ),
         prefixIcon: const Icon(Icons.lock_outline, color: Colors.teal),
         suffixIcon: IconButton(
           icon: Icon(
@@ -313,14 +344,18 @@ class _LoginScreenState extends State<LoginScreen> {
               setState(() => _isPasswordVisible = !_isPasswordVisible),
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.shade200,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
@@ -406,23 +441,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildGoogleButton() {
+  Widget _buildGoogleButton(bool isDark) {
     return FadeInUp(
       delay: const Duration(milliseconds: 800),
       child: Container(
         width: double.infinity,
         height: 55,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.shade200,
+          ),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -432,14 +473,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/google.png', height: 24, width: 24),
+                Image.asset('assets/images/google.png', height: 40, width: 40),
                 const SizedBox(width: 15),
                 Text(
                   context.loc.continueWithGoogle,
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
               ],
@@ -450,23 +491,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildGuestButton() {
+  Widget _buildGuestButton(bool isDark) {
     return FadeInUp(
       delay: const Duration(milliseconds: 850),
       child: Container(
         width: double.infinity,
         height: 55,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.shade200,
+          ),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -483,7 +530,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
               ],
@@ -494,13 +541,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSignupLink() {
+  Widget _buildSignupLink(bool isDark) {
     return FadeInUp(
       delay: const Duration(milliseconds: 900),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(context.loc.noAccount),
+          Text(
+            context.loc.noAccount,
+            style: TextStyle(color: isDark ? Colors.grey[400] : Colors.black87),
+          ),
           TextButton(
             onPressed: () {
               Navigator.push(

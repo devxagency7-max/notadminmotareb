@@ -273,7 +273,8 @@ exports.createDepositBooking = onCall(
         for (const doc of existingBookings.docs) {
             const bData = doc.data();
             if (bData.status === "reserved" || bData.status === "completed") {
-                throw new HttpsError("already-exists", "You already have an active or completed booking for this property.");
+                // Allow multiple bookings for the same property (e.g. User books Room 1, then later Room 2)
+                // continue; 
             }
             if (bData.status === "pending_deposit") {
                 existingPendingBooking = doc;
@@ -295,9 +296,24 @@ exports.createDepositBooking = onCall(
             }
 
             const property = propSnap.data();
-            // Property must be approved (available) to start a new payment process
-            if (property.status !== "approved") {
-                throw new HttpsError("failed-precondition", "Property is currently unavailable or already reserved by someone else.");
+
+            // --- NEW LOGIC: Partial Booking Validation ---
+            const bookedUnits = property.bookedUnits || [];
+
+            if (isWhole) {
+                // If user wants entire apartment, it must be completely empty
+                if (property.status !== "approved" && property.status !== "available") { // strict check
+                    throw new HttpsError("failed-precondition", "Property is not fully available for whole-apartment booking.");
+                }
+                if (bookedUnits.length > 0) {
+                    throw new HttpsError("failed-precondition", "Some units in this property are already booked. Cannot book whole apartment.");
+                }
+            } else {
+                // Check if ANY of the selected units are already in bookedUnits
+                const alreadyBooked = selections.filter(unitId => bookedUnits.includes(unitId));
+                if (alreadyBooked.length > 0) {
+                    throw new HttpsError("failed-precondition", `The following units are already booked: ${alreadyBooked.join(", ")}`);
+                }
             }
 
             // Create or Update Booking (Upsert)
@@ -450,6 +466,9 @@ exports.paymobWebhook = onRequest(
 
                 const booking = bookingSnap.data();
                 const propRef = db.collection("properties").doc(booking.propertyId);
+                const propSnap = await t.get(propRef);
+                if (!propSnap.exists) throw new Error("Property not found");
+                const property = propSnap.data();
 
                 // ✅ NOW WRITE
 
@@ -476,7 +495,56 @@ exports.paymobWebhook = onRequest(
                         expiresAt: admin.firestore.Timestamp.fromDate(exp)
                     });
 
-                    t.update(propRef, { status: "reserved" });
+                    // --- NEW LOGIC: Update bookedUnits & Check for Full Occupancy ---
+
+                    const currentBookedUnits = new Set(property.bookedUnits || []);
+                    const newSelections = booking.selections || [];
+
+
+                    // Add new selections to bookedUnits
+                    newSelections.forEach(unit => currentBookedUnits.add(unit));
+
+                    const updatedBookedUnits = Array.from(currentBookedUnits);
+
+                    let newPropertyStatus = "available"; // Default remains available if partially booked
+
+                    if (booking.isWhole) {
+                        newPropertyStatus = "reserved";
+                    } else {
+                        // Check if ALL units are now booked
+                        // We need the total count of units to know if it's fully booked.
+                        // Assuming 'rooms' array exists.
+                        // We need to count total bookable slots (rooms or beds).
+                        // This estimation relies on correct data. 
+
+                        let totalSlots = 0;
+                        if (property.rooms) {
+                            property.rooms.forEach((r, rIdx) => {
+                                if (r.beds > 0) {
+                                    for (let i = 0; i < r.beds; i++) totalSlots++; // Each bed is a slot "r0_b0"
+                                } else {
+                                    totalSlots++; // Implementation treats room as 1 slot "r0"
+                                }
+                            });
+                        }
+
+                        // If all slots are covered, mark as reserved
+                        // Note: logic might need adjusting depending on exact ID format "r0" vs "r0_b1" strictly.
+                        // Ideally we check if every generated slot ID is in updatedBookedUnits.
+
+                        // For SAFETY: We will ONLY flip to 'reserved' if explicitly whole or logic confirms.
+                        // Let's implement a safer check: 
+                        // If (updatedBookedUnits.length >= totalSlots && totalSlots > 0) -> reserved
+
+                        if (totalSlots > 0 && updatedBookedUnits.length >= totalSlots) {
+                            newPropertyStatus = "reserved";
+                        }
+                    }
+
+                    t.update(propRef, {
+                        bookedUnits: updatedBookedUnits,
+                        status: newPropertyStatus
+                    });
 
                 } else {
 

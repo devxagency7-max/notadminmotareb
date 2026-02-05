@@ -1043,7 +1043,7 @@ abstract class AppLocalizations {
   /// No description provided for @featuredForYou.
   ///
   /// In en, this message translates to:
-  /// **'Featured for you'**
+  /// **'Featured for you ✨'**
   String get featuredForYou;
 
   /// No description provided for @recentlyAdded.
@@ -1915,6 +1915,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Selected property is no longer available.'**
   String get paymentErrorUnavailable;
+
+  /// No description provided for @createNewAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Account'**
+  String get createNewAccount;
+
+  /// No description provided for @signupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your details to start finding your perfect home'**
+  String get signupSubtitle;
+
+  /// No description provided for @seeker.
+  ///
+  /// In en, this message translates to:
+  /// **'Seeker'**
+  String get seeker;
+
+  /// No description provided for @seekerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for housing'**
+  String get seekerRole;
+
+  /// No description provided for @owner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get owner;
+
+  /// No description provided for @ownerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Apartment Owner'**
+  String get ownerRole;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @agreeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to '**
+  String get agreeTo;
+
+  /// No description provided for @and.
+  ///
+  /// In en, this message translates to:
+  /// **' and '**
+  String get and;
+
+  /// No description provided for @accountCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created successfully! Welcome'**
+  String get accountCreatedSuccess;
+
+  /// No description provided for @agreeTermsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please agree to terms and conditions to continue'**
+  String get agreeTermsError;
+
+  /// No description provided for @passwordsNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsNotMatch;
 }
 
 class _AppLocalizationsDelegate

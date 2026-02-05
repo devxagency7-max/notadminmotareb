@@ -21,7 +21,7 @@ class AuthService {
   // ------------------------------------------------------------
   // Google Sign-In
   // ------------------------------------------------------------
-  Future<UserCredential?> signInWithGoogle() async {
+  Future<UserCredential?> signInWithGoogle({bool isOwner = false}) async {
     try {
       // ✅ v7 singleton initialization
       await _googleSignIn.initialize(serverClientId: _webClientId);
@@ -50,9 +50,6 @@ class AuthService {
       );
 
       // ✅ Firestore create/update user
-      // Note: Since authenticate() might not return user profile info directly in some v7 flows,
-      // we might need to handle user data differently.
-      // But typically, we can get current user or profile if scopes were authorized.
       final user = userCredential.user;
       if (user != null) {
         final userDoc = _firestore.collection('users').doc(user.uid);
@@ -64,7 +61,7 @@ class AuthService {
             'name': user.displayName ?? 'Google User',
             'email': user.email,
             'photoUrl': user.photoURL,
-            'role': 'seeker',
+            'role': isOwner ? 'owner' : 'seeker',
             'provider': 'google',
             'createdAt': FieldValue.serverTimestamp(),
             'lastLoginAt': FieldValue.serverTimestamp(),

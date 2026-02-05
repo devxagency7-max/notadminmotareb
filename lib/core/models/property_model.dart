@@ -45,6 +45,7 @@ class Property {
   final double? requiredDeposit; // Added
   final bool bookingEnabled; // Added
   final String status; // Added
+  final List<String> bookedUnits; // Added for partial booking support
 
   // Helpers
   List<String> get tags => amenities.map((e) => e.toString()).toList();
@@ -89,6 +90,7 @@ class Property {
     this.requiredDeposit,
     this.bookingEnabled = true,
     this.status = 'approved',
+    this.bookedUnits = const [],
   });
 
   factory Property.fromMap(Map<String, dynamic> map, String documentId) {
@@ -96,6 +98,11 @@ class Property {
       id: documentId,
       title: map['title'] ?? '',
       titleEn: map['titleEn'] ?? map['title'] ?? '',
+      bookedUnits:
+          (map['bookedUnits'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       location: map['location'] ?? '',
       locationEn: map['locationEn'] ?? map['location'] ?? '',
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
@@ -231,5 +238,51 @@ class Property {
       }
       return false;
     });
+  }
+
+  bool get isFullyBooked {
+    if (status == 'sold') return true;
+
+    if (bookingMode == 'bed') {
+      return bookedUnits.length >= totalBeds;
+    } else {
+      // Unit mode
+      if (isFullApartmentBooking) {
+        return bookedUnits.isNotEmpty;
+      }
+
+      // Check if individual rooms are all booked
+      if (rooms.isEmpty) return false;
+
+      for (int i = 0; i < rooms.length; i++) {
+        final room = rooms[i];
+        final roomKey = 'r$i';
+
+        // 1. If the room itself is booked (usually Single rooms)
+        if (bookedUnits.contains(roomKey)) {
+          continue;
+        }
+
+        // 2. If the room is split into beds (Double, Triple, etc.)
+        // We check if ALL beds in this room are booked.
+        final type = room['type'];
+        if (type == 'Single') {
+          // Single rooms must have 'r$i' key, which we checked above.
+          return false;
+        } else {
+          // Check all beds
+          final beds = (room['beds'] as int?) ?? 1;
+          bool allBedsBooked = true;
+          for (int b = 0; b < beds; b++) {
+            if (!bookedUnits.contains('${roomKey}_b$b')) {
+              allBedsBooked = false;
+              break;
+            }
+          }
+          if (!allBedsBooked) return false;
+        }
+      }
+      return true;
+    }
   }
 }

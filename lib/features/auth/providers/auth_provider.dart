@@ -92,13 +92,15 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({bool isOwner = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final userCredential = await _authService.signInWithGoogle();
+      final userCredential = await _authService.signInWithGoogle(
+        isOwner: isOwner,
+      );
       if (userCredential != null) {
         _user = _authService.getCurrentUser();
         await _fetchUserRolesAndData();

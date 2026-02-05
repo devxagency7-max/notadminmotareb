@@ -157,7 +157,7 @@
   "noSearchResults": "No search results",
   "noUniversitiesFound": "No universities found",
   "viewAll": "View All",
-  "featuredForYou": "Featured for you",
+  "featuredForYou": "Featured for you ✨",
   "recentlyAdded": "Recently Added",
   "newLabel": "NEW",
   "noCategoryProperties": "No properties in this category",
@@ -351,5 +351,17 @@
         }
     }
   },
-  "paymentErrorUnavailable": "Selected property is no longer available."
+  "paymentErrorUnavailable": "Selected property is no longer available.",
+  "createNewAccount": "Create New Account",
+  "signupSubtitle": "Enter your details to start finding your perfect home",
+  "seeker": "Seeker",
+  "seekerRole": "Looking for housing",
+  "owner": "Owner",
+  "ownerRole": "Apartment Owner",
+  "alreadyHaveAccount": "Already have an account?",
+  "agreeTo": "I agree to ",
+  "and": " and ",
+  "accountCreatedSuccess": "Account created successfully! Welcome",
+  "agreeTermsError": "Please agree to terms and conditions to continue",
+  "passwordsNotMatch": "Passwords do not match"
 }

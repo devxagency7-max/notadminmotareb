@@ -139,8 +139,7 @@ class PropertyActions extends StatelessWidget {
                       ),
                     ),
                   )
-                else if (property.status != 'approved' &&
-                    property.status != 'available')
+                else if (property.isFullyBooked)
                   Container(
                     height: 50,
                     padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -150,7 +149,8 @@ class PropertyActions extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        context.loc.booked, // "Booked"
+                        // If status is specifically 'sold' or 'reserved', show 'Booked'
+                        context.loc.booked,
                         style: GoogleFonts.cairo(
                           color: Colors.white,
                           fontSize: 16,

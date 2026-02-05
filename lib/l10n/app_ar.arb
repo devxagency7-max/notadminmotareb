@@ -157,7 +157,7 @@
   "noSearchResults": "لا يوجد نتائج",
   "noUniversitiesFound": "لا يوجد جامعات",
   "viewAll": "عرض الكل",
-  "featuredForYou": "مميز لك",
+  "featuredForYou": "مميز لك ✨",
   "recentlyAdded": "أضيف مؤخراً",
   "newLabel": "جديد",
   "noCategoryProperties": "لا يوجد عقارات في هذا القسم",
@@ -309,5 +309,17 @@
   "nearbyUniversities": "الجامعات المجاورة",
   "paymentErrorPropertyReserved": "هذا العقار يتم حجزه حالياً بواسطة شخص آخر. يرجى المحاولة مرة أخرى بعد 5 دقائق.",
   "paymentErrorGeneric": "تعذر بدء عملية الدفع: {error}",
-  "paymentErrorUnavailable": "العقار المحدد لم يعد متاحاً."
+  "paymentErrorUnavailable": "العقار المحدد لم يعد متاحاً.",
+  "createNewAccount": "إنشاء حساب جديد",
+  "signupSubtitle": "أدخل بياناتك للبدء في البحث عن سكنك المثالي",
+  "seeker": "باحث عن سكن",
+  "seekerRole": "عايز سكن",
+  "owner": "صاحب عقار",
+  "ownerRole": "صاحب شقة",
+  "alreadyHaveAccount": "لديك حساب بالفعل؟",
+  "agreeTo": "أوافق على ",
+  "and": " و ",
+  "accountCreatedSuccess": "تم إنشاء الحساب بنجاح! مرحباً بك",
+  "agreeTermsError": "يرجى الموافقة على الشروط والأحكام للمتابعة",
+  "passwordsNotMatch": "كلمات المرور غير متطابقة"
 }

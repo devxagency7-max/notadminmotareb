@@ -3,12 +3,14 @@ import 'package:animate_do/animate_do.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:motareb/core/extensions/loc_extension.dart';
 
 import '../../../utils/custom_snackbar.dart';
 import '../../../utils/error_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../home/screens/home_screen.dart';
+import '../widgets/user_type_dialog.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -42,7 +44,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_acceptedTerms) {
       CustomSnackBar.show(
         context: context,
-        message: 'يرجى الموافقة على الشروط والأحكام للمتابعة',
+        message: context.loc.agreeTermsError,
         isError: true,
       );
       return;
@@ -51,7 +53,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (_passwordController.text != _confirmPasswordController.text) {
       CustomSnackBar.show(
         context: context,
-        message: 'كلمات المرور غير متطابقة',
+        message: context.loc.passwordsNotMatch,
         isError: true,
       );
       return;
@@ -68,7 +70,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) {
         CustomSnackBar.show(
           context: context,
-          message: 'تم إنشاء الحساب بنجاح! مرحباً بك',
+          message: context.loc.accountCreatedSuccess,
           isError: false,
         );
         Navigator.pushReplacement(
@@ -81,7 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
         SnackBarAction? action;
         if (e is FirebaseAuthException && e.code == 'email-already-in-use') {
           action = SnackBarAction(
-            label: 'تسجيل الدخول',
+            label: context.loc.login,
             textColor: Colors.white,
             onPressed: () {
               Navigator.pop(context); // Go back to Login Screen
@@ -100,12 +102,21 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    // Show Selection Dialog first
+    final bool? isOwner = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const UserTypeDialog(),
+    );
+
+    if (isOwner == null) return; // User cancelled
+
     try {
-      await context.read<AuthProvider>().signInWithGoogle();
+      await context.read<AuthProvider>().signInWithGoogle(isOwner: isOwner);
       if (mounted && context.read<AuthProvider>().isAuthenticated) {
         CustomSnackBar.show(
           context: context,
-          message: 'تم تسجيل الدخول بجوجل بنجاح!',
+          message: context.loc.googleLoginSuccess,
           isError: false,
         );
         Navigator.pushReplacement(
@@ -126,15 +137,20 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     // Scrollable Layout as requested
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true, // Allow background to go behind AppBar
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.teal),
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: isDark ? Colors.white70 : Colors.teal,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -149,7 +165,9 @@ class _SignupScreenState extends State<SignupScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
+                color: isDark
+                    ? Colors.teal.withOpacity(0.1)
+                    : const Color(0xFFE0F2F1).withOpacity(0.8),
               ),
             ),
           ),
@@ -162,14 +180,16 @@ class _SignupScreenState extends State<SignupScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE0F2F1).withValues(alpha: 0.8),
+                color: isDark
+                    ? Colors.teal.withOpacity(0.1)
+                    : const Color(0xFFE0F2F1).withOpacity(0.8),
               ),
             ),
           ),
           // Blur Effect
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(color: Colors.white.withValues(alpha: 0.0)),
+            child: Container(color: Colors.transparent),
           ),
 
           // Content
@@ -206,7 +226,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         end: Alignment.centerLeft,
                       ).createShader(bounds),
                       child: Text(
-                        'إنشاء حساب جديد',
+                        context.loc.createNewAccount,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.cairo(
                           fontSize: 32,
@@ -220,9 +240,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 300),
                     child: Text(
-                      'أدخل بياناتك للبدء في البحث عن سكنك المثالي',
+                      context.loc.signupSubtitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
                     ),
                   ),
 
@@ -240,9 +263,15 @@ class _SignupScreenState extends State<SignupScreen> {
                           padding: const EdgeInsets.all(4),
                           margin: const EdgeInsets.only(bottom: 20),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: isDark
+                                ? Colors.white.withOpacity(0.05)
+                                : Colors.grey[100],
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.grey.shade300),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.1)
+                                  : Colors.grey.shade300,
+                            ),
                           ),
                           child: Stack(
                             children: [
@@ -250,21 +279,21 @@ class _SignupScreenState extends State<SignupScreen> {
                               AnimatedAlign(
                                 duration: const Duration(milliseconds: 250),
                                 curve: Curves.easeInOut,
-                                alignment: !_isOwner
-                                    ? Alignment.centerLeft
-                                    : Alignment.centerRight,
+                                alignment: _isOwner
+                                    ? AlignmentDirectional.centerEnd
+                                    : AlignmentDirectional.centerStart,
                                 child: Container(
                                   width:
-                                      (MediaQuery.of(context).size.width - 96) /
-                                      2, // Width adjusted for padding
+                                      (MediaQuery.of(context).size.width - 56) /
+                                      2,
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: isDark
+                                        ? Colors.white.withOpacity(0.1)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.15,
-                                        ),
+                                        color: Colors.black.withOpacity(0.15),
                                         blurRadius: 8,
                                         offset: const Offset(0, 3),
                                       ),
@@ -291,7 +320,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                             fontSize: !_isOwner ? 16 : 14,
                                             color: !_isOwner
                                                 ? const Color(0xFF008695)
-                                                : Colors.grey,
+                                                : (isDark
+                                                      ? Colors.grey[600]
+                                                      : Colors.grey),
                                           ),
                                           child: Row(
                                             mainAxisAlignment:
@@ -302,10 +333,57 @@ class _SignupScreenState extends State<SignupScreen> {
                                                 size: !_isOwner ? 22 : 18,
                                                 color: !_isOwner
                                                     ? const Color(0xFF008695)
-                                                    : Colors.grey,
+                                                    : (isDark
+                                                          ? Colors.grey[600]
+                                                          : Colors.grey),
                                               ),
                                               const SizedBox(width: 8),
-                                              const Text('عايز سكن'),
+                                              Flexible(
+                                                child: !_isOwner
+                                                    ? ShaderMask(
+                                                        shaderCallback: (bounds) =>
+                                                            const LinearGradient(
+                                                              colors: [
+                                                                Color(
+                                                                  0xFF39BB5E,
+                                                                ),
+                                                                Color(
+                                                                  0xFF008695,
+                                                                ),
+                                                              ],
+                                                              begin: Alignment
+                                                                  .centerRight,
+                                                              end: Alignment
+                                                                  .centerLeft,
+                                                            ).createShader(
+                                                              bounds,
+                                                            ),
+                                                        child: Text(
+                                                          context
+                                                              .loc
+                                                              .seekerRole,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                      )
+                                                    : Text(
+                                                        context.loc.seekerRole,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          color: isDark
+                                                              ? Colors.grey[600]
+                                                              : Colors.grey,
+                                                        ),
+                                                      ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -328,7 +406,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                             fontSize: _isOwner ? 16 : 14,
                                             color: _isOwner
                                                 ? const Color(0xFF39BB5E)
-                                                : Colors.grey,
+                                                : (isDark
+                                                      ? Colors.grey[600]
+                                                      : Colors.grey),
                                           ),
                                           child: Row(
                                             mainAxisAlignment:
@@ -339,10 +419,55 @@ class _SignupScreenState extends State<SignupScreen> {
                                                 size: _isOwner ? 22 : 18,
                                                 color: _isOwner
                                                     ? const Color(0xFF39BB5E)
-                                                    : Colors.grey,
+                                                    : (isDark
+                                                          ? Colors.grey[600]
+                                                          : Colors.grey),
                                               ),
                                               const SizedBox(width: 8),
-                                              const Text('صاحب شقة'),
+                                              Flexible(
+                                                child: _isOwner
+                                                    ? ShaderMask(
+                                                        shaderCallback: (bounds) =>
+                                                            const LinearGradient(
+                                                              colors: [
+                                                                Color(
+                                                                  0xFF39BB5E,
+                                                                ),
+                                                                Color(
+                                                                  0xFF008695,
+                                                                ),
+                                                              ],
+                                                              begin: Alignment
+                                                                  .centerRight,
+                                                              end: Alignment
+                                                                  .centerLeft,
+                                                            ).createShader(
+                                                              bounds,
+                                                            ),
+                                                        child: Text(
+                                                          context.loc.ownerRole,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                      )
+                                                    : Text(
+                                                        context.loc.ownerRole,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          color: isDark
+                                                              ? Colors.grey[600]
+                                                              : Colors.grey,
+                                                        ),
+                                                      ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -355,34 +480,37 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
 
-                        _buildLabel('الاسم الكامل'),
+                        _buildLabel(context.loc.fullName, isDark),
                         TextField(
                           controller: _nameController,
                           decoration: _inputDecoration(
                             'أحمد محمد',
                             Icons.person_outline,
+                            isDark,
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        _buildLabel('البريد الإلكتروني'),
+                        _buildLabel(context.loc.email, isDark),
                         TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: _inputDecoration(
                             'example@domain.com',
                             Icons.email_outlined,
+                            isDark,
                           ),
                         ),
                         const SizedBox(height: 20),
 
-                        _buildLabel('كلمة المرور'),
+                        _buildLabel(context.loc.password, isDark),
                         TextField(
                           controller: _passwordController,
                           obscureText: !_isPasswordVisible,
                           decoration: _inputDecoration(
                             '........',
                             Icons.lock_outline,
+                            isDark,
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isPasswordVisible
@@ -398,13 +526,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        _buildLabel('تأكيد كلمة المرور'),
+                        _buildLabel(context.loc.confirmPassword, isDark),
                         TextField(
                           controller: _confirmPasswordController,
                           obscureText: !_isConfirmPasswordVisible,
                           decoration: _inputDecoration(
                             '........',
                             Icons.verified_user_outlined,
+                            isDark,
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _isConfirmPasswordVisible
@@ -440,22 +569,24 @@ class _SignupScreenState extends State<SignupScreen> {
                           child: RichText(
                             text: TextSpan(
                               style: GoogleFonts.cairo(
-                                color: Colors.grey[700],
+                                color: isDark
+                                    ? Colors.grey[400]
+                                    : Colors.grey[700],
                                 fontSize: 14,
                               ),
-                              children: const [
-                                TextSpan(text: 'أوافق على '),
+                              children: [
+                                TextSpan(text: context.loc.agreeTo),
                                 TextSpan(
-                                  text: 'الشروط والأحكام',
-                                  style: TextStyle(
+                                  text: context.loc.termsOfService,
+                                  style: const TextStyle(
                                     color: Colors.teal,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                TextSpan(text: ' و '),
+                                TextSpan(text: context.loc.and),
                                 TextSpan(
-                                  text: 'سياسة الخصوصية',
-                                  style: TextStyle(
+                                  text: context.loc.privacyPolicy,
+                                  style: const TextStyle(
                                     color: Colors.teal,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -511,9 +642,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ? const CircularProgressIndicator(
                                     color: Colors.white,
                                   )
-                                : const Text(
-                                    'إنشاء الحساب',
-                                    style: TextStyle(
+                                : Text(
+                                    context.loc.signup,
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -528,7 +659,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 30),
 
                   // Google Sign In Button
-                  _buildGoogleButton(),
+                  _buildGoogleButton(isDark),
 
                   const SizedBox(height: 20),
 
@@ -538,14 +669,19 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('لديك حساب بالفعل؟'),
+                        Text(
+                          context.loc.alreadyHaveAccount,
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[400] : Colors.black87,
+                          ),
+                        ),
                         TextButton(
                           onPressed: () {
                             Navigator.pop(context); // Go back to Login
                           },
-                          child: const Text(
-                            'تسجيل الدخول',
-                            style: TextStyle(
+                          child: Text(
+                            context.loc.login,
+                            style: const TextStyle(
                               color: Colors.teal,
                               fontWeight: FontWeight.bold,
                             ),
@@ -564,23 +700,29 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildGoogleButton() {
+  Widget _buildGoogleButton(bool isDark) {
     return FadeInUp(
       delay: const Duration(milliseconds: 700),
       child: Container(
         width: double.infinity,
         height: 55,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.grey.shade200,
+          ),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -590,14 +732,14 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/google.png', height: 24, width: 24),
+                Image.asset('assets/images/google.png', height: 40, width: 40),
                 const SizedBox(width: 15),
                 Text(
-                  'التسجيل بـ Google',
+                  context.loc.continueWithGoogle,
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
               ],
@@ -608,14 +750,14 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, right: 5),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: Color(0xFF004D40),
+          color: isDark ? Colors.teal[200] : const Color(0xFF004D40),
         ),
       ),
     );
@@ -623,15 +765,17 @@ class _SignupScreenState extends State<SignupScreen> {
 
   InputDecoration _inputDecoration(
     String hint,
-    IconData icon, {
+    IconData icon,
+    bool isDark, {
     Widget? suffixIcon,
   }) {
     return InputDecoration(
       hintText: hint,
+      hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
       prefixIcon: Icon(icon, color: Colors.teal),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.grey[50], // Light grey background
+      fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[50],
       contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
@@ -639,7 +783,13 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(
+          color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.shade200,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: Colors.teal),
       ),
     );
   }

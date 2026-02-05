@@ -555,6 +555,9 @@ class UnitSelectionWidget extends StatelessWidget {
         GestureDetector(
           onTap: () {
             if (isReadOnly) return;
+            if (property.bookedUnits.isNotEmpty) {
+              return; // Cannot book whole apartment if partially booked
+            }
             onSelectionChanged(true, null);
           },
           child: Container(
@@ -568,7 +571,9 @@ class UnitSelectionWidget extends StatelessWidget {
                   : null,
               color: isWholeApartment
                   ? null
-                  : Theme.of(context).cardTheme.color,
+                  : (property.bookedUnits.isNotEmpty
+                        ? Theme.of(context).disabledColor.withOpacity(0.1)
+                        : Theme.of(context).cardTheme.color),
               borderRadius: BorderRadius.circular(12),
               border: isWholeApartment
                   ? null
@@ -590,17 +595,27 @@ class UnitSelectionWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  context.loc.bookApartmentFull,
+                  property.bookedUnits.isNotEmpty
+                      ? "غير متاح (محجوز جزئياً)"
+                      : context.loc.bookApartmentFull,
                   style: GoogleFonts.cairo(
                     color: isWholeApartment
                         ? Colors.white
-                        : Theme.of(context).textTheme.bodyMedium?.color,
+                        : (property.bookedUnits.isNotEmpty
+                              ? Theme.of(context).disabledColor
+                              : Theme.of(context).textTheme.bodyMedium?.color),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
                 if (isWholeApartment)
-                  const Icon(Icons.check_circle, color: Colors.white, size: 22),
+                  const Icon(Icons.check_circle, color: Colors.white, size: 22)
+                else if (property.bookedUnits.isNotEmpty)
+                  Icon(
+                    Icons.block,
+                    color: Theme.of(context).disabledColor,
+                    size: 22,
+                  ),
               ],
             ),
           ),
@@ -713,6 +728,8 @@ class UnitSelectionWidget extends StatelessWidget {
                                     ? _buildSelectableUnit(
                                         context: context,
                                         isSelected: isRoomSelected,
+                                        isDisabled: property.bookedUnits
+                                            .contains(roomKey),
                                         label: context.loc.room,
                                         onTap: () {
                                           if (isReadOnly) return;
@@ -728,6 +745,9 @@ class UnitSelectionWidget extends StatelessWidget {
                                           final isBedSelected =
                                               !isWholeApartment &&
                                               selectedUnitKeys.contains(bedKey);
+                                          final isBedBooked = property
+                                              .bookedUnits
+                                              .contains(bedKey);
                                           return Expanded(
                                             child: Container(
                                               decoration: BoxDecoration(
@@ -744,6 +764,7 @@ class UnitSelectionWidget extends StatelessWidget {
                                               child: _buildSelectableUnit(
                                                 context: context,
                                                 isSelected: isBedSelected,
+                                                isDisabled: isBedBooked,
                                                 label: context.loc.bed,
                                                 onTap: () {
                                                   if (isReadOnly) return;
@@ -777,68 +798,71 @@ class UnitSelectionWidget extends StatelessWidget {
   Widget _buildSelectableUnit({
     required BuildContext context,
     required bool isSelected,
+    required bool isDisabled,
     required String label,
     required VoidCallback onTap,
     bool isSmall = false,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isDisabled ? null : onTap,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Color (Unselected)
-          Container(color: Colors.transparent),
+          // Background Color (Unselected or Disabled)
+          Container(
+            color: isDisabled
+                ? Theme.of(context).brightness == Brightness.dark
+                      ? Colors.black.withOpacity(0.3)
+                      : Colors.grey.withOpacity(0.3)
+                : Colors.transparent,
+          ),
 
-          // Selected Gradient Overlay (Animated Fade)
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 300),
-            opacity: isSelected ? 1.0 : 0.0,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF39BB5E), Color(0xFF008695)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          if (!isDisabled)
+            // Selected Gradient Overlay (Animated Fade)
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: isSelected ? 1.0 : 0.0,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF39BB5E), Color(0xFF008695)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
               ),
             ),
-          ),
 
           // Content
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: EdgeInsets.all(isSmall ? 8 : 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? null
-                      : Border.all(color: Colors.grey.shade400, width: 2),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isDisabled)
+                  Icon(
+                    Icons.block,
+                    color: Theme.of(context).disabledColor,
+                    size: isSmall ? 16 : 20,
+                  )
+                else
+                  Icon(
+                    isSelected ? Icons.check_circle : Icons.add_circle_outline,
+                    color: isSelected ? Colors.white : Colors.grey.shade400,
+                    size: isSmall ? 18 : 22,
+                  ),
+                const SizedBox(height: 4),
+                Text(
+                  isDisabled ? (context.isAr ? 'مباع' : 'Sold') : label,
+                  style: GoogleFonts.cairo(
+                    fontSize: isSmall ? 10 : 12,
+                    fontWeight: FontWeight.bold,
+                    color: isDisabled
+                        ? Theme.of(context).disabledColor
+                        : (isSelected ? Colors.white : Colors.grey.shade600),
+                  ),
                 ),
-                child: Icon(
-                  Icons.check,
-                  color: isSelected
-                      ? const Color(0xFF008695)
-                      : Colors.transparent,
-                  size: isSmall ? 14 : 20,
-                ),
-              ),
-              const SizedBox(height: 8),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: GoogleFonts.cairo(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected
-                      ? Colors.white
-                      : Theme.of(context).textTheme.bodyMedium?.color,
-                ),
-                child: Text(label),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

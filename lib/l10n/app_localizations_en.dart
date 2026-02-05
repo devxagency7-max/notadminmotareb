@@ -480,7 +480,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewAll => 'View All';
 
   @override
-  String get featuredForYou => 'Featured for you';
+  String get featuredForYou => 'Featured for you ✨';
 
   @override
   String get recentlyAdded => 'Recently Added';
@@ -943,4 +943,42 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paymentErrorUnavailable =>
       'Selected property is no longer available.';
+
+  @override
+  String get createNewAccount => 'Create New Account';
+
+  @override
+  String get signupSubtitle =>
+      'Enter your details to start finding your perfect home';
+
+  @override
+  String get seeker => 'Seeker';
+
+  @override
+  String get seekerRole => 'Looking for housing';
+
+  @override
+  String get owner => 'Owner';
+
+  @override
+  String get ownerRole => 'Apartment Owner';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String get agreeTo => 'I agree to ';
+
+  @override
+  String get and => ' and ';
+
+  @override
+  String get accountCreatedSuccess => 'Account created successfully! Welcome';
+
+  @override
+  String get agreeTermsError =>
+      'Please agree to terms and conditions to continue';
+
+  @override
+  String get passwordsNotMatch => 'Passwords do not match';
 }
