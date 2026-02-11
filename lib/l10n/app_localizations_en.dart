@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get students => 'Students';
+
+  @override
   String get addApartment => 'Add Apartment';
 
   @override

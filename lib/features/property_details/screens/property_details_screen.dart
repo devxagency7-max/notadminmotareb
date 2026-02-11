@@ -150,6 +150,94 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
     );
   }
 
+  Widget _buildStudentSection(BuildContext context, String? gender) {
+    if (gender == null || gender.isEmpty) return const SizedBox.shrink();
+
+    String label;
+    // IconData icon; // Removed
+    // Color color; // Removed
+
+    switch (gender.toLowerCase()) {
+      case 'male':
+        label = context.loc.youth;
+        // icon = Icons.male;
+        // color = const Color(0xFF1E88E5);
+        break;
+      case 'female':
+        label = context.loc.girls;
+        // icon = Icons.female;
+        // color = const Color(0xFFE91E63);
+        break;
+      default:
+        label = context.loc.all;
+        // icon = Icons.people;
+        // color = const Color(0xFF9C27B0);
+        break;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.school_outlined,
+              color: const Color(0xFF008695),
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              context.loc.students, // Changed from allowedGender
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Used Wrap to match Nearby Universities style container
+        Wrap(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon(icon, color: color, size: 20), // Removed as per request
+                  // const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildNearbySection(
     BuildContext context,
     String title,
@@ -297,6 +385,14 @@ class _PropertyDetailsContentState extends State<_PropertyDetailsContent> {
                                 context,
                               ), // Use localized
                             ),
+                            const SizedBox(height: 20),
+
+                            // Student Section (Gender)
+                            if (property.gender != null &&
+                                property.gender!.isNotEmpty) ...[
+                              _buildStudentSection(context, property.gender),
+                              const SizedBox(height: 20),
+                            ],
                             const SizedBox(height: 20),
 
                             // Nearby Universities Section
