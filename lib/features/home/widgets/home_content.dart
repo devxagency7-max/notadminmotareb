@@ -13,6 +13,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../providers/home_provider.dart';
 import 'large_property_card.dart';
 import 'property_card.dart';
+import 'add_property_card.dart';
 import '../screens/university_properties_screen.dart';
 
 import 'package:motareb/core/services/ad_service.dart';
@@ -340,14 +341,14 @@ class HomeContent extends StatelessWidget {
                 // color: Theme.of(context).cardTheme.color,
                 // shape: BoxShape.circle,
                 // boxShadow: Theme.of(context).brightness == Brightness.dark
-                    // ? []
-                    // : [
-                        // BoxShadow(
-                        //   color: Colors.black12,
-                        //   blurRadius: 10,
-                        //   offset: const Offset(0, 5),
-                        // ),
-                      // ],
+                // ? []
+                // : [
+                // BoxShadow(
+                //   color: Colors.black12,
+                //   blurRadius: 10,
+                //   offset: const Offset(0, 5),
+                // ),
+                // ],
               ),
               child: const Text('🍃', style: TextStyle(fontSize: 24)),
             ),
@@ -473,14 +474,21 @@ class HomeContent extends StatelessWidget {
   }
 
   Widget _buildFeaturedList(BuildContext context, List<Property> properties) {
+    final bool isOwner = context.watch<AuthProvider>().isOwner;
+    final int extraCount = isOwner ? 1 : 0;
+
     return SizedBox(
       height: 280,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: properties.length,
+        itemCount: properties.length + extraCount,
         separatorBuilder: (_, __) => const SizedBox(width: 15),
         itemBuilder: (context, index) {
-          return PropertyCard(property: properties[index]);
+          if (isOwner && index == 0) {
+            return const AddPropertyCard(width: 206);
+          }
+          final propertyIndex = isOwner ? index - 1 : index;
+          return PropertyCard(property: properties[propertyIndex]);
         },
       ),
     );
@@ -490,11 +498,22 @@ class HomeContent extends StatelessWidget {
     BuildContext context,
     List<Property> properties,
   ) {
-    final totalItems = properties.length + (properties.length ~/ 5);
+    final bool isOwner = context.watch<AuthProvider>().isOwner;
+    final int extraItems = isOwner ? 1 : 0;
+    final totalItems =
+        properties.length +
+        extraItems +
+        ((properties.length + extraItems) ~/ 5);
 
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        if ((index + 1) % 6 == 0) {
+        if (isOwner && index == 0) {
+          return const AddPropertyCard(height: 100, isHorizontal: false);
+        }
+
+        final int adjustedIndex = isOwner ? index - 1 : index;
+
+        if ((adjustedIndex + 1) % 6 == 0) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 15),
             child: AdService().getAdWidget(
@@ -504,8 +523,9 @@ class HomeContent extends StatelessWidget {
           );
         }
 
-        final propertyIndex = index - (index ~/ 6);
-        if (propertyIndex >= properties.length) return const SizedBox.shrink();
+        final propertyIndex = adjustedIndex - (adjustedIndex ~/ 6);
+        if (propertyIndex < 0 || propertyIndex >= properties.length)
+          return const SizedBox.shrink();
 
         final property = properties[propertyIndex];
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -661,16 +681,23 @@ class HomeContent extends StatelessWidget {
         ),
       ];
     }
+    final bool isOwner = context.watch<AuthProvider>().isOwner;
+    final int extraCount = isOwner ? 1 : 0;
+
     return [
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate((context, index) {
+            if (isOwner && index == 0) {
+              return const AddPropertyCard(height: 250, isHorizontal: false);
+            }
+            final propertyIndex = isOwner ? index - 1 : index;
             return Padding(
               padding: const EdgeInsets.only(bottom: 20),
-              child: LargePropertyCard(property: properties[index]),
+              child: LargePropertyCard(property: properties[propertyIndex]),
             );
-          }, childCount: properties.length),
+          }, childCount: properties.length + extraCount),
         ),
       ),
     ];

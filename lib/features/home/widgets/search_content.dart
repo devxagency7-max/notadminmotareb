@@ -8,6 +8,8 @@ import 'package:motareb/features/home/screens/filter_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/home_provider.dart';
 import 'large_property_card.dart';
+import 'add_property_card.dart';
+import '../../auth/providers/auth_provider.dart';
 
 import 'package:motareb/core/extensions/loc_extension.dart';
 
@@ -179,16 +181,26 @@ class SearchContent extends StatelessWidget {
                 );
               }
 
-              // Calculate total items including ads
-              // Ad every 3 items
-              final totalItems = properties.length + (properties.length ~/ 3);
+              final bool isOwner = context.watch<AuthProvider>().isOwner;
+              final int extraItemsCount = isOwner ? 1 : 0;
+              final int baseCount = properties.length + extraItemsCount;
+              final totalItems = baseCount + (baseCount ~/ 3);
 
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: totalItems,
                 itemBuilder: (context, index) {
+                  if (isOwner && index == 0) {
+                    return const AddPropertyCard(
+                      height: 250,
+                      isHorizontal: false,
+                    );
+                  }
+
+                  final int adjustedIndex = isOwner ? index - 1 : index;
+
                   // Ad position: Every 4th item
-                  if ((index + 1) % 4 == 0) {
+                  if ((adjustedIndex + 1) % 4 == 0) {
                     return AdService().getAdWidget(
                       factoryId: 'listTileLarge',
                       height: 300,
@@ -196,9 +208,9 @@ class SearchContent extends StatelessWidget {
                   }
 
                   // Calculate actual property index
-                  final propertyIndex = index - (index ~/ 4);
+                  final propertyIndex = adjustedIndex - (adjustedIndex ~/ 4);
 
-                  if (propertyIndex >= properties.length) {
+                  if (propertyIndex < 0 || propertyIndex >= properties.length) {
                     return const SizedBox.shrink();
                   }
 

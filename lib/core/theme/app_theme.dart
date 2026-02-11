@@ -16,7 +16,7 @@ class AppTheme {
   static const Color brandSecondary = Color(0xFF008695);
 
   static const Color errorRed = Color(0xFFEF4444);
-  static const Color ambientGlow = Color.fromARGB(255, 206, 253, 246);
+  static const Color ambientGlow = Color.fromARGB(255, 59, 194, 97);
 
   // Global Gradients
   static const LinearGradient primaryGradient = LinearGradient(

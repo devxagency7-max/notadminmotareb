@@ -12,6 +12,7 @@ class R2UploadService {
   Future<String> uploadFile(
     File file, {
     String? propertyId,
+    String? customPath,
     void Function(int, int)? onProgress,
   }) async {
     try {
@@ -32,6 +33,7 @@ class R2UploadService {
             'fileName': fileName,
             'contentType': contentType,
             'propertyId': propertyId,
+            'customPath': customPath,
           })
           .timeout(const Duration(seconds: 20));
 

@@ -98,6 +98,12 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @addApartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Apartment'**
+  String get addApartment;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
@@ -1987,6 +1993,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Passwords do not match'**
   String get passwordsNotMatch;
+
+  /// No description provided for @privacyPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices and Payment Mechanism'**
+  String get privacyPolicyTitle;
+
+  /// No description provided for @privacyPolicyContent.
+  ///
+  /// In en, this message translates to:
+  /// **'The \"Khaleek Areeb\" application offers a range of paid services aimed at facilitating the housing search and advertising experience, such as premium property listings, paid subscriptions, and in-app advertising services.\n\nPrices vary based on the service or package selected, and the final price is clearly displayed to the user before completing the purchase within the application.\n\nAll payments are processed exclusively within the mobile application. The website does not provide purchasing or direct payment options, as its role is limited to displaying information and policies only.\n\nTo ensure the security of your financial data, all transactions are processed through a secured and certified electronic payment company (such as Paymob), using protection and encryption systems that guarantee the confidentiality and security of your banking information.\n\nIf you have any inquiries regarding payment or prices, you can contact us via the contact details provided within the application or website.'**
+  String get privacyPolicyContent;
+
+  /// No description provided for @websiteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Website'**
+  String get websiteTitle;
+
+  /// No description provided for @websiteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'For more information and details, you can visit our website.'**
+  String get websiteContent;
 }
 
 class _AppLocalizationsDelegate

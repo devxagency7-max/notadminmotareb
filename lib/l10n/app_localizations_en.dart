@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get addApartment => 'Add Apartment';
+
+  @override
   String get appTitle => 'Motareb';
 
   @override
@@ -981,4 +984,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get passwordsNotMatch => 'Passwords do not match';
+
+  @override
+  String get privacyPolicyTitle => 'Prices and Payment Mechanism';
+
+  @override
+  String get privacyPolicyContent =>
+      'The \"Khaleek Areeb\" application offers a range of paid services aimed at facilitating the housing search and advertising experience, such as premium property listings, paid subscriptions, and in-app advertising services.\n\nPrices vary based on the service or package selected, and the final price is clearly displayed to the user before completing the purchase within the application.\n\nAll payments are processed exclusively within the mobile application. The website does not provide purchasing or direct payment options, as its role is limited to displaying information and policies only.\n\nTo ensure the security of your financial data, all transactions are processed through a secured and certified electronic payment company (such as Paymob), using protection and encryption systems that guarantee the confidentiality and security of your banking information.\n\nIf you have any inquiries regarding payment or prices, you can contact us via the contact details provided within the application or website.';
+
+  @override
+  String get websiteTitle => 'Website';
+
+  @override
+  String get websiteContent =>
+      'For more information and details, you can visit our website.';
 }

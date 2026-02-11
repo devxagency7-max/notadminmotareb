@@ -234,11 +234,13 @@ class HomeProvider extends ChangeNotifier {
 
         if (_filterGenders.contains('Male') &&
             (propGender == 'male' ||
+                propGender == 'both' ||
                 p.tags.contains('شباب') ||
                 p.tags.contains('ذكور')))
           matchesGender = true;
         if (_filterGenders.contains('Female') &&
             (propGender == 'female' ||
+                propGender == 'both' ||
                 p.tags.contains('بنات') ||
                 p.tags.contains('إناث')))
           matchesGender = true;

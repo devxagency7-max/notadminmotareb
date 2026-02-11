@@ -20,6 +20,7 @@ import '../../favorites/providers/favorites_provider.dart';
 import '../../../core/widgets/ads/banner_ad_widget.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../bookings/screens/my_bookings_screen.dart';
+import '../screens/privacy_policy_screen.dart';
 
 class ProfileContent extends StatefulWidget {
   const ProfileContent({super.key});
@@ -289,6 +290,21 @@ class _ProfileContentState extends State<ProfileContent> {
                       ],
 
                       const SizedBox(height: 10),
+
+                      // Privacy & Policy
+                      _buildProfileMenuItem(
+                        context.loc.privacyPolicyScreen,
+                        Icons.privacy_tip_outlined,
+                        delay: 400,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PrivacyPolicyScreen(),
+                            ),
+                          );
+                        },
+                      ),
 
                       // Theme Toggle Tile
                       _buildThemeToggle(context, themeProvider),

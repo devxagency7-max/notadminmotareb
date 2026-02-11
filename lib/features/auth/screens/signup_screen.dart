@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../home/screens/home_screen.dart';
 import '../widgets/user_type_dialog.dart';
+import 'package:flutter/gestures.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -582,6 +584,14 @@ class _SignupScreenState extends State<SignupScreen> {
                                     color: Colors.teal,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () async {
+                                      const url =
+                                          'https://5lek-oraeb.vercel.app/';
+                                      if (await canLaunchUrl(Uri.parse(url))) {
+                                        await launchUrl(Uri.parse(url));
+                                      }
+                                    },
                                 ),
                                 TextSpan(text: context.loc.and),
                                 TextSpan(
@@ -590,6 +600,14 @@ class _SignupScreenState extends State<SignupScreen> {
                                     color: Colors.teal,
                                     fontWeight: FontWeight.bold,
                                   ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () async {
+                                      const url =
+                                          'https://5lek-oraeb.vercel.app/';
+                                      if (await canLaunchUrl(Uri.parse(url))) {
+                                        await launchUrl(Uri.parse(url));
+                                      }
+                                    },
                                 ),
                               ],
                             ),

@@ -9,6 +9,9 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get addApartment => 'إضافة شقة';
+
+  @override
   String get appTitle => 'موتارب';
 
   @override
@@ -976,4 +979,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get passwordsNotMatch => 'كلمات المرور غير متطابقة';
+
+  @override
+  String get privacyPolicyTitle => 'الأسعار وآلية الدفع';
+
+  @override
+  String get privacyPolicyContent =>
+      'يقدم تطبيق \"خليك قريب\" مجموعة من الخدمات المدفوعة التي تهدف إلى تسهيل تجربة البحث عن السكن والإعلان عنه، مثل نشر العقارات المميزة، الاشتراكات المدفوعة، والخدمات الإعلانية داخل التطبيق.\n\nتختلف الأسعار بناءً على نوع الخدمة أو الباقة المختارة، ويتم عرض السعر النهائي بشكل واضح للمستخدم قبل إتمام عملية الشراء داخل التطبيق.\n\nجميع عمليات الدفع تتم حصريًا داخل تطبيق الهاتف المحمول، ولا يوفر الموقع الإلكتروني إمكانية الشراء أو الدفع المباشر، حيث يقتصر دوره على عرض المعلومات والسياسات فقط.\n\nحرصًا منا على أمان بياناتكم المالية، تتم جميع المعاملات عبر شركة دفع إلكتروني معتمدة وآمنة (مثل Paymob)، باستخدام أنظمة حماية وتشفير تضمن سرية وأمان معلوماتكم البنكية.\n\nفي حال وجود أي استفسار بخصوص الدفع أو الأسعار، يمكنكم التواصل معنا عبر بيانات الاتصال الموضحة داخل التطبيق أو الموقع.';
+
+  @override
+  String get websiteTitle => 'الموقع الإلكتروني';
+
+  @override
+  String get websiteContent =>
+      'لمزيد من المعلومات والتفاصيل، يمكنكم زيارة موقعنا الإلكتروني.';
 }

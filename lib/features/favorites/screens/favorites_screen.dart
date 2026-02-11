@@ -5,6 +5,8 @@ import 'package:animate_do/animate_do.dart';
 import 'package:motareb/core/extensions/loc_extension.dart';
 import 'package:motareb/core/theme/app_theme.dart';
 import '../../home/widgets/property_card.dart';
+import '../../home/widgets/add_property_card.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/favorites_provider.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -25,7 +27,7 @@ class FavoritesScreen extends StatelessWidget {
           Expanded(
             child: favorites.isEmpty
                 ? _buildEmptyState(context)
-                : _buildFavoritesGrid(favorites),
+                : _buildFavoritesGrid(context, favorites),
           ),
         ],
       ),
@@ -144,7 +146,10 @@ class FavoritesScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildFavoritesGrid(List favorites) {
+  Widget _buildFavoritesGrid(BuildContext context, List favorites) {
+    final bool isOwner = context.watch<AuthProvider>().isOwner;
+    final int extraCount = isOwner ? 1 : 0;
+
     return GridView.builder(
       padding: const EdgeInsets.all(20),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -153,12 +158,16 @@ class FavoritesScreen extends StatelessWidget {
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
       ),
-      itemCount: favorites.length,
+      itemCount: favorites.length + extraCount,
       itemBuilder: (context, index) {
+        if (isOwner && index == 0) {
+          return const AddPropertyCard();
+        }
+        final propertyIndex = isOwner ? index - 1 : index;
         return FadeInUp(
           duration: const Duration(milliseconds: 500),
           delay: Duration(milliseconds: index * 100),
-          child: PropertyCard(property: favorites[index]),
+          child: PropertyCard(property: favorites[propertyIndex]),
         );
       },
     );

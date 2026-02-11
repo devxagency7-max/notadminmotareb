@@ -14,6 +14,7 @@ class R2UploadService {
     File file, {
     String? ownerId,
     String? propertyUuid,
+    String? customPath,
     void Function(int, int)? onProgress,
   }) async {
     try {
@@ -27,10 +28,11 @@ class R2UploadService {
       print('🚀 Starting upload for: $fileName ($contentType)');
 
       // Construct path for pending upload if parameters are present
-      String? customPath;
-      if (ownerId != null && propertyUuid != null) {
+      // Construct path for pending upload if parameters are present
+      String? effectivePath = customPath;
+      if (effectivePath == null && ownerId != null && propertyUuid != null) {
         // e.g. pending/user123/prop456/image.jpg
-        customPath = 'pending/$ownerId/$propertyUuid/$fileName';
+        effectivePath = 'pending/$ownerId/$propertyUuid/$fileName';
       }
 
       // 1) Get Presigned URL from Cloud Function
@@ -41,7 +43,7 @@ class R2UploadService {
             'fileName': fileName,
             'contentType': contentType,
             'customPath':
-                customPath, // Pass custom path to function if supported
+                effectivePath, // Pass custom path to function if supported
             // If the function doesn't support customPath yet, we might need to rely on the function's default behavior
             // or update the function. For now, assuming standard behavior or that we can pass metadata.
             // Based on user request "pending/{ownerId}/{propertyId}/{uuid}.jpg", we really want the backend to handle this structure.
